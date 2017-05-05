@@ -1,13 +1,14 @@
 """Helper classes and methods for datalab client."""
 
 __authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20170502' # yyyymmdd
+__version__ = '20170504' # yyyymmdd
 
 # std lib imports
 from functools import partial
 from cStringIO import StringIO
 from collections import OrderedDict
 from Queue import deque
+import getpass
 
 # 3rd party Python imports
 import pylab as p
@@ -22,29 +23,29 @@ import shapely.geometry as geo
 # Data Lab imports
 from dl import authClient, queryClient
 
-
 class Querist:
 
-    def __init__(self,username='anonymous',password=''):
+    def __init__(self,username='anonymous'):
         
         """Helper class to authenticate user with Data Lab, run queries, and
         convert results to the requested data type.
         
         Parameters
         ----------
-        username, password: str
-            User name and user password, will be supplied to
-            :func:`authClient.login()` to obtain an authentication
-            token. The defaults are 'anonymous' and '' for `username`
-            and `password`, respectively, and obtain an anonymous
-            access token from :module:`authClient`.
+        username: str
+            User name, will be supplied to :func:`authClient.login()`
+            to obtain an authentication token. The default username is
+            'anonymous', which obtains an anonymous access token from
+            :module:`authClient`.
+
+            Other user names will trigger a password prompt.
+
+            The token can be cleared by calling :func:`clearToken()`.
 
         """
 
-        try:
-            self.token = authClient.login(username,password)
-        except:
-            raise
+        # obtain auth token in secure way
+        self.token = self._getToken(username)
             
         # map outfmt container types to a tuple:
         # (:func:`queryClient.query()` fmt-value, descriptive title,
@@ -60,7 +61,42 @@ class Querist:
 
         self.openjobs = deque()  # FIFO queue of submitted async jobIDs
 
+
+    def _getToken(self,username):
+
+        """Get authentication token through :func:`authClient.login()`
+
+        Parameters
+        ----------
+        username : str
+            If 'anonymous', use default password and obtain default
+            auth token. Otherwise prompt for password while trying to
+            obtain a valid auth token.
+
+            :func:`authClient.login() returns either a valid token, or
+            an error message (as string), so we check the return value
+            using :func:`authClient.isValidToken()`. If this returns
+            False, we raise an Exception here.
+        """
+
+        if username == 'anonymous':
+            token = authClient.login('anonymous','')
+        else:
+            token = authClient.login(username,getpass.getpass())
+
+        if not authClient.isValidToken(token):
+            raise Exception, "Invalid user name and/or password provided. Please try again."
+        else:
+            return token
+
         
+    def clearToken(self):
+
+        """Sets to token to empty string. Useful e.g. before saving a notebook."""
+
+        self.token = ''
+
+    
     def __call__(self,query=None,outfmt='array',preview=0,async=False):
         
         """Submit `query` string via :func:`queryClient.query()`, and process
@@ -125,8 +161,11 @@ class Querist:
         
         return output
 
-    
+
     def clearQueue(self):
+
+        """Clears the async job queue, i.e. they become unretrievable."""
+        
         print "Clearing the queue of async queries."
         self.openjobs.clear()
 
@@ -417,7 +456,7 @@ def constructOutlines(x,y,clusterlabels):  # compute convex hull, one per cluste
     return outlines
 
 
-def plotSkymapScatter(x,y,c=None,clusterlabels=None,plot='both',xlabel='RA',ylabel='Dec',clabel='',title='',projection='aitoff',**kwargs):
+def plotSkymapScatter(x,y,c=None,clusterlabels=None,s=3,plot='both',xlabel='RA',ylabel='Dec',clabel='',title='',projection='aitoff',**kwargs):
 
     """Plot an all-sky projection of data x,y.
 
@@ -440,6 +479,10 @@ def plotSkymapScatter(x,y,c=None,clusterlabels=None,plot='both',xlabel='RA',ylab
         designating that datapoint as member of some cluster or
         class. In this case, all scatter points with the same value in
         `clusterlabels` will be plotted in the same color.
+
+    s : float
+        Marker size for scatter plot. Will be passed to matplotlib's
+        :func:`scatter()`. Default: s=3.
 
     plot : str
         Either 'both' (default) or 'scatter' or 'outlines'. If
@@ -483,7 +526,7 @@ def plotSkymapScatter(x,y,c=None,clusterlabels=None,plot='both',xlabel='RA',ylab
         if plot in ('scatter','both'):
             for label in N.unique(clusterlabels):
                 sel = (clusterlabels == label)
-                im = p.scatter(x[sel], y[sel], marker='o', s=3, edgecolors='none', alpha=1, label=label, **kwargs)
+                im = p.scatter(x[sel], y[sel], marker='o', s=s, edgecolors='none', alpha=1, label=label, **kwargs)
 
             p.legend(loc='upper right',title='clusters',markerscale=5)
 
@@ -495,7 +538,7 @@ def plotSkymapScatter(x,y,c=None,clusterlabels=None,plot='both',xlabel='RA',ylab
                 p.plot(x_,y_,ls='-',color='r',lw=2)
         
     else:
-        im = p.scatter(x, y, marker='o', s=3, c=c, edgecolors='none', alpha=1, **kwargs)
+        im = p.scatter(x, y, marker='o', s=s, c=c, edgecolors='none', alpha=1, **kwargs)
 
         if c is not None:
             cb = p.colorbar(im)

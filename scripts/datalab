@@ -1,0 +1,119 @@
+#!/usr/local/anaconda/bin/python
+
+""" 
+    A Data Lab command-line client
+"""
+
+from __future__ import print_function
+
+
+from dl import dltasks as dl
+import sys
+import logging
+from optparse import Values
+
+
+def parseSelf(obj):
+    opt = Values()
+    for attr in dir(obj):
+        if isinstance(getattr(obj, attr), Option):
+            opt.ensure_value(attr, getattr(obj, attr).value)
+    return opt
+
+
+def parseArgs(task, args):
+    ''' Parse task parameters '''
+    params = []
+    if any(x in args for x in ['--help', '--h', '-h', 'help', '-help']):
+        print ("The '%s' task takes the following parameters:" % task.name)
+        for par in task.params:
+            opt = getattr(task, par)
+            name = opt.display and opt.display or par
+            if opt.required:
+                print ("  %s - %s [required]" % (name, opt.description))
+            else:
+                print ("  %s - %s [optional]" % (name, opt.description))
+        sys.exit()
+    else:
+        # Set task parameters
+        for i in range(2, len(args)):
+            parts = args[i].strip().split("=")
+            name = parts[0][0] == "-" and parts[0][2:] or parts[0]
+            params.append(name)
+            if hasattr(task, name):
+                opt = getattr(task, name)
+                opt.value = '='.join(parts[1:])
+            else:
+                print ("Parameter '%s' is not supported by this task" % name)
+                sys.exit(-1)
+
+        # Set logging
+        task.setLogger()
+
+        # Check that required parameters are not missing
+        for par in task.params:
+            if getattr(task, par).required and par not in params:
+                opt = getattr(task, par)
+                disp = opt.display and opt.display or par
+                var = raw_input("%s (default: %s): " % (disp, opt.default))
+                if var == "":
+                    opt.value = opt.default
+                else:
+                    opt.value = var
+
+
+if __name__ == "__main__":
+
+    # Initialize datalab
+    datalab = None
+
+    # Supported tasks
+    tasks = {'login': dl.Login,
+             'logout': dl.Logout,
+             'whoami': dl.WhoAmI,
+             'status': dl.Status,
+             'mount': dl.Mountvofs,
+             'addcapability': dl.AddCapability,
+             'listcapability': dl.ListCapability,
+             'query': dl.Query2,
+             'qstatus': dl.QueryStatus,
+             'qresults': dl.QueryResults,
+             'listdb': dl.ListMyDB,
+             'dropdb': dl.DropMyDB,
+             'put': dl.Put,
+             'get': dl.Get,
+             'mv': dl.Move,
+             'cp': dl.Copy,
+             'rm': dl.Delete,
+             'ln': dl.Link,
+             'ls': dl.List,
+             'tag': dl.Tag,
+             'mkdir': dl.MkDir,
+             'rmdir': dl.RmDir,
+             'broadcast': dl.Broadcast,
+             'exec': dl.LaunchJob,
+             'launch': dl.Launch,
+             'siaquery': dl.SiaQuery
+             }
+
+    # List tasks
+    if len(sys.argv) == 1 or "help" in sys.argv[1]:
+        print ("\nUsage:\n\n    % datalab <task> [task_options]\n")
+        print ("where <task> is one of:\n")
+        for task in sorted(tasks):
+            print ('    %15s - %s' % (task, tasks[task](datalab).description))
+        print(' ')
+
+    # Parse arguments
+    elif sys.argv[1] in tasks:
+        datalab = dl.DataLab()
+        task = tasks[sys.argv[1]](datalab)
+        opt = parseArgs(task, sys.argv)
+        resp = task.run()
+        if resp is not None:
+            print (resp)
+    else:
+        print ("Unknown command: '%s'" % sys.argv[1])
+
+    sys.exit(0)
+

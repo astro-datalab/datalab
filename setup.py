@@ -25,7 +25,7 @@ except:
 
 
 setup(name="datalab",
-      version="2.0.1",
+      version="2.0.2",
       url="https://github.noao.edu/mjg/datalab",
       description="Tools for interacting with NOAO DataLab.",
       author="M.J. Graham",

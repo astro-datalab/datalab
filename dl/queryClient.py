@@ -33,6 +33,7 @@ import json
 #####################################
 
 
+#DEF_SERVICE_URL = "http://dldev.datalab.noao.edu/query"
 DEF_SERVICE_URL = "http://dlsvcs.datalab.noao.edu/query"
 SM_SERVICE_URL = "http://dlsvcs.datalab.noao.edu/storage"
 PROFILE = "default"
@@ -164,24 +165,24 @@ def query(token, adql=None, sql=None, fmt='csv', out=None, async=False, **kw):
     if PROFILE != "default":
         dburl += "&profile=%s" % PROFILE
 
-    try:
-        r = requests.get(dburl, headers=headers)
+    r = requests.get(dburl, headers=headers)
 
-        if r.status_code != 200:
-            raise queryClientError("Error in query: " + r.text)
+    if r.status_code != 200:
+        print ("etext: " + r.text)
+        print ("econtent: " + r.content)
+        raise queryClientError("Error in query: " + r.text)
 
-        if (out is not None and out != '') and not async:
-            if out[:7] == 'file://':
-                out = out[7:]
-            if ':' not in out or out[:out.index(':')] not in ['vos', 'mydb']:
-                file = open(out, 'wb', 0)
-                file.write(r.content)
-                file.close()
-        else:
-            return r.content
+    if (out is not None and out != '') and not async:
+        if out[:7] == 'file://':
+            out = out[7:]
+        if ':' not in out or out[:out.index(':')] not in ['vos', 'mydb']:
+            file = open(out, 'wb', 0)
+            file.write(r.content)
+            file.close()
+    else:
+        return r.content
 
-    except Exception as e:
-        raise queryClientError(e.message)
+    return "OK"
 
 
 # SIAQUERY -- Send a SIA query to the query manager service
@@ -332,7 +333,7 @@ def results(token, jobId=None):
     return r.content
 
 
-# SERVICE_URL -- Set the service url to use
+# SET_SVC_URL -- Set the service url to use
 #
 def set_svc_url(svc_url):
     """Set the query manager service URL.
@@ -360,7 +361,35 @@ def set_svc_url(svc_url):
     DEF_SERVICE_URL = svc_url
 
 
-# PROFILES -- Get the profiles supported by the query manager service
+
+# GET_SVC_URL -- Get the service url to use
+#
+def get_svc_url():
+    """Get the query manager service URL.
+
+    Parameters
+    ----------
+        None
+
+    Returns
+    -------
+        Current Query Manager service URL
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        # get the service url
+        print (queryClient.get_scv_url())
+
+    """
+    global DEF_SERVICE_URL
+    return DEF_SERVICE_URL
+
+
+
+# LIST_PROFILES -- Get the profiles supported by the query manager service
 #
 def list_profiles(token, profile=None):
     """Retrieve the profiles supported by the query manager service
@@ -391,16 +420,18 @@ def list_profiles(token, profile=None):
     headers = {'Content-Type': 'text/ascii',
                'X-DL-AuthToken': token}  # application/x-sql
     dburl = '%s/profiles' % DEF_SERVICE_URL
-    if profile != None:
+    if profile != None and profile != 'None' and profile != '':
         dburl += "/%s" % profile
+
     r = requests.get(dburl, headers=headers)
     profiles = r.content
     if '{' in profiles:
-        profiles = json.load(StringIO(profiles))
+        #profiles = json.load(StringIO(profiles))
+        profiles = json.loads(profiles)
     return profiles
 
 
-# PROFILES -- Set the profile to be used
+# SET_PROFILES -- Set the profile to be used
 #
 def set_profile(profile):
     """Set the profile
@@ -426,7 +457,7 @@ def set_profile(profile):
     PROFILE = profile
 
 
-# PROFILES -- Set the profile to be used
+# GET_PROFILES -- Set the profile to be used
 #
 def get_profile(profile):
     """Get the profile

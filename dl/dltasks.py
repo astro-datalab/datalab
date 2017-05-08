@@ -579,6 +579,9 @@ class Query2 (Task):
         self.addOption("async", 
             Option("async", "", "Asynchronous query?", default=False,
                 required=False))
+        self.addOption("profile", 
+            Option("profile", "", "Service profile to use",
+                required=False, default="default"))
 
     def run(self):
         token = getUserToken (self)
@@ -606,6 +609,9 @@ class Query2 (Task):
             adql = self.adql.value
             
         # Execute the query.
+        if self.profile.value != "default":
+            if self.profile.value != "" and self.profile.value is not None:
+                queryClient.set_profile (profile=self.profile.value)
         res = queryClient.query (token, adql=adql, sql=sql, 
             fmt=self.fmt.value, out=self.out.value, async=self.async.value)
 
@@ -682,8 +688,8 @@ class DropMyDB(Task):
     '''
     def __init__(self, datalab):
         Task.__init__(self, datalab, 'dropdb', 'Drop a user MyDB table')
-        self.addOption("table", Option("table", "",
-                        "Table name", required=False))
+        self.addOption("table", 
+            Option("table", "", "Table name", required=False))
 
     def run(self):
         token = getUserToken(self)
@@ -691,6 +697,22 @@ class DropMyDB(Task):
             queryClient.drop (token, table=self.table.value)
         except Exception as e:
             print ("Error dropping table '%s'." % self.table.value)
+
+
+class QueryProfiles(Task):
+    '''
+        List the available Query Manager profiles.
+    '''
+    def __init__(self, datalab):
+        Task.__init__(self, datalab, 'list_query_profiles', 
+            'List the available Query Manager profiles')
+        self.addOption("profile", 
+            Option("profile", "", "Profile to list", required=False,
+                default=None))
+
+    def run(self):
+        token = getUserToken(self)
+        print (queryClient.list_profiles (token, profile=self.profile.value))
 
 
 
@@ -1133,6 +1155,22 @@ class Resolve(Task):
         token = getUserToken(self)
         r = requests.get(SM_URL + "resolve?name=%s" %
                          self.name.value, headers={'X-DL-AuthToken': token})
+
+
+class StorageProfiles(Task):
+    '''
+        List the available Storage Manager profiles.
+    '''
+    def __init__(self, datalab):
+        Task.__init__(self, datalab, 'list_storage_profiles', 
+            'List the available Storage Manager profiles')
+        self.addOption("profile", 
+            Option("profile", "", "Profile to list", required=False,
+                default=None))
+
+    def run(self):
+        token = getUserToken(self)
+        print (storeClient.list_profiles (token, profile=self.profile.value))
 
 
 ################################################

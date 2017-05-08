@@ -33,6 +33,7 @@ import json
 #####################################
 
 
+#DEF_SERVICE_URL = "http://dldev.datalab.noao.edu/query"
 DEF_SERVICE_URL = "http://dlsvcs.datalab.noao.edu/query"
 SM_SERVICE_URL = "http://dlsvcs.datalab.noao.edu/storage"
 PROFILE = "default"
@@ -164,24 +165,24 @@ def query(token, adql=None, sql=None, fmt='csv', out=None, async=False, **kw):
     if PROFILE != "default":
         dburl += "&profile=%s" % PROFILE
 
-    try:
-        r = requests.get(dburl, headers=headers)
+    r = requests.get(dburl, headers=headers)
 
-        if r.status_code != 200:
-            raise queryClientError("Error in query: " + r.text)
+    if r.status_code != 200:
+        print ("etext: " + r.text)
+        print ("econtent: " + r.content)
+        raise queryClientError("Error in query: " + r.text)
 
-        if (out is not None and out != '') and not async:
-            if out[:7] == 'file://':
-                out = out[7:]
-            if ':' not in out or out[:out.index(':')] not in ['vos', 'mydb']:
-                file = open(out, 'wb', 0)
-                file.write(r.content)
-                file.close()
-        else:
-            return r.content
+    if (out is not None and out != '') and not async:
+        if out[:7] == 'file://':
+            out = out[7:]
+        if ':' not in out or out[:out.index(':')] not in ['vos', 'mydb']:
+            file = open(out, 'wb', 0)
+            file.write(r.content)
+            file.close()
+    else:
+        return r.content
 
-    except Exception as e:
-        raise queryClientError(e.message)
+    return "OK"
 
 
 # SIAQUERY -- Send a SIA query to the query manager service
@@ -421,8 +422,6 @@ def list_profiles(token, profile=None):
     dburl = '%s/profiles' % DEF_SERVICE_URL
     if profile != None and profile != 'None' and profile != '':
         dburl += "/%s" % profile
-
-    print (dburl)
 
     r = requests.get(dburl, headers=headers)
     profiles = r.content

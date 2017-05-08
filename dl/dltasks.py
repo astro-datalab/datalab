@@ -590,6 +590,7 @@ class Query2 (Task):
         # directly or by specifying a filename.
         sql = None
         adql = None
+        res = None
 
         if self.adql.value is None or self.adql.value == '':
             if self.sql.value is None or self.sql.value == '':
@@ -612,13 +613,22 @@ class Query2 (Task):
         if self.profile.value != "default":
             if self.profile.value != "" and self.profile.value is not None:
                 queryClient.set_profile (profile=self.profile.value)
-        res = queryClient.query (token, adql=adql, sql=sql, 
-            fmt=self.fmt.value, out=self.out.value, async=self.async.value)
 
-        if self.async.value:
-            print (res)                         # Return the JobID
-        elif self.out.value== '' or self.out.value is None:
-            print (res)                         # Return the results
+        try:
+            res = queryClient.query (token, adql=adql, sql=sql, 
+                fmt=self.fmt.value, out=self.out.value, async=self.async.value)
+
+            if self.async.value:
+                print (res)                         # Return the JobID
+            elif self.out.value== '' or self.out.value is None:
+                print (res)                         # Return the results
+        except Exception as e:
+            if not self.async.value and e.message is not None:
+                err = e.message
+                if err.find("Time-out"):
+                    print ("Error: Sync query timeout, try an async query")
+            else:
+                print (e.message)
 
 
 class QueryStatus(Task):

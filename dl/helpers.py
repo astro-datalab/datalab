@@ -547,10 +547,6 @@ def plotSkymapScatter(x,y,c=None,clusterlabels=None,s=3,plot='both',xlabel='RA',
             cb = p.colorbar(im)
             cb.set_label(clabel)
 
-    ax.xaxis.set_major_locator(MaxNLocator(9,prune='both'))
-    ax.set_xlim(360,0)
-    ax.invert_xaxis()
-    
     p.title(title,y=1.08)
     p.grid(True)
     p.xlabel(xlabel)

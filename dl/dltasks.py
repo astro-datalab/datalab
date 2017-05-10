@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Matthew Graham <graham@noao.edu>, Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20170430'  # yyyymmdd
+__version__ = '20170509'  # yyyymmdd
 
 
 """
@@ -657,20 +657,6 @@ class QueryResults(Task):
     def run(self):
         token = getUserToken(self)
         print (queryClient.results (token, jobId=self.jobId.value))
-
-
-class QueryStatus(Task):
-    '''
-        Get the async query job status.
-    '''
-    def __init__(self, datalab):
-        Task.__init__(self, datalab, 'qstatus', 'Get an async query job status')
-        self.addOption("jobId", Option("jobId", "",
-                        "Query Job ID", required=True))
-
-    def run(self):
-        token = getUserToken(self)
-        print (queryClient.status (token, jobId=self.jobId.value))
 
 
 class ListMyDB(Task):

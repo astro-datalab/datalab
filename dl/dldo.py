@@ -19,6 +19,8 @@ Import via
     from dl import datalab
 """
 
+# std lib imports
+import getpass
 
 # Data Lab Client interfaces
 from dl import authClient, storeClient, queryClient

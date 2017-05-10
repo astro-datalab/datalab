@@ -31,8 +31,8 @@ class Dldo:
        dldo super-class
     '''
     def __init__(self):
-        pass
-        
+        self.token = ''
+    
     def login(self, username):
         '''
         Login to datalab

@@ -83,9 +83,9 @@ class Dldo:
 
 
     def status(self):
-    ''' 
+        ''' 
         Status of the Data Lab connection
-    '''
+        '''
         if self.status == "loggedout":
             print ("No user is currently logged into the Data Lab")
         else:

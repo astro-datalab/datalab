@@ -21,6 +21,7 @@ Import via
 
 import os
 from subprocess import Popen, PIPE
+from time import gmtime, strftime, sleep
 try:
     import ConfigParser                         # Python 2
     from urllib import quote_plus               # Python 2
@@ -35,10 +36,10 @@ import getpass
 from dl import authClient, storeClient, queryClient
 
 # VOSpace imports
-import vos as vos
-from vos.fuse import FUSE
-from vos.__version__ import version
-from vos.vofs import VOFS
+#import vos as vos
+#from vos.fuse import FUSE
+#from vos.__version__ import version
+#from vos.vofs import VOFS
 DAEMON_TIMEOUT = 60                             # Mount timeout
 CAPS_DIR = "../caps"                            # Capability directory
 
@@ -59,7 +60,6 @@ def getUserName (self):
         return "anonymous"
     else:
         return _user
-
 
 def getUserToken (self):
     '''  Get the currently logged-in user token.  If we haven't logged in
@@ -175,29 +175,29 @@ class Dldo:
         else:
             DOLOGIN = 1
 
-       # Do the login via the authClient
-       if DOLOGIN == 1:
-             if user == '':
-             user = raw_input('Enter user: ')
-             if user == 'anonymous':
-                 token = authClient.login('anonymous','')
-             else:
-                 token = authClient.login(user,getpass.getpass(prompt='Enter password: '))
+        # Do the login via the authClient
+        if DOLOGIN == 1:
+            if user == '':
+                user = raw_input('Enter user: ')
+            if user == 'anonymous':
+                token = authClient.login('anonymous','')
+            else:
+                token = authClient.login(user,getpass.getpass(prompt='Enter password: '))
        
-                 if not authClient.isValidToken(token):
-                     print "Invalid user name and/or password provided. Please try again."
-                     return
-                 else:
-                     print ("Welcome to the Data Lab, %s" % user)
-                     #print "Authentication successful."
-                     self.dl.save("login", "status", "loggedin")
-                     self.dl.save("login", "user", user)
-                     self.dl.save("login", "authtoken", token)
-                     self.dl.save(user, "authtoken", token)
-                     self.loginstatus = "loggedin"
-                     #self.user = user
-                     #self.token = token
-                     self.loginstatus = "loggedin"
+                if not authClient.isValidToken(token):
+                    print "Invalid user name and/or password provided. Please try again."
+                    return
+                else:
+                    print ("Welcome to the Data Lab, %s" % user)
+                    #print "Authentication successful."
+                    self.dl.save("login", "status", "loggedin")
+                    self.dl.save("login", "user", user)
+                    self.dl.save("login", "authtoken", token)
+                    self.dl.save(user, "authtoken", token)
+                    self.loginstatus = "loggedin"
+                    #self.user = user
+                    #self.token = token
+                    self.loginstatus = "loggedin"
 
         ## Default parameters if the VOSpace mount is requested.
         #if mount != "":
@@ -341,10 +341,10 @@ class Dldo:
         '''
         token = getUserToken(self)
         # Check that we have a good token
-        if not authClient.isValidToken(self.token):
+        if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the LS command
-        return storeClient.ls (self.token, name=name, format=format)
+        return storeClient.ls (token, name=name, format=format)
 
 
     def get(self, source='', destination='', verbose=True):
@@ -357,10 +357,10 @@ class Dldo:
             return
         token = getUserToken(self)
         # Check that we have a good token
-        if not authClient.isValidToken(self.token):
+        if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the GET command
-        storeClient.get (self.token, fr=source, to=destination,
+        storeClient.get (token, fr=source, to=destination,
                             verbose=verbose)
 
     def put(self, source='', destination='', verbose=True):
@@ -373,10 +373,10 @@ class Dldo:
             return
         token = getUserToken(self)
         # Check that we have a good token
-        if not authClient.isValidToken(self.token):
+        if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the PUT command
-        storeClient.put (self.token, source, to=destination,
+        storeClient.put (token, source, to=destination,
                             verbose=verbose)
         
     def mv(self, source='', destination='', verbose=True):
@@ -389,10 +389,10 @@ class Dldo:
             return
         token = getUserToken(self)
         # Check that we have a good token
-        if not authClient.isValidToken(self.token):
+        if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the MV command
-        storeClient.mv (self.token, fr=source, to=destination,
+        storeClient.mv (token, fr=source, to=destination,
                         verbose=verbose)
 
     def cp(self, source='', destination='', verbose=True):
@@ -405,10 +405,10 @@ class Dldo:
             return
         token = getUserToken(self)
         # Check that we have a good token
-        if not authClient.isValidToken(self.token):
+        if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the CP command
-        storeClient.cp (self.token, fr=source, to=destination,
+        storeClient.cp (token, fr=source, to=destination,
                         verbose=verbose)
 
     def rm(self, name='', verbose=True):
@@ -421,10 +421,10 @@ class Dldo:
             return
         token = getUserToken(self)
         # Check that we have a good token
-        if not authClient.isValidToken(self.token):
+        if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the RM command
-        storeClient.rm (self.token, name=name, verbose=verbose)
+        storeClient.rm (token, name=name, verbose=verbose)
 
         
     def ln(self, source='', target=''):
@@ -437,10 +437,10 @@ class Dldo:
             return
         token = getUserToken(self)
         # Check that we have a good token
-        if not authClient.isValidToken(self.token):
+        if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the LN command
-        storeClient.ln (self.token, fr=source, target=target)
+        storeClient.ln (token, fr=source, target=target)
 
         
     def tag(self, name='', tag=''):
@@ -453,10 +453,10 @@ class Dldo:
             return
         token = getUserToken(self)
         # Check that we have a good token
-        if not authClient.isValidToken(self.token):
+        if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the TAG command
-        storeClient.tag (self.token, name=name, tag=tag)
+        storeClient.tag (token, name=name, tag=tag)
 
     def mkdir(self, name=''):
         ''' 
@@ -468,10 +468,10 @@ class Dldo:
             return
         token = getUserToken(self)
         # Check that we have a good token
-        if not authClient.isValidToken(self.token):
+        if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the MKDIR command
-        storeClient.mkdir (self.token, name=name)
+        storeClient.mkdir (token, name=name)
 
 
     def rmdir(self, name=''):
@@ -484,10 +484,10 @@ class Dldo:
             return
         token = getUserToken(self)
         # Check that we have a good token
-        if not authClient.isValidToken(self.token):
+        if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the RMDIR command
-        storeClient.rmdir (self.token, name=name)
+        storeClient.rmdir (token, name=name)
 
     def resolve(self, name=''):
         ''' 
@@ -499,8 +499,19 @@ class Dldo:
             return
         token = getUserToken(self)
         # Check that we have a good token
-        if not authClient.isValidToken(self.token):
+        if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the command
         r = requests.get(SM_URL + "resolve?name=%s" %
-                         name, headers={'X-DL-AuthToken': self.token})
+                         name, headers={'X-DL-AuthToken': token})
+
+
+
+################################################
+#  SAMP Tasks
+################################################
+
+
+################################################
+#  SIA Tasks
+################################################

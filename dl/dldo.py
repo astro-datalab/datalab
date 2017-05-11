@@ -56,9 +56,9 @@ class Dldo:
             return
 
     def logout(self):
-    '''
+        '''
         Logout out of the Data Lab
-    '''
+        '''
         if self.status == 'loggedout':
             print ("No user is currently logged into the Data Lab")
             return

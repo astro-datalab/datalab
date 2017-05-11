@@ -138,7 +138,7 @@ class Dldo:
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the GET command
-        storeClient.get (self.token, fr=source, destination,
+        storeClient.get (self.token, fr=source, to=destination,
                             verbose=verbose)
 
     def put(self, source, destination, verbose=True):

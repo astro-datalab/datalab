@@ -320,12 +320,76 @@ class Dldo:
 
 
     def query(self, query=None, type='sql', fmt='csv', out=None, async=False, profile='default'):
-        '''
-        Send a query to a remote query service.  [Note: placeholder name
-        until we figure out what to do with the old Query() functionality.]
-        
-        out    mydb://table, vos://file, other values will save to local file
-        '''
+        """
+        Send a query to a remote query service.
+
+        Parameters
+        ----------
+        query : str
+            The query string that will be passed to the queryClient and then
+            to the DB query manager.  This can either be in the SQL or
+            ADQL format (specified by the "type" parameter).  For example,
+
+            .. code-block:: python
+
+                'select ra,dec from gaia_dr1.gaia_source limit 3'
+        type : str
+            The query format, SQL or ADQL.  SQL is used by default.
+
+        fmt : str
+            Format of the result to be returned by the query. Permitted values are:
+              * 'csv'     the returned result is a comma-separated string that looks like a csv file (newlines at the end of every row)
+              * 'string'  same as csv
+              * 'array'   Numpy array
+              * 'structarray'  Numpy structured / record array
+              * 'pandas'  a Pandas data frame
+              * 'table'   in Astropy Table format
+              * 'votable' result is a string XML-formatted as a VO table
+
+        out : str or None
+            The output name if the results are to be saved to mydb (mydb://tablename), to VOSpace (vos://filename),
+            or the local file system (file:// and other names with no prefix).  The files are in csv format.
+
+        async : bool
+            If ``True``, the query is asynchronous, i.e. a job is
+            submitted to the DB, and a jobID is returned. The jobID
+            must be then used to check the query's status and to retrieve
+            the result (when status is ``COMPLETE``). Default is
+            ``False``, i.e. synchroneous query.
+
+        Returns
+        -------
+        result : str
+            If ``async=False``, the return value is the result of the
+            query as a formatted string (see ``fmt``). Otherwise the
+            result string is a job token, with which later the
+            asynchroneaous query's status can be checked
+            (:func:`dl.query.status()`), and the result retrieved (see
+            :func:`dl.query.result()`.
+          DEPENDS ON "FMT"
+
+
+        Example
+        -------
+        Get security token first, see :func:`dl.auth.login`. Then:
+
+        .. code-block:: python
+
+            from dl import queryClient
+            query = 'select ra,dec from gaia_dr1.gaia_source limit 3'
+            response = queryClient.query(token, adql = query, fmt = 'csv')
+            print response
+
+        This prints
+
+        .. code::
+
+              ra,dec
+              315.002571989537842,35.2662974820284489
+              315.00408275885701,35.2665448169895797
+              314.996334457679438,35.2673478725552698
+
+        """
         # Not enough information input
         if (query is None):
             print "Syntax - dl.query(query, type='sql', fmt='csv', out='', async=False, profile='default')"

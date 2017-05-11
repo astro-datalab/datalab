@@ -89,10 +89,10 @@ class Dldo:
         if self.status == "loggedout":
             print ("No user is currently logged into the Data Lab")
         else:
-            print ("User %s is logged into the Data Lab" % self.user
+            print ("User %s is logged into the Data Lab" % self.user)
         if self.mount != "":
             if status != "loggedout":
-                print ("The user's Virtual Storage is mounted at %s" % self.mount
+                print ("The user's Virtual Storage is mounted at %s" % self.mount)
             else:
                 print ("The last user's Virtual Storage is still mounted at %s" % \
                     self.mount

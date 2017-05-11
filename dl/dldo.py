@@ -130,10 +130,13 @@ class Dldo:
         return storeClient.ls (self.token, name=name, format=format)
 
 
-    def get(self, source, destination, verbose=True):
+    def get(self, source='', destination='', verbose=True):
         '''
         Get one or more files from Data Lab.
         '''
+        if source == '' OR destination == '':
+            print "Syntax - dl.get(source, destination)'
+            return
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."

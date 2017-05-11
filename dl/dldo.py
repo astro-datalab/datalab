@@ -19,11 +19,22 @@ Import via
     from dl import datalab
 """
 
+import os
+from subprocess import Popen, PIPE
+
 # std lib imports
 import getpass
 
 # Data Lab Client interfaces
 from dl import authClient, storeClient, queryClient
+
+# VOSpace imports
+import vos as vos
+from vos.fuse import FUSE
+from vos.__version__ import version
+from vos.vofs import VOFS
+DAEMON_TIMEOUT = 60                             # Mount timeout
+CAPS_DIR = "../caps"                            # Capability directory
 
 # Service URLs
 AM_URL = "http://dlsvcs.datalab.noao.edu/auth"      # Auth Manager
@@ -38,6 +49,7 @@ class Dldo:
         self.token = ""
         self.user = ""
         self.loginstatus = ""
+        self.mount = ""
         self.unmount = ""
         pass
 
@@ -47,7 +59,7 @@ class Dldo:
 ################################################
 
     
-    def login(self, user=''):
+    def login(self, user='', mount=''):
         '''
         Login to datalab
         '''
@@ -66,9 +78,28 @@ class Dldo:
             self.user = user
             self.token = token
             self.loginstatus = "loggedin"
-            return
 
-    def logout(self):
+        # Default parameters if the VOSpace mount is requested.
+        if mount != "":
+            print ("Initializing virtual storage mount")
+            self.mount(vospace='vos:', mount=mount, cache_dir=None, cache_limit= 50 * 2 ** (10 + 10 + 10),
+                       cache_nodes=False, max_flux_threads=10, secure_get=False, allow_other=False,
+                       foreground=False, nothreads=True)
+            #mount = Mountvofs(self.dl)
+            #mount.setOption('vospace', 'vos:')
+            #mount.setOption('mount', self.mount.value)
+            #mount.setOption('cache_dir', None)
+            #mount.setOption('cache_limit', 50 * 2 ** (10 + 10 + 10))
+            #mount.setOption('cache_nodes', False)
+            #mount.setOption('max_flush_threads', 10)
+            #mount.setOption('secure_get', False)
+            #mount.setOption('allow_other', False)
+            #mount.setOption('foreground', False)
+            #mount.setOption('nothreads', True)
+            #mount.run()
+        return
+
+    def logout(self, unmount=''):
         '''
         Logout out of the Data Lab
         '''
@@ -103,12 +134,12 @@ class Dldo:
             print ("No user is currently logged into the Data Lab")
         else:
             print ("User %s is logged into the Data Lab" % self.user)
-        #if self.mount != "":
-        #    if status != "loggedout":
-        #        print ("The user's Virtual Storage is mounted at %s" % self.mount)
-        #    else:
-        #        print ("The last user's Virtual Storage is still mounted at %s" % \
-        #            self.mount)
+        if self.mount != "":
+            if status != "loggedout":
+                print ("The user's Virtual Storage is mounted at %s" % self.mount)
+            else:
+                print ("The last user's Virtual Storage is still mounted at %s" % \
+                    self.mount)
             
 
     def whoami(self):
@@ -117,6 +148,64 @@ class Dldo:
         '''
         print self.user
 
+
+
+################################################
+#  FUSE Mounting Tasks
+################################################
+
+    def mount(self, vospace='', mount='', cache_dir=None, readonly=False,
+              cache_limit=(50 * 2 ** (10 + 10 + 10)), cache_nodes=False, max_flux_threads=10,
+              secure_get=False, allow_other=False, foreground=False, nothreads=True):
+        '''
+        Mount a VOSpace via FUSE
+        '''
+        #readonly = False
+        token = self.token
+        user = self.user
+        root = vospace + "/" + user
+        absmount = os.path.abspath(mount)
+        self.mount = absmount
+        if cache_dir is None:
+            cache_dir = os.path.normpath(os.path.join(
+                os.getenv('HOME', '.'), root.replace(":", "_")))
+        if not os.access(absmount, os.F_OK):
+            os.makedirs(absmount)
+        #opt = parseSelf(self)
+        conn = vos.Connection(vospace_token=token)
+        if platform == "darwin":
+            fuse = FUSE(VOFS(root, cache_dir, opt,
+                             conn=conn, cache_limit=cache_limit,
+                             cache_nodes=cache_nodes,
+                             cache_max_flush_threads=max_flush_threads,
+                             secure_get=secure_get),
+                        absmount,
+                        fsname=root,
+                        volname=root,
+                        nothreads=nothreads,
+                        defer_permissions=True,
+                        daemon_timeout=DAEMON_TIMEOUT,
+                        readonly=readonly,
+                        allow_other=allow_other,
+                        noapplexattr=True,
+                        noappledouble=True,
+                        foreground=foreground)
+        else:
+            fuse = FUSE(VOFS(root, cache_dir, opt,
+                             conn=conn, cache_limit=cache_limit,
+                             cache_nodes=cache_nodes,
+                             cache_max_flush_threads=max_flush_threads,
+                             secure_get=secure_get),
+                        absmount,
+                        fsname=root,
+                        nothreads=nothreads,
+                        readonly=readonly,
+                        allow_other=allow_other,
+                        foreground=foreground)
+        if not fuse:
+            self.mount = ''
+
+        
 ################################################
 #  Storage Manager Tasks
 ################################################
@@ -137,6 +226,7 @@ class Dldo:
         '''
         Get one or more files from Data Lab.
         '''
+        # Not enough information input
         if (source == '') | (destination == ''):
             print "Syntax - dl.get(source, destination)"
             return
@@ -147,10 +237,14 @@ class Dldo:
         storeClient.get (self.token, fr=source, to=destination,
                             verbose=verbose)
 
-    def put(self, source, destination, verbose=True):
+    def put(self, source='', destination='', verbose=True):
         '''
         Put files into Data Lab.
         '''
+        # Not enough information input
+        if (source == '') | (destination == ''):
+            print "Syntax - dl.put(source, destination)"
+            return
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
@@ -158,10 +252,14 @@ class Dldo:
         storeClient.put (self.token, source, to=destination,
                             verbose=verbose)
         
-    def mv(self, source, destination, verbose=True):
+    def mv(self, source='', destination='', verbose=True):
         '''
         The move command method
         '''
+        # Not enough information input
+        if (source == '') | (destination == ''):
+            print "Syntax - dl.mv(source, destination)"
+            return
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
@@ -169,10 +267,14 @@ class Dldo:
         storeClient.mv (self.token, fr=source, to=destination,
                         verbose=verbose)
 
-    def cp(self, source, destination, verbose=True):
+    def cp(self, source='', destination='', verbose=True):
         '''
         Copy a file in Data Lab
         '''
+        # Not enough information input
+        if (source == '') | (destination == ''):
+            print "Syntax - dl.cp(source, destination)"
+            return
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
@@ -180,10 +282,14 @@ class Dldo:
         storeClient.cp (self.token, fr=source, to=destination,
                         verbose=verbose)
 
-    def rm(self, name, verbose=True):
+    def rm(self, name='', verbose=True):
         '''
         Delete files in Data Lab
         '''
+        # Not enough information input
+        if (name == ''):
+            print "Syntax - dl.rm(name)"
+            return
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
@@ -191,10 +297,14 @@ class Dldo:
         storeClient.rm (self.token, name=name, verbose=verbose)
 
         
-    def ln(self, source, target):
+    def ln(self, source='', target=''):
         '''
         Link a file in Data Lab
         '''
+        # Not enough information input
+        if (source == '') | (target == ''):
+            print "Syntax - dl.ln(source, target)"
+            return
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
@@ -202,20 +312,28 @@ class Dldo:
         storeClient.ln (self.token, fr=source, target=target)
 
         
-    def tag(self, name, tag):
+    def tag(self, name='', tag=''):
         '''
         Tag a file in Data Lab
         '''
+        # Not enough information input
+        if (name == '') | (tag == ''):
+            print "Syntax - dl.tag(name, tag)"
+            return
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the TAG command
         storeClient.tag (self.token, name=name, tag=tag)
 
-    def mkdir(self, name):
+    def mkdir(self, name=''):
         ''' 
         Create a directory in Data Lab
         '''
+        # Not enough information input
+        if (name == ''):
+            print "Syntax - dl.mkdir(name)"
+            return
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
@@ -223,20 +341,28 @@ class Dldo:
         storeClient.mkdir (self.token, name=name)
 
 
-    def rmdir(self, name):
+    def rmdir(self, name=''):
         ''' 
         Delete a directory in Data Lab
         '''
+        # Not enough information input
+        if (name == ''):
+            print "Syntax - dl.rmdir(name)"
+            return
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the RMDIR command
         storeClient.rmdir (self.token, name=name)
 
-    def resolve(self, name):
+    def resolve(self, name=''):
         ''' 
         Resolve a vos short form identifier     -- FIXME
         '''
+        # Not enough information input
+        if (name == ''):
+            print "Syntax - dl.resolve(name)"
+            return
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."

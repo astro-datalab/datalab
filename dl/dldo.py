@@ -47,10 +47,12 @@ class Dldo:
 ################################################
 
     
-    def login(self, user):
+    def login(self, user=''):
         '''
         Login to datalab
         '''
+        if user == '':
+            user = raw_input('Enter user:')
         if user == 'anonymous':
             token = authClient.login('anonymous','')
         else:

@@ -31,27 +31,74 @@ class Dldo:
        dldo super-class
     '''
     def __init__(self):
-        self.token = ''
-    
-    def login(self, username):
+        self.token = ""
+        self.user = ""
+        self.status = ""
+        self.unmount = ""
+        pass
+        
+    def login(self, user):
         '''
         Login to datalab
         '''
-        if username == 'anonymous':
+        if user == 'anonymous':
             token = authClient.login('anonymous','')
         else:
-#            print "Enter password:"
-            token = authClient.login(username,getpass.getpass(prompt='Enter password:'))
+            token = authClient.login(user,getpass.getpass(prompt='Enter password:'))
 
         if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         else:
             print "Authentication successful."
+            self.user = user
             self.token = token
-            return token
+            self.status = "loggedin"
+            return
 
+    def logout(self):
+    '''
+        Logout out of the Data Lab
+    '''
+        if self.status == 'loggedout':
+            print ("No user is currently logged into the Data Lab")
+            return
+        else:
+            user, uid, gid, hash = self.token.strip().split('.', 3)
+
+            res = authClient.logout (self.token)
+            if res != "OK":
+                print ("Error: %s" % res)
+                return
+            if self.unmount != "":
+                print ("Unmounting remote space")
+                cmd = "umount %s" % self.unmount
+                pipe = Popen(cmd, shell=True, stdout=PIPE)
+                output = pipe.stdout.read()
+                self.mount = ""
+                
+            print ("'%s' is now logged out of the Data Lab" % user)
+            self.status = "loggedout"
+            self.user = ""
+            self.token = ""
+
+
+    def status(self):
+    ''' 
+        Status of the Data Lab connection
+    '''
+        if self.status == "loggedout":
+            print ("No user is currently logged into the Data Lab")
+        else:
+            print ("User %s is logged into the Data Lab" % self.user
+        if self.mount != "":
+            if status != "loggedout":
+                print ("The user's Virtual Storage is mounted at %s" % self.mount
+            else:
+                print ("The last user's Virtual Storage is still mounted at %s" % \
+                    self.mount
+            
         
-    def ls(self, file, format='ascii'):
+    def ls(self, file='vos://', format='ascii'):
         '''
         The list command method
         '''
@@ -59,7 +106,7 @@ class Dldo:
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the LS command
-        return storeClient.ls (token, name=file, format=format)
+        return storeClient.ls (self.token, name=file, format=format)
 
     
     def mv(self, token, source, destination, verbose=True):
@@ -70,7 +117,7 @@ class Dldo:
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the MV command
-        storeClient.mv (token, fr=source, to=destination,
+        storeClient.mv (self.token, fr=source, to=destination,
                         verbose=verbose)
 
         

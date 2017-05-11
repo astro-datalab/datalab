@@ -33,7 +33,7 @@ class Dldo:
     def __init__(self):
         self.token = ""
         self.user = ""
-        self.status = ""
+        self.loginstatus = ""
         self.unmount = ""
         pass
         
@@ -52,14 +52,14 @@ class Dldo:
             print "Authentication successful."
             self.user = user
             self.token = token
-            self.status = "loggedin"
+            self.loginstatus = "loggedin"
             return
 
     def logout(self):
         '''
         Logout out of the Data Lab
         '''
-        if self.status == 'loggedout':
+        if self.loginstatus == 'loggedout':
             print ("No user is currently logged into the Data Lab")
             return
         else:
@@ -77,7 +77,7 @@ class Dldo:
                 self.mount = ""
                 
             print ("'%s' is now logged out of the Data Lab" % user)
-            self.status = "loggedout"
+            self.loginstatus = "loggedout"
             self.user = ""
             self.token = ""
 
@@ -86,7 +86,7 @@ class Dldo:
         ''' 
         Status of the Data Lab connection
         '''
-        if self.status == "loggedout":
+        if self.loginstatus == "loggedout":
             print ("No user is currently logged into the Data Lab")
         else:
             print ("User %s is logged into the Data Lab" % self.user)

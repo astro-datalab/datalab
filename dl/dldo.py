@@ -95,7 +95,7 @@ class Dldo:
                 print ("The user's Virtual Storage is mounted at %s" % self.mount)
             else:
                 print ("The last user's Virtual Storage is still mounted at %s" % \
-                    self.mount
+                    self.mount)
             
         
     def ls(self, file='vos://', format='ascii'):

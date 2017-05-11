@@ -31,6 +31,12 @@ except ImportError:
     
 # std lib imports
 import getpass
+from functools import partial
+from collections import OrderedDict
+import numpy as np
+from pandas import read_csv
+from astropy.table import Table
+from astropy.io.votable import parse_single_table
 
 # Data Lab Client interfaces
 from dl import authClient, storeClient, queryClient
@@ -144,7 +150,7 @@ class Dldo:
 ################################################
 
     
-    def login(self, user=''):
+    def login(self, user=None):
         '''
         Login to datalab
         '''
@@ -219,7 +225,7 @@ class Dldo:
         #    #mount.run()
         return
 
-    def logout(self, unmount=''):
+    def logout(self, unmount=None):
         '''
         Logout out of the Data Lab
         '''
@@ -313,14 +319,16 @@ class Dldo:
 ################################################
 
 
-    def query(self, query='', type='sql', fmt='csv', out='', async=False, profile='default'):
+    def query(self, query=None, type='sql', fmt='csv', out=None, async=False, profile='default'):
         '''
         Send a query to a remote query service.  [Note: placeholder name
         until we figure out what to do with the old Query() functionality.]
+        
+        out    mydb://table, vos://file, other values will save to local file
         '''
         # Not enough information input
-        if (query == ''):
-            print "Syntax - dl.query(query, type='sql', fmt='csv', async=False, profile='default')"
+        if (query is None):
+            print "Syntax - dl.query(query, type='sql', fmt='csv', out='', async=False, profile='default')"
             return
 
         # Check type
@@ -331,7 +339,7 @@ class Dldo:
         token = getUserToken (self)
         _query = query         # local working copy
         
-        # Check if it's a file
+        # Check if the query is in a file
         if os.path.exists (_query):
                 with open (_query, "r", 0) as fd:
                     _query = fd.read (os.path.getsize(_query)+1)
@@ -344,7 +352,27 @@ class Dldo:
             sql = _query
         else:
             adql = _query
-                
+
+        # map outfmt container types to a tuple:
+        # (:func:`queryClient.query()` fmt-value, descriptive title,
+        # processing function for the result string)
+        mapping = OrderedDict([
+            ('csv'         , ('csv',     'CSV formatted table as a string', lambda x: x.getvalue())),
+            ('string'      , ('csv',     'CSV formatted table as a string', lambda x: x.getvalue())),
+            ('array'       , ('csv',     'Numpy array',                     partial(np.loadtxt,unpack=False,skiprows=1,delimiter=','))),
+            ('structarray' , ('csv',     'Numpy structured / record array', partial(np.genfromtxt,dtype=float,delimiter=',',names=True))),
+            ('pandas'      , ('csv',     'Pandas dataframe',                read_csv)),
+            ('table'       , ('csv',     'Astropy Table',                   partial(Table.read,format='csv'))),
+            ('votable'     , ('votable', 'Astropy VOtable',                 parse_single_table))
+        ])
+
+        # The queryClient "fmt" will depend on the requested output format
+        try:
+            qcfmt = mapping[fmt][0]
+        except:
+            print ("Format %s not supported." % fmt)
+            return
+        
         # Execute the query.
         if profile != "default":
             if profile != "" and profile is not None:
@@ -352,12 +380,21 @@ class Dldo:
 
         try:
             res = queryClient.query (token, adql=adql, sql=sql, 
-                                     fmt=fmt, out=out, async=async)
+                                     fmt=qcfmt, out=out, async=async)
 
+            # Return the results
+            
+            # Asynchronous
             if async:
-                print (res)                         # Return the JobID
+                print ("Asynchronous query JobID = %s " % res)                         # Return the JobID
+            # Synchronous
             elif out == '' or out is None:
-                print (res)                         # Return the results
+                # Convert to the desired format
+                s = StringIO(res)
+                output = self.mapping[fmt][2](s)
+                print "Returning %s" % self.mapping[fmt][1]
+                return output
+                    
         except Exception as e:
             if not async and e.message is not None:
                 err = e.message
@@ -366,29 +403,29 @@ class Dldo:
             else:
                 print (e.message)
 
-    def querystatus(self, jobid=''):
+    def querystatus(self, jobid=None):
         '''
         Get the async query job status.
         '''
         # Not enough information input
-        if (jobid == ''):
+        if (jobid is None):
             print "Syntax - dl.querystatus(jobid)"
             return
         token = getUserToken(self)
         print (queryClient.status (token, jobId=jobid))
 
-    def queryresults(self, jobid=''):
+    def queryresults(self, jobid=None):
         '''
         Get the async query results.
         '''
         # Not enough information input
-        if (jobid == ''):
+        if (jobid is None):
             print "Syntax - dl.queryresults(jobid)"
             return
         token = getUserToken(self)
         print (queryClient.results (token, jobId=jobid))
 
-    def listmydb(self, table=''):
+    def listmydb(self, table=None):
         '''
         List the user's MyDB tables.
         '''
@@ -401,7 +438,7 @@ class Dldo:
             print (res)
 
             
-    def dropmydb(self, table=''):
+    def dropmydb(self, table=None):
         '''
         Drop a user's MyDB table.
         '''
@@ -411,7 +448,7 @@ class Dldo:
         except Exception as e:
             print ("Error dropping table '%s'." % table)
 
-    def queryprofiles(self, profile=''):
+    def queryprofiles(self, profile=None):
         '''
         List the available Query Manager profiles.
         '''
@@ -498,12 +535,12 @@ class Dldo:
         return storeClient.ls (token, name=name, format=format)
 
 
-    def get(self, source='', destination='', verbose=True):
+    def get(self, source=None, destination=None, verbose=True):
         '''
         Get one or more files from Data Lab.
         '''
         # Not enough information input
-        if (source == '') or (destination == ''):
+        if (source is None) or (destination is None):
             print "Syntax - dl.get(source, destination)"
             return
         token = getUserToken(self)
@@ -514,12 +551,12 @@ class Dldo:
         storeClient.get (token, fr=source, to=destination,
                             verbose=verbose)
 
-    def put(self, source='', destination='', verbose=True):
+    def put(self, source=None, destination=None, verbose=True):
         '''
         Put files into Data Lab.
         '''
         # Not enough information input
-        if (source == '') or (destination == ''):
+        if (source is None) or (destination is None):
             print "Syntax - dl.put(source, destination)"
             return
         token = getUserToken(self)
@@ -530,12 +567,12 @@ class Dldo:
         storeClient.put (token, source, to=destination,
                             verbose=verbose)
         
-    def mv(self, source='', destination='', verbose=True):
+    def mv(self, source=None, destination=None, verbose=True):
         '''
         The move command method
         '''
         # Not enough information input
-        if (source == '') or (destination == ''):
+        if (source is None) or (destination is None):
             print "Syntax - dl.mv(source, destination)"
             return
         token = getUserToken(self)
@@ -546,12 +583,12 @@ class Dldo:
         storeClient.mv (token, fr=source, to=destination,
                         verbose=verbose)
 
-    def cp(self, source='', destination='', verbose=True):
+    def cp(self, source=None, destination=None, verbose=True):
         '''
         Copy a file in Data Lab
         '''
         # Not enough information input
-        if (source == '') or (destination == ''):
+        if (source is None) or (destination is None):
             print "Syntax - dl.cp(source, destination)"
             return
         token = getUserToken(self)
@@ -562,12 +599,12 @@ class Dldo:
         storeClient.cp (token, fr=source, to=destination,
                         verbose=verbose)
 
-    def rm(self, name='', verbose=True):
+    def rm(self, name=None, verbose=True):
         '''
         Delete files in Data Lab
         '''
         # Not enough information input
-        if (name == ''):
+        if (name is None):
             print "Syntax - dl.rm(name)"
             return
         token = getUserToken(self)
@@ -578,12 +615,12 @@ class Dldo:
         storeClient.rm (token, name=name, verbose=verbose)
 
         
-    def ln(self, source='', target=''):
+    def ln(self, source=None, target=None):
         '''
         Link a file in Data Lab
         '''
         # Not enough information input
-        if (source == '') or (target == ''):
+        if (source is None) or (target is None):
             print "Syntax - dl.ln(source, target)"
             return
         token = getUserToken(self)
@@ -594,12 +631,12 @@ class Dldo:
         storeClient.ln (token, fr=source, target=target)
 
         
-    def tag(self, name='', tag=''):
+    def tag(self, name=None, tag=None):
         '''
         Tag a file in Data Lab
         '''
         # Not enough information input
-        if (name == '') or (tag == ''):
+        if (name is None) or (tag is None):
             print "Syntax - dl.tag(name, tag)"
             return
         token = getUserToken(self)
@@ -609,12 +646,12 @@ class Dldo:
         # Run the TAG command
         storeClient.tag (token, name=name, tag=tag)
 
-    def mkdir(self, name=''):
+    def mkdir(self, name=None):
         ''' 
         Create a directory in Data Lab
         '''
         # Not enough information input
-        if (name == ''):
+        if (name is None):
             print "Syntax - dl.mkdir(name)"
             return
         token = getUserToken(self)
@@ -625,12 +662,12 @@ class Dldo:
         storeClient.mkdir (token, name=name)
 
 
-    def rmdir(self, name=''):
+    def rmdir(self, name=None):
         ''' 
         Delete a directory in Data Lab
         '''
         # Not enough information input
-        if (name == ''):
+        if (name is None):
             print "Syntax - dl.rmdir(name)"
             return
         token = getUserToken(self)
@@ -640,12 +677,12 @@ class Dldo:
         # Run the RMDIR command
         storeClient.rmdir (token, name=name)
 
-    def resolve(self, name=''):
+    def resolve(self, name=None):
         ''' 
         Resolve a vos short form identifier     -- FIXME
         '''
         # Not enough information input
-        if (name == ''):
+        if (name is None):
             print "Syntax - dl.resolve(name)"
             return
         token = getUserToken(self)
@@ -662,12 +699,12 @@ class Dldo:
 #  SAMP Tasks
 ################################################
 
-    def broadcast(self, type='', pars=''):
+    def broadcast(self, type=None, pars=None):
         ''' 
         Broadcast a SAMP message
         '''
         # Not enough information input
-        if (type == '') or (pars == ''):
+        if (type is None) or (pars is None):
             print "Syntax - dl.broadcast(type, pars)"
             return
         client = self.getSampClient()
@@ -678,12 +715,12 @@ class Dldo:
             params[key] = value
         self.broadcast(client, mtype, params)
 
-    def launch(self, dir=''):
+    def launch(self, dir=None):
         '''
         Launch a plugin in Data Lab
         '''
         # Not enough information input
-        if (dir == ''):
+        if (dir is None):
             print "Syntax - dl.launch(dir)"
             return
         token = getUserToken(self)
@@ -725,7 +762,7 @@ class Dldo:
 
 # why not use queryClient SIAQUERY????
 
-    def siaquery(self, input='', search='', out=''):
+    def siaquery(self, input=None, search=None, out=None):
         '''
         SIA query with an uploaded file
         '''
@@ -739,7 +776,7 @@ class Dldo:
         #    return uid
 
         # Not enough information input
-        if (input == '') or (search == ''):
+        if (input is None) or (search is None):
             print "Syntax - dl.siaquery(input, search)"
             return
         

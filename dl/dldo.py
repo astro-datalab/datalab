@@ -21,7 +21,13 @@ Import via
 
 import os
 from subprocess import Popen, PIPE
-
+try:
+    import ConfigParser                         # Python 2
+    from urllib import quote_plus               # Python 2
+except ImportError:
+    import configParse as ConfigParser          # Python 2
+    from urllib.parse import quote_plus         # Python 3
+    
 # std lib imports
 import getpass
 
@@ -36,67 +42,181 @@ from vos.vofs import VOFS
 DAEMON_TIMEOUT = 60                             # Mount timeout
 CAPS_DIR = "../caps"                            # Capability directory
 
+ANON_TOKEN = "anonymous.0.0.anon_access"        # default tokens
+
 # Service URLs
 AM_URL = "http://dlsvcs.datalab.noao.edu/auth"      # Auth Manager
 SM_URL = "http://dlsvcs.datalab.noao.edu/storage"   # Storage Manager
 QM_URL = "http://dlsvcs.datalab.noao.edu/query"     # Query Manager
+
+
+def getUserName (self):
+    '''  Get the currently logged-in user token.  If we haven't logged in
+         return the anonymous username.
+    '''
+    _user = self.dl.get("login", "user")
+    if _user is None or _user == '':
+        return "anonymous"
+    else:
+        return _user
+
+
+def getUserToken (self):
+    '''  Get the currently logged-in user token.  If we haven't logged in
+         return the anonymous token.
+    '''
+    _token = self.dl.get("login", "authtoken")
+    if _token is None or _token == '':
+        return ANON_TOKEN
+    else:
+        return _token
+
+
+class DLInteract:
+    '''
+       Main class for Data Lab interactions
+    '''
+    
+    def __init__(self):
+        self.home = '%s/.datalab' % os.path.expanduser('~')
+
+        # Check that $HOME/.datalab exists
+        if not os.path.exists(self.home):
+            os.makedirs(self.home)
+
+        # See if datalab conf file exists
+        self.config = ConfigParser.RawConfigParser(allow_no_value=True)
+        if not os.path.exists('%s/dl.conf' % self.home):
+            self.config.add_section('datalab')
+            self.config.set('datalab', 'created', strftime(
+                '%Y-%m-%d %H:%M:%S', gmtime()))
+            self.config.add_section('login')
+            self.config.set('login', 'status', 'loggedout')
+            self.config.set('login', 'user', '')
+            self.config.add_section('vospace')
+            self.config.set('vospace', 'mount', '')
+            self._write()
+        else:
+            self.config.read('%s/dl.conf' % self.home)
+
+        # Set script variables
+        CAPS_DIR = os.getenv('VOSPACE_CAPSDIR', '../caps')
+
+
+    def save(self, section, param, value):
+        ''' Save the configuration file.
+        '''
+        if not self.config.has_section(section):
+            self.config.add_section(section)
+        self.config.set(section, param, value)
+        self._write()
+
+
+    def get(self, section, param):
+        ''' Get a value from the configuration file.
+        '''
+        return self.config.get(section, param)
+
+
+    def _write(self):
+        ''' Write out the configuration file to disk.
+        '''
+        with open('%s/dl.conf' % self.home, 'wb') as configfile:
+            self.config.write(configfile)
 
 class Dldo:
     '''
        dldo super-class
     '''
     def __init__(self):
-        self.token = ""
-        self.user = ""
+        dlinteract = DLInteract()
+        self.dl = dlinteract
         self.loginstatus = ""
-        self.mount = ""
-        self.unmount = ""
-        pass
-
+        #self.token = ""
+        #self.user = ""
+        #self.mount = ""
+        #self.unmount = ""
+        #pass
+    
 
 ################################################
 #  Account Login Tasks
 ################################################
 
     
-    def login(self, user='', mount=''):
+    def login(self, user=''):
         '''
         Login to datalab
         '''
-        if user == '':
-            user = raw_input('Enter user: ')
-        if user == 'anonymous':
-            token = authClient.login('anonymous','')
+        # Check if we are already logged in.  The 'user' field of the 
+        # configuration contains the currently active user and token,
+        # however previous logins will have preserved tokens from other
+        # accounts we may be able to use.
+        DOLOGIN = 1                             # login by default
+        # Already logged in
+        if self.loginstatus == "loggedin":
+            _user = self.dl.get("login", "user")
+            # Same username
+            if user == _user:
+                # See whether current token is still valid for this user.
+                _token = self.dl.get("login", "authtoken")
+                if not authClient.isValidToken (_token):
+                    print ("Current token for User '%s' no longer valid.  Please re-login." % user)
+                    DOLOGIN = 1
+                else:
+                    DOLOGIN = 0
+                    print ("User '%s' is already logged in to the Data Lab" % user)
+            # Different username
+            else:
+                # We're logging in as a different user.
+                print ("You are currently logged in as user '%s'. Switching to %s." % (_user, user))
+                DOLOGIN = 1
+        # Not logged in
         else:
-            token = authClient.login(user,getpass.getpass(prompt='Enter password: '))
+            DOLOGIN = 1
 
-        if not authClient.isValidToken(token):
-            print "Invalid user name and/or password provided. Please try again."
-            return
-        else:
-            print "Authentication successful."
-            self.user = user
-            self.token = token
-            self.loginstatus = "loggedin"
+       # Do the login via the authClient
+       if DOLOGIN == 1:
+             if user == '':
+             user = raw_input('Enter user: ')
+             if user == 'anonymous':
+                 token = authClient.login('anonymous','')
+             else:
+                 token = authClient.login(user,getpass.getpass(prompt='Enter password: '))
+       
+                 if not authClient.isValidToken(token):
+                     print "Invalid user name and/or password provided. Please try again."
+                     return
+                 else:
+                     print ("Welcome to the Data Lab, %s" % user)
+                     #print "Authentication successful."
+                     self.dl.save("login", "status", "loggedin")
+                     self.dl.save("login", "user", user)
+                     self.dl.save("login", "authtoken", token)
+                     self.dl.save(user, "authtoken", token)
+                     self.loginstatus = "loggedin"
+                     #self.user = user
+                     #self.token = token
+                     self.loginstatus = "loggedin"
 
-        # Default parameters if the VOSpace mount is requested.
-        if mount != "":
-            print ("Initializing virtual storage mount")
-            self.mount(vospace='vos:', mount=mount, cache_dir=None, cache_limit= 50 * 2 ** (10 + 10 + 10),
-                       cache_nodes=False, max_flux_threads=10, secure_get=False, allow_other=False,
-                       foreground=False, nothreads=True)
-            #mount = Mountvofs(self.dl)
-            #mount.setOption('vospace', 'vos:')
-            #mount.setOption('mount', self.mount.value)
-            #mount.setOption('cache_dir', None)
-            #mount.setOption('cache_limit', 50 * 2 ** (10 + 10 + 10))
-            #mount.setOption('cache_nodes', False)
-            #mount.setOption('max_flush_threads', 10)
-            #mount.setOption('secure_get', False)
-            #mount.setOption('allow_other', False)
-            #mount.setOption('foreground', False)
-            #mount.setOption('nothreads', True)
-            #mount.run()
+        ## Default parameters if the VOSpace mount is requested.
+        #if mount != "":
+        #    print ("Initializing virtual storage mount")
+        #    self.mount(vospace='vos:', mount=mount, cache_dir=None, cache_limit= 50 * 2 ** (10 + 10 + 10),
+        #               cache_nodes=False, max_flux_threads=10, secure_get=False, allow_other=False,
+        #               foreground=False, nothreads=True)
+        #    #mount = Mountvofs(self.dl)
+        #    #mount.setOption('vospace', 'vos:')
+        #    #mount.setOption('mount', self.mount.value)
+        #    #mount.setOption('cache_dir', None)
+        #    #mount.setOption('cache_limit', 50 * 2 ** (10 + 10 + 10))
+        #    #mount.setOption('cache_nodes', False)
+        #    #mount.setOption('max_flush_threads', 10)
+        #    #mount.setOption('secure_get', False)
+        #    #mount.setOption('allow_other', False)
+        #    #mount.setOption('foreground', False)
+        #    #mount.setOption('nothreads', True)
+        #    #mount.run()
         return
 
     def logout(self, unmount=''):
@@ -107,23 +227,26 @@ class Dldo:
             print ("No user is currently logged into the Data Lab")
             return
         else:
-            user, uid, gid, hash = self.token.strip().split('.', 3)
+            token = getUserToken(self)
+            user, uid, gid, hash = token.strip().split('.', 3)
 
-            res = authClient.logout (self.token)
+            res = authClient.logout (token)
             if res != "OK":
                 print ("Error: %s" % res)
                 return
-            if self.unmount != "":
-                print ("Unmounting remote space")
-                cmd = "umount %s" % self.unmount
-                pipe = Popen(cmd, shell=True, stdout=PIPE)
-                output = pipe.stdout.read()
-                self.mount = ""
-                
+#            if self.unmount != "":
+#                print ("Unmounting remote space")
+#                cmd = "umount %s" % self.unmount
+#                pipe = Popen(cmd, shell=True, stdout=PIPE)
+#                output = pipe.stdout.read()
+#                self.mount = ""
+            self.dl.save("login", "status", "loggedout")
+            self.dl.save("login", "user", "")
+            self.dl.save("login", "authtoken", "")
             print ("'%s' is now logged out of the Data Lab" % user)
             self.loginstatus = "loggedout"
-            self.user = ""
-            self.token = ""
+            #self.user = ""
+            #self.token = ""
 
 
     def status(self):
@@ -133,20 +256,21 @@ class Dldo:
         if self.loginstatus == "loggedout":
             print ("No user is currently logged into the Data Lab")
         else:
-            print ("User %s is logged into the Data Lab" % self.user)
-        if self.mount != "":
-            if status != "loggedout":
-                print ("The user's Virtual Storage is mounted at %s" % self.mount)
-            else:
-                print ("The last user's Virtual Storage is still mounted at %s" % \
-                    self.mount)
+            print ("User %s is logged into the Data Lab" % \
+                    self.dl.get("login", "user"))
+        #if self.mount != "":
+        #    if status != "loggedout":
+        #        print ("The user's Virtual Storage is mounted at %s" % self.mount)
+        #    else:
+        #        print ("The last user's Virtual Storage is still mounted at %s" % \
+        #            self.mount)
             
 
     def whoami(self):
         '''
         Print the current active user.
         '''
-        print self.user
+        print (getUserName(self))
 
 
 
@@ -154,56 +278,56 @@ class Dldo:
 #  FUSE Mounting Tasks
 ################################################
 
-    def mount(self, vospace='', mount='', cache_dir=None, readonly=False,
-              cache_limit=(50 * 2 ** (10 + 10 + 10)), cache_nodes=False, max_flux_threads=10,
-              secure_get=False, allow_other=False, foreground=False, nothreads=True):
-        '''
-        Mount a VOSpace via FUSE
-        '''
-        #readonly = False
-        token = self.token
-        user = self.user
-        root = vospace + "/" + user
-        absmount = os.path.abspath(mount)
-        self.mount = absmount
-        if cache_dir is None:
-            cache_dir = os.path.normpath(os.path.join(
-                os.getenv('HOME', '.'), root.replace(":", "_")))
-        if not os.access(absmount, os.F_OK):
-            os.makedirs(absmount)
-        #opt = parseSelf(self)
-        conn = vos.Connection(vospace_token=token)
-        if platform == "darwin":
-            fuse = FUSE(VOFS(root, cache_dir, opt,
-                             conn=conn, cache_limit=cache_limit,
-                             cache_nodes=cache_nodes,
-                             cache_max_flush_threads=max_flush_threads,
-                             secure_get=secure_get),
-                        absmount,
-                        fsname=root,
-                        volname=root,
-                        nothreads=nothreads,
-                        defer_permissions=True,
-                        daemon_timeout=DAEMON_TIMEOUT,
-                        readonly=readonly,
-                        allow_other=allow_other,
-                        noapplexattr=True,
-                        noappledouble=True,
-                        foreground=foreground)
-        else:
-            fuse = FUSE(VOFS(root, cache_dir, opt,
-                             conn=conn, cache_limit=cache_limit,
-                             cache_nodes=cache_nodes,
-                             cache_max_flush_threads=max_flush_threads,
-                             secure_get=secure_get),
-                        absmount,
-                        fsname=root,
-                        nothreads=nothreads,
-                        readonly=readonly,
-                        allow_other=allow_other,
-                        foreground=foreground)
-        if not fuse:
-            self.mount = ''
+#    def mount(self, vospace='', mount='', cache_dir=None, readonly=False,
+#              cache_limit=(50 * 2 ** (10 + 10 + 10)), cache_nodes=False, max_flux_threads=10,
+#              secure_get=False, allow_other=False, foreground=False, nothreads=True):
+#        '''
+#        Mount a VOSpace via FUSE
+#        '''
+#        #readonly = False
+#        token = self.token
+#        user = self.user
+#        root = vospace + "/" + user
+#        absmount = os.path.abspath(mount)
+#        self.mount = absmount
+#        if cache_dir is None:
+#            cache_dir = os.path.normpath(os.path.join(
+#                os.getenv('HOME', '.'), root.replace(":", "_")))
+#        if not os.access(absmount, os.F_OK):
+#            os.makedirs(absmount)
+#        #opt = parseSelf(self)
+#        conn = vos.Connection(vospace_token=token)
+#        if platform == "darwin":
+#            fuse = FUSE(VOFS(root, cache_dir, opt,
+#                             conn=conn, cache_limit=cache_limit,
+#                             cache_nodes=cache_nodes,
+#                             cache_max_flush_threads=max_flush_threads,
+#                             secure_get=secure_get),
+#                        absmount,
+#                        fsname=root,
+#                        volname=root,
+#                        nothreads=nothreads,
+#                        defer_permissions=True,
+#                        daemon_timeout=DAEMON_TIMEOUT,
+#                        readonly=readonly,
+#                        allow_other=allow_other,
+#                        noapplexattr=True,
+#                        noappledouble=True,
+#                        foreground=foreground)
+#        else:
+#            fuse = FUSE(VOFS(root, cache_dir, opt,
+#                             conn=conn, cache_limit=cache_limit,
+#                             cache_nodes=cache_nodes,
+#                             cache_max_flush_threads=max_flush_threads,
+#                             secure_get=secure_get),
+#                        absmount,
+#                        fsname=root,
+#                        nothreads=nothreads,
+#                        readonly=readonly,
+#                        allow_other=allow_other,
+#                        foreground=foreground)
+#        if not fuse:
+#            self.mount = ''
 
         
 ################################################
@@ -215,6 +339,7 @@ class Dldo:
         '''
         The list command method
         '''
+        token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
@@ -230,6 +355,7 @@ class Dldo:
         if (source == '') | (destination == ''):
             print "Syntax - dl.get(source, destination)"
             return
+        token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
@@ -245,6 +371,7 @@ class Dldo:
         if (source == '') | (destination == ''):
             print "Syntax - dl.put(source, destination)"
             return
+        token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
@@ -260,6 +387,7 @@ class Dldo:
         if (source == '') | (destination == ''):
             print "Syntax - dl.mv(source, destination)"
             return
+        token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
@@ -275,6 +403,7 @@ class Dldo:
         if (source == '') | (destination == ''):
             print "Syntax - dl.cp(source, destination)"
             return
+        token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
@@ -290,6 +419,7 @@ class Dldo:
         if (name == ''):
             print "Syntax - dl.rm(name)"
             return
+        token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
@@ -305,6 +435,7 @@ class Dldo:
         if (source == '') | (target == ''):
             print "Syntax - dl.ln(source, target)"
             return
+        token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
@@ -320,6 +451,7 @@ class Dldo:
         if (name == '') | (tag == ''):
             print "Syntax - dl.tag(name, tag)"
             return
+        token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
@@ -334,6 +466,7 @@ class Dldo:
         if (name == ''):
             print "Syntax - dl.mkdir(name)"
             return
+        token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
@@ -349,6 +482,7 @@ class Dldo:
         if (name == ''):
             print "Syntax - dl.rmdir(name)"
             return
+        token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
@@ -363,6 +497,7 @@ class Dldo:
         if (name == ''):
             print "Syntax - dl.resolve(name)"
             return
+        token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(self.token):
             raise Exception, "Invalid user name and/or password provided. Please try again."

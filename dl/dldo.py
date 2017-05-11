@@ -152,7 +152,7 @@ class Dldo:
         # configuration contains the currently active user and token,
         # however previous logins will have preserved tokens from other
         # accounts we may be able to use.
-        DOLOGIN = 1                             # login by default
+        DOLOGIN = True                             # login by default
         # Already logged in
         if self.loginstatus == "loggedin":
             _user = self.dl.get("login", "user")
@@ -162,21 +162,21 @@ class Dldo:
                 _token = self.dl.get("login", "authtoken")
                 if not authClient.isValidToken (_token):
                     print ("Current token for User '%s' no longer valid.  Please re-login." % user)
-                    DOLOGIN = 1
+                    DOLOGIN = True
                 else:
-                    DOLOGIN = 0
+                    DOLOGIN = False
                     print ("User '%s' is already logged in to the Data Lab" % user)
             # Different username
             else:
                 # We're logging in as a different user.
                 print ("You are currently logged in as user '%s'. Switching to %s." % (_user, user))
-                DOLOGIN = 1
+                DOLOGIN = True
         # Not logged in
         else:
-            DOLOGIN = 1
+            DOLOGIN = True
 
         # Do the login via the authClient
-        if DOLOGIN == 1:
+        if DOLOGIN is True:
             if user == '':
                 user = raw_input('Enter user: ')
             if user == 'anonymous':
@@ -273,6 +273,157 @@ class Dldo:
         print (getUserName(self))
 
 
+################################################
+#  Storage Manager Capability Tasks
+################################################
+
+
+    def addcapability(self):
+        ''' 
+        Add a capability to a VOSpace container
+        '''
+
+        if self.listcap.value:
+            print ("The available capabilities are: ")
+            for file in glob.glob(self.capsdir):
+                print (file[:file.index("_cap.conf")])
+        else:
+            mountpoint = self.dl.get('vospace', 'mount')
+            if mountpoint is None:
+                print ("No mounted Virtual Storage can be found")
+            else:
+                if not os.path.exists("%s/%s_cap.conf" % \
+                    (self.capsdir, self.cap.value)):
+                        print ("The capability '%s' is not known" % \
+                            self.cap.value)
+                else:
+                    shutil.copy("%s/%s_cap.conf" % (self.capsdir, 
+                        self.cap.value), "%s/%s" % (mountpoint, self.dir.value))
+
+    def listcapability(self):
+        ''' 
+        Add a capability to a VOSpace container
+        '''
+        print ("The available capabilities are: ")
+        for file in glob.glob("%s/*_cap.conf" % self.capsdir):
+            print ("  %s" % file[file.rindex("/") + 1:file.index("_cap.conf")])
+        
+################################################
+#  Query Manager Tasks
+################################################
+
+
+    def query(self, query='', type='sql', fmt='csv', out='', async=False, profile='default'):
+        '''
+        Send a query to a remote query service.  [Note: placeholder name
+        until we figure out what to do with the old Query() functionality.]
+        '''
+        # Not enough information input
+        if (query == ''):
+            print "Syntax - dl.query(query, type='sql', fmt='csv', async=False, profile='default')"
+            return
+
+        # Check type
+        if (type != 'sql') and (type != 'adql'):
+            print "Only 'sql' and 'adql' queries are currently supported."
+            return
+            
+        token = getUserToken (self)
+        _query = query         # local working copy
+        
+        # Check if it's a file
+        if os.path.exists (_query):
+                with open (_query, "r", 0) as fd:
+                    _query = fd.read (os.path.getsize(_query)+1)
+                fd.close()
+                
+        # What type of query are we doing
+        sql = None
+        adql = Nonee
+        if type == 'sql':
+            sql = _query
+        else:
+            adql = _query
+                
+        # Execute the query.
+        if profile != "default":
+            if profile != "" and profile is not None:
+                queryClient.set_profile (profile=profile)
+
+        try:
+            res = queryClient.query (token, adql=adql, sql=sql, 
+                                     fmt=fmt, out=out, async=async)
+
+            if async:
+                print (res)                         # Return the JobID
+            elif out == '' or out is None:
+                print (res)                         # Return the results
+        except Exception as e:
+            if not async and e.message is not None:
+                err = e.message
+                if err.find("Time-out"):
+                    print ("Error: Sync query timeout, try an async query")
+            else:
+                print (e.message)
+
+    def querystatus(self, jobid=''):
+        '''
+        Get the async query job status.
+        '''
+        # Not enough information input
+        if (jobid == ''):
+            print "Syntax - dl.querystatus(jobid)"
+            return
+        token = getUserToken(self)
+        print (queryClient.status (token, jobId=jobid))
+
+    def queryresults(self, jobid=''):
+        '''
+        Get the async query results.
+        '''
+        # Not enough information input
+        if (jobid == ''):
+            print "Syntax - dl.queryresults(jobid)"
+            return
+        token = getUserToken(self)
+        print (queryClient.results (token, jobId=jobid))
+
+    def listmydb(self, table=''):
+        '''
+        List the user's MyDB tables.
+        '''
+        token = getUserToken(self)
+        try:
+            res = queryClient.list (token, table=table)
+        except Exception as e:
+            print ("Error listing MyDB tables.")
+        else:
+            print (res)
+
+            
+    def dropmydb(self, table=''):
+        '''
+        Drop a user's MyDB table.
+        '''
+        token = getUserToken(self)
+        try:
+            queryClient.drop (token, table=table)
+        except Exception as e:
+            print ("Error dropping table '%s'." % table)
+
+    def queryprofiles(self, profile=''):
+        '''
+        List the available Query Manager profiles.
+        '''
+        token = getUserToken(self)
+        print (queryClient.list_profiles (token, profile=profile))
+
+
+################################################
+#  Task Execution Tasks
+################################################
+
+# launchjob
 
 ################################################
 #  FUSE Mounting Tasks
@@ -352,7 +503,7 @@ class Dldo:
         Get one or more files from Data Lab.
         '''
         # Not enough information input
-        if (source == '') | (destination == ''):
+        if (source == '') or (destination == ''):
             print "Syntax - dl.get(source, destination)"
             return
         token = getUserToken(self)
@@ -368,7 +519,7 @@ class Dldo:
         Put files into Data Lab.
         '''
         # Not enough information input
-        if (source == '') | (destination == ''):
+        if (source == '') or (destination == ''):
             print "Syntax - dl.put(source, destination)"
             return
         token = getUserToken(self)
@@ -384,7 +535,7 @@ class Dldo:
         The move command method
         '''
         # Not enough information input
-        if (source == '') | (destination == ''):
+        if (source == '') or (destination == ''):
             print "Syntax - dl.mv(source, destination)"
             return
         token = getUserToken(self)
@@ -400,7 +551,7 @@ class Dldo:
         Copy a file in Data Lab
         '''
         # Not enough information input
-        if (source == '') | (destination == ''):
+        if (source == '') or (destination == ''):
             print "Syntax - dl.cp(source, destination)"
             return
         token = getUserToken(self)
@@ -432,7 +583,7 @@ class Dldo:
         Link a file in Data Lab
         '''
         # Not enough information input
-        if (source == '') | (target == ''):
+        if (source == '') or (target == ''):
             print "Syntax - dl.ln(source, target)"
             return
         token = getUserToken(self)
@@ -448,7 +599,7 @@ class Dldo:
         Tag a file in Data Lab
         '''
         # Not enough information input
-        if (name == '') | (tag == ''):
+        if (name == '') or (tag == ''):
             print "Syntax - dl.tag(name, tag)"
             return
         token = getUserToken(self)
@@ -511,7 +662,115 @@ class Dldo:
 #  SAMP Tasks
 ################################################
 
+    def broadcast(self, type='', pars=''):
+        ''' 
+        Broadcast a SAMP message
+        '''
+        # Not enough information input
+        if (type == '') or (pars == ''):
+            print "Syntax - dl.broadcast(type, pars)"
+            return
+        client = self.getSampClient()
+        mtype = type
+        params = {}
+        for param in pars.split(","):
+            key, value = param.split("=")
+            params[key] = value
+        self.broadcast(client, mtype, params)
+
+    def launch(self, dir=''):
+        '''
+        Launch a plugin in Data Lab
+        '''
+        # Not enough information input
+        if (dir == ''):
+            print "Syntax - dl.launch(dir)"
+            return
+        token = getUserToken(self)
+        r = requests.get(SM_URL + "/rmdir?dir=%s" %
+                         dir, headers={'X-DL-AuthToken': token})
+
+
+
+#    def receiver():
+#        '''
+#        SAMP listener
+#        '''
+#        def __init__(self, client):
+#            self.client = client
+#            self.received = False
+#
+#        def receive_notifications(self, private_key, sender_id, mtype, 
+#                                params, extra):
+#            self.params = params
+#            self.received = True
+#            print ('Notification:', private_key, sender_id, mtype, params, extra)
+#
+#        def receiver_call(self, private_key, sender_id, msg_id, mtype, 
+#                                params, extra):
+#            self.params = params
+#            self.received = True
+#            print ('Call:', private_key, sender_id, msg_id, mtype, params, extra)
+#            self.client.reply(
+#                msg_id, {'samp.status': 'samp.ok', 'samp.result': {}})
+#
+#        def point_select(self, private_key, send_id, mtype, params, extra):
+#            self.params = params
+#            self.received = True
 
 ################################################
 #  SIA Tasks
 ################################################
+
+
+    def siaquery(self, input='', search='', out=''):
+        '''
+        SIA query with an uploaded file
+        '''
+
+        #def getUID(self):
+        #    ''' Get the UID for this user
+        #    '''
+        #    token = getUserToken(self)
+        #    parts = token.strip().split(".")
+        #    uid = parts[1]
+        #    return uid
+
+        # Not enough information input
+        if (input == '') or (search == ''):
+            print "Syntax - dl.siaquery(input, search)"
+            return
+        
+        token = getUserToken(self)
+        parts = token.strip().split(".")
+        uid = parts[1]
+        
+        # If local input file, upload it
+        _input = input
+        shortname = '%s_%s' % (uid, input[input.rfind('/') + 1:])
+        if input[:input.find(':')] not in ['vos', 'mydb']:
+            #      target = 'vos://nvo.caltech!vospace/siawork/%s' % shortname
+            # Need to set this from config
+            target = 'vos://datalab.noao.edu!vospace/siawork/%s' % shortname
+            r = requests.get(SM_URL + "/put?name=%s" %
+                             target, headers={'X-DL-AuthToken': token})
+            file = open(input).read()
+            resp = requests.put(r.content, data=file, headers={
+                                'Content-type': 'application/octet-stream',
+                                'X-DL-AuthToken': token})
+
+        # Query the Data Lab query service
+        headers = {'Content-Type': 'text/ascii', 
+                   'X-DL-AuthToken': token}
+        dburl = '%s/sia?in=%s&radius=%s&out=%s' % (
+            QM_URL, shortname, search, out)
+        r = requests.get(dburl, headers=headers)
+
+        # Output value
+        if out != '':
+            if out[:out.index(':')] not in ['vos']:
+                file = open(out, 'wb')
+                file.write(r.content)
+                file.close()
+        else:
+            print (r.content)

@@ -339,7 +339,7 @@ class Dldo:
                 
         # What type of query are we doing
         sql = None
-        adql = Nonee
+        adql = None
         if type == 'sql':
             sql = _query
         else:
@@ -722,6 +722,8 @@ class Dldo:
 #  SIA Tasks
 ################################################
 
+
+# why not use queryClient SIAQUERY????
 
     def siaquery(self, input='', search='', out=''):
         '''

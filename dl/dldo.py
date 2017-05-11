@@ -134,8 +134,8 @@ class Dldo:
         '''
         Get one or more files from Data Lab.
         '''
-        if source == '' OR destination == '':
-            print "Syntax - dl.get(source, destination)'
+        if (source == '') | (destination == ''):
+            print "Syntax - dl.get(source, destination)"
             return
         # Check that we have a good token
         if not authClient.isValidToken(self.token):

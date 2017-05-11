@@ -52,14 +52,15 @@ class Dldo:
         Login to datalab
         '''
         if user == '':
-            user = raw_input('Enter user:')
+            user = raw_input('Enter user: ')
         if user == 'anonymous':
             token = authClient.login('anonymous','')
         else:
-            token = authClient.login(user,getpass.getpass(prompt='Enter password:'))
+            token = authClient.login(user,getpass.getpass(prompt='Enter password: '))
 
         if not authClient.isValidToken(token):
-            raise Exception, "Invalid user name and/or password provided. Please try again."
+            print "Invalid user name and/or password provided. Please try again."
+            return
         else:
             print "Authentication successful."
             self.user = user

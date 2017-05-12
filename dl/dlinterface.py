@@ -318,6 +318,10 @@ class Dlinterface:
         ''' 
         Add a capability to a VOSpace container
         '''
+        # Check if we are logged in
+        if not checkLogin(self):
+            return
+
         print ("The available capabilities are: ")
         for file in glob.glob("%s/*_cap.conf" % self.capsdir):
             print ("  %s" % file[file.rindex("/") + 1:file.index("_cap.conf")])
@@ -487,6 +491,9 @@ class Dlinterface:
         if (jobid is None):
             print "Syntax - dl.querystatus(jobid)"
             return
+        # Check if we are logged in
+        if not checkLogin(self):
+            return
         token = getUserToken(self)
         print (queryClient.status (token, jobId=jobid))
 
@@ -498,6 +505,9 @@ class Dlinterface:
         if (jobid is None):
             print "Syntax - dl.queryresults(jobid)"
             return
+        # Check if we are logged in
+        if not checkLogin(self):
+            return
         token = getUserToken(self)
         print (queryClient.results (token, jobId=jobid))
 
@@ -505,6 +515,9 @@ class Dlinterface:
         '''
         List the user's MyDB tables.
         '''
+        # Check if we are logged in
+        if not checkLogin(self):
+            return
         token = getUserToken(self)
         try:
             res = queryClient.list (token, table=table)
@@ -518,6 +531,9 @@ class Dlinterface:
         '''
         Drop a user's MyDB table.
         '''
+        # Check if we are logged in
+        if not checkLogin(self):
+            return
         token = getUserToken(self)
         try:
             queryClient.drop (token, table=table)
@@ -528,6 +544,9 @@ class Dlinterface:
         '''
         List the available Query Manager profiles.
         '''
+        # Check if we are logged in
+        if not checkLogin(self):
+            return
         token = getUserToken(self)
         print (queryClient.list_profiles (token, profile=profile))
 
@@ -622,6 +641,9 @@ class Dlinterface:
         if (source is None) or (destination is None):
             print "Syntax - dl.get(source, destination)"
             return
+        # Check if we are logged in
+        if not checkLogin(self):
+            return
         token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(token):
@@ -637,6 +659,9 @@ class Dlinterface:
         # Not enough information input
         if (source is None) or (destination is None):
             print "Syntax - dl.put(source, destination)"
+            return
+        # Check if we are logged in
+        if not checkLogin(self):
             return
         token = getUserToken(self)
         # Check that we have a good token
@@ -654,6 +679,9 @@ class Dlinterface:
         if (source is None) or (destination is None):
             print "Syntax - dl.mv(source, destination)"
             return
+        # Check if we are logged in
+        if not checkLogin(self):
+            return
         token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(token):
@@ -669,6 +697,9 @@ class Dlinterface:
         # Not enough information input
         if (source is None) or (destination is None):
             print "Syntax - dl.cp(source, destination)"
+            return
+        # Check if we are logged in
+        if not checkLogin(self):
             return
         token = getUserToken(self)
         # Check that we have a good token
@@ -686,6 +717,9 @@ class Dlinterface:
         if (name is None):
             print "Syntax - dl.rm(name)"
             return
+        # Check if we are logged in
+        if not checkLogin(self):
+            return
         token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(token):
@@ -701,6 +735,9 @@ class Dlinterface:
         # Not enough information input
         if (source is None) or (target is None):
             print "Syntax - dl.ln(source, target)"
+            return
+        # Check if we are logged in
+        if not checkLogin(self):
             return
         token = getUserToken(self)
         # Check that we have a good token
@@ -718,6 +755,9 @@ class Dlinterface:
         if (name is None) or (tag is None):
             print "Syntax - dl.tag(name, tag)"
             return
+        # Check if we are logged in
+        if not checkLogin(self):
+            return
         token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(token):
@@ -732,6 +772,9 @@ class Dlinterface:
         # Not enough information input
         if (name is None):
             print "Syntax - dl.mkdir(name)"
+            return
+        # Check if we are logged in
+        if not checkLogin(self):
             return
         token = getUserToken(self)
         # Check that we have a good token
@@ -749,6 +792,9 @@ class Dlinterface:
         if (name is None):
             print "Syntax - dl.rmdir(name)"
             return
+        # Check if we are logged in
+        if not checkLogin(self):
+            return
         token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(token):
@@ -763,6 +809,9 @@ class Dlinterface:
         # Not enough information input
         if (name is None):
             print "Syntax - dl.resolve(name)"
+            return
+        # Check if we are logged in
+        if not checkLogin(self):
             return
         token = getUserToken(self)
         # Check that we have a good token
@@ -786,6 +835,9 @@ class Dlinterface:
         if (type is None) or (pars is None):
             print "Syntax - dl.broadcast(type, pars)"
             return
+        # Check if we are logged in
+        if not checkLogin(self):
+            return
         client = self.getSampClient()
         mtype = type
         params = {}
@@ -801,6 +853,9 @@ class Dlinterface:
         # Not enough information input
         if (dir is None):
             print "Syntax - dl.launch(dir)"
+            return
+        # Check if we are logged in
+        if not checkLogin(self):
             return
         token = getUserToken(self)
         r = requests.get(SM_URL + "/rmdir?dir=%s" %
@@ -857,6 +912,9 @@ class Dlinterface:
         # Not enough information input
         if (input is None) or (search is None):
             print "Syntax - dl.siaquery(input, search)"
+            return
+        # Check if we are logged in
+        if not checkLogin(self):
             return
         
         token = getUserToken(self)

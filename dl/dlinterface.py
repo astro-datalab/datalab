@@ -144,7 +144,7 @@ class DLInteract:
 
 class Dlinterface:
     '''
-       dlinterface super-class
+       Data Lab python interface super-class with methods for each command.
     '''
     def __init__(self, verbose=True):
         dlinteract = DLInteract()
@@ -243,8 +243,8 @@ class Dlinterface:
         or,
 
             dl.login()
-            Enter username: myusername
-            Enter password: *******
+            Enter user: myusername
+            Enter password: ******
             Welcome to the Data Lab, myusername
 
         '''
@@ -330,9 +330,9 @@ class Dlinterface:
         Example
         -------
 
-        .. code-block:: python
-
         Logout of Data Lab.
+
+        .. code-block:: python
 
             dl.logout()
             'myusername' is now logged out of the Data Lab
@@ -367,8 +367,27 @@ class Dlinterface:
 
     def status(self):
         ''' 
-        Status of the Data Lab connection
+        Print the status of the Data Lab connection.
+
+        Example
+        -------
+
+        The "myusername" is already logged in.
+
+        .. code-block:: python
+     
+            dl.status()
+            User myusername is logged into the Data Lab
+
+        No user is currently logged in.
+
+        .. code-block:: python
+     
+            dl.status()
+            No user is currently logged into the Data Lab
+
         '''
+
         if self.loginstatus == "loggedout":
             print ("No user is currently logged into the Data Lab")
         else:
@@ -385,6 +404,15 @@ class Dlinterface:
     def whoami(self):
         '''
         Print the current active user.
+
+        Example
+        -------
+
+        .. code-block:: python
+     
+            dl.whoami()
+            myusername
+
         '''
         print (getUserName(self))
 

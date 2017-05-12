@@ -281,7 +281,7 @@ class Dlinterface:
 
         # Do the login via the authClient
         if DOLOGIN is True:
-            if user == '':
+            if user == None or user == '':
                 user = raw_input('Enter user: ')
             if user == 'anonymous':
                 token = authClient.login('anonymous','')

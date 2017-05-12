@@ -204,7 +204,8 @@ class Dlinterface:
         else:
             cmd = getattr(self, command, None)
             if cmd is not None:
-                print cmd.__doc__
+                #print cmd.__doc__
+                help(cmd)
             else:
                 print ("%s is not a supported command." % command)
         

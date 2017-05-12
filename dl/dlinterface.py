@@ -158,7 +158,7 @@ class Dlinterface:
 
     def help(self, command=None):
         '''
-        Print out useful help information.
+        Print out useful help information on the Data Lab python interface and it's commands.
         '''
 
         # Print out general help information
@@ -189,12 +189,12 @@ class Dlinterface:
             print "dl.tag()       - Tag a file in Data Lab"
             print " "
             print "-- Query and database operations --"
-            print "dl.query()     - Query a remote data service in the Data Lab"
-            print "dl.dropdb()    - Drop a user MyDB table"
-            print "dl.listdb()    - List the user MyDB tables"
-            print "dl.qresults()  - Get the async query results"
-            print "dl.qstatus()   - Get an async query job status"
-            print "dl.siaquery()  - Query a SIA service in the Data Lab"
+            print "dl.query()          - Query a remote data service in the Data Lab"
+            print "dl.dropdb()         - Drop a user MyDB table"
+            print "dl.listdb()         - List the user MyDB tables"
+            print "dl.queryresults()   - Get the async query results"
+            print "dl.querystatus()    - Get an async query job status"
+            print "dl.siaquery()       - Query a SIA service in the Data Lab"
             print " "
             print "-- Capabilities --"
             print "dl.listcapability() - List the capabilities supported by this Virtual Storage"
@@ -227,7 +227,7 @@ class Dlinterface:
         ----------
         user : str
             The Data lab username.  If this is not given, then the user will be
-            prompted on the command line for the information.
+            prompted for the information.
 
         Example
         -------
@@ -372,7 +372,7 @@ class Dlinterface:
         Example
         -------
 
-        The "myusername" is already logged in.
+        The "myusername" is logged in.
 
         .. code-block:: python
      
@@ -505,34 +505,45 @@ class Dlinterface:
         Returns
         -------
         result : str
-            If ``async=False``, the return value is the result of the
-            query as a formatted string (see ``fmt``). Otherwise the
-            result string is a job token, with which later the
-            asynchroneaous query's status can be checked
-            (:func:`dl.query.status()`), and the result retrieved (see
-            :func:`dl.query.result()`.
-          DEPENDS ON "FMT"
-
+            If ``async=False`` and ``out`` is not used, then the return value is the result of the query
+            in the requested format (see ``fmt``).  If ``out`` is given then the query result is saved to
+            a file or mydb.  If ``async=True`` the jobID is returned with which later the asynchronous
+            query's status can be checked (:func:`dl.querystatus()`), and the result retrieved (see
+            :func:`dl.queryresults()`.
 
         Example
         -------
-        Get security token first, see :func:`dl.auth.login`. Then:
+        A simple query returned as a pandas data frame.
 
         .. code-block:: python
 
-            from dl import queryClient
-            query = 'select ra,dec from gaia_dr1.gaia_source limit 3'
-            response = queryClient.query(token, adql = query, fmt = 'csv')
-            print response
+            data = dl.query('SELECT * from smash_dr1.source LIMIT 100',fmt='pandas')
+            Returning Pandas dataframe
 
-        This prints
+            type(data)
+            pandas.core.frame.DataFrame
+
+            print data['ra'][0:3]
+            0    103.068355
+            1    103.071774
+            2    103.071598
+
+        Perform a query and save the results to a table called "table1.txt" in mydb.
 
         .. code::
 
-              ra,dec
-              315.002571989537842,35.2662974820284489
-              315.00408275885701,35.2665448169895797
-              314.996334457679438,35.2673478725552698
+            res = dl.query('SELECT * from smash_dr1.source LIMIT 100',out='mydb://table1.txt')
+
+             dl.listmydb()
+
+        Perform the same query and save it to a local file.
+
+        .. code::
+
+            res = dl.query('SELECT * from smash_dr1.source LIMIT 100',out='table1.txt')
+
+            ls
+            table1.txt
 
         '''
         # Not enough information input
@@ -601,7 +612,8 @@ class Dlinterface:
             # Asynchronous
             if async:
                 print ("Asynchronous query JobID = %s " % res)                         # Return the JobID
-            # Synchronous
+                return res
+                # Synchronous
             elif out == '' or out is None:
                 # Convert to the desired format
                 s = StringIO(res)
@@ -620,6 +632,33 @@ class Dlinterface:
     def querystatus(self, jobid=None):
         '''
         Get the async query job status.
+
+        Parameters
+        ----------
+        jobid : str
+             The unique job identifier for the asynchronous query which was returned by ql.query()
+             when the query job was submitted.
+
+        Example
+        -------
+
+        The "myusername" is logged in.
+
+        .. code-block:: python
+     
+            jobid = dl.query('SELECT * from smash_dr1.source LIMIT 100',async=True)
+
+            dl.status()
+            User myusername is logged into the Data Lab
+
+        No user is currently logged in.
+
+        .. code-block:: python
+     
+            dl.status()
+            No user is currently logged into the Data Lab
+
+
         '''
         # Not enough information input
         if (jobid is None):

@@ -206,7 +206,7 @@ class Dlinterface:
             if cmd is not None:
                 print cmd.__doc__
             else:
-                print command " is not a supported command."
+                print ("%s is not a supported command." % command)
         
         
 ################################################

@@ -153,7 +153,7 @@ class Dlinterface:
         
 #### HELP ########
 
-    def help(self, command=None);
+    def help(self, command=None):
         '''
         Print out useful help information.
         '''

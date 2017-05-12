@@ -202,7 +202,7 @@ class Dlinterface:
 
          # Help on a specific command
         else:
-            cmd = getattr(dl, command, None)
+            cmd = getattr(self, command, None)
             if cmd is not None:
                 print cmd.__doc__
             else:

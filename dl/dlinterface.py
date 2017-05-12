@@ -642,21 +642,15 @@ class Dlinterface:
         Example
         -------
 
-        The "myusername" is logged in.
+        Submit an asynchronous query and then check the status
 
         .. code-block:: python
      
             jobid = dl.query('SELECT * from smash_dr1.source LIMIT 100',async=True)
+            Asynchronous query JobID = uqrcs8a5n8s6d0je 
 
             dl.status()
             User myusername is logged into the Data Lab
-
-        No user is currently logged in.
-
-        .. code-block:: python
-     
-            dl.status()
-            No user is currently logged into the Data Lab
 
 
         '''

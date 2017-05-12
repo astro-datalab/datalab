@@ -148,7 +148,66 @@ class Dlinterface:
         self.dl = dlinteract
         self.loginstatus = ""
         self.verbose = verbose
+        if verbose is True:
+            print "Welcome to the Data Lab python interface.  Type dl.help() for help."
+        
+#### HELP ########
 
+    def help(self, command=None);
+        '''
+        Print out useful help information.
+        '''
+
+        # Print out general help information
+        if command is None:
+            print "The Data Lab python interface."
+            print " "
+            print "Use dl.help(<command>) for specific help on one command."
+            print " "
+            print "The available commands are:"
+            print " "
+            print "-- Login and authentication --"
+            print "dl.login()     - Login to the Data Lab"
+            print "dl.logout()    - Logout of the Data Lab"
+            print "dl.status()    - Report on the user status"
+            print "dl.whoami()    - Print the current active user"
+            print " "
+            print "-- File system operations --"
+            print "dl.ls()        - List a location in Data Lab"
+            print "dl.get()       - Get a file from Data Lab"
+            print "dl.put()       - Put a file into Data Lab"
+            print "dl.cp()()      - Copy a file in Data Lab"
+            print "dl.mv()        - Move a file in Data Lab"
+            print "dl.rm()        - Delete a file in Data Lab"
+            print "dl.mkdir()     - Create a directory in Data Lab"
+            print "dl.rmdir()     - Delete a directory in Data Lab"
+            print "dl.ln()        - Link a file in Data Lab"
+            print "dl.tag()       - Tag a file in Data Lab"
+            print " "
+            print "-- Query and database operations --"
+            print "dl.query()     - Query a remote data service in the Data Lab"
+            print "dl.dropdb()    - Drop a user MyDB table"
+            print "dl.listdb()    - List the user MyDB tables"
+            print "dl.qresults()  - Get the async query results"
+            print "dl.qstatus()   - Get an async query job status"
+            print "dl.siaquery()  - Query a SIA service in the Data Lab"
+            print " "
+            print "-- Capabilities --"
+            print "dl.listcapability() - List the capabilities supported by this Virtual Storage"
+            print "dl.addcapability()  - Activate a capability on a Virtual Storage container"
+            print "dl.exec()           - Launch a remote task in the Data Lab"
+            print "dl.launch()         - Launch a plugin"
+            print "dl.broadcast()      - Broadcast a SAMP message"
+            #print "dl.mount()          - mount the default Virtual Storage"
+
+         # Help on a specific command
+         else:
+            cmd = getattr(dl, command, None)
+            if cmd is not None:
+                print cmd.__doc__
+            else:
+                print command " is not a supported command."
+        
         
 ################################################
 #  Account Login Tasks
@@ -283,62 +342,7 @@ class Dlinterface:
         '''
         print (getUserName(self))
 
-        
-    def help(self, command=None);
-        '''
-        Print out useful help information.
-        '''
 
-        # Print out general help information
-        if command is None:
-            print "The Data Lab python interface."
-            print " "
-            print "Use dl.help(<command>) for specific help on one command."
-            print " "
-            print "The available commands are:"
-            print " "
-            print "-- Login and authentication --"
-            print "dl.login()     - Login to the Data Lab"
-            print "dl.logout()    - Logout of the Data Lab"
-            print "dl.status()    - Report on the user status"
-            print "dl.whoami()    - Print the current active user"
-            print " "
-            print "-- File system operations --"
-            print "dl.ls()        - List a location in Data Lab"
-            print "dl.get()       - Get a file from Data Lab"
-            print "dl.put()       - Put a file into Data Lab"
-            print "dl.cp()()      - Copy a file in Data Lab"
-            print "dl.mv()        - Move a file in Data Lab"
-            print "dl.rm()        - Delete a file in Data Lab"
-            print "dl.mkdir()     - Create a directory in Data Lab"
-            print "dl.rmdir()     - Delete a directory in Data Lab"
-            print "dl.ln()        - Link a file in Data Lab"
-            print "dl.tag()       - Tag a file in Data Lab"
-            print " "
-            print "-- Query and database operations --"
-            print "dl.query()     - Query a remote data service in the Data Lab"
-            print "dl.dropdb()    - Drop a user MyDB table"
-            print "dl.listdb()    - List the user MyDB tables"
-            print "dl.qresults()  - Get the async query results"
-            print "dl.qstatus()   - Get an async query job status"
-            print "dl.siaquery()  - Query a SIA service in the Data Lab"
-            print " "
-            print "-- Capabilities --"
-            print "dl.listcapability() - List the capabilities supported by this Virtual Storage"
-            print "dl.addcapability()  - Activate a capability on a Virtual Storage container"
-            print "dl.exec()           - Launch a remote task in the Data Lab"
-            print "dl.launch()         - Launch a plugin"
-            print "dl.broadcast()      - Broadcast a SAMP message"
-            #print "dl.mount()          - mount the default Virtual Storage"
-
-         # Help on a specific command
-         else:
-            cmd = getattr(dl, command, None)
-            if cmd is not None:
-                print cmd.__doc__
-            else:
-                print command " is not a supported command."
-                
 ################################################
 #  Storage Manager Capability Tasks
 ################################################

@@ -162,9 +162,10 @@ class Dlinterface:
         if command is None:
             print "The Data Lab python interface."
             print " "
-            print "Use dl.help(<command>) for specific help on one command."
-            print " "
             print "The available commands are:"
+            print " "
+            print "dl.help()      - Helpful information"
+            print "Use dl.help(<command>) for specific help on a command."
             print " "
             print "-- Login and authentication --"
             print "dl.login()     - Login to the Data Lab"
@@ -217,7 +218,30 @@ class Dlinterface:
     
     def login(self, user=None):
         '''
-        Login to datalab
+        Login to Data Lab
+
+        Parameters
+        ----------
+        user : str
+            The Data lab username.  If this is not given, then the user will be
+            prompted on the command line for the information.
+
+        Example
+        -------
+
+        .. code-block:: python
+
+            dl.login('myusername')
+            Enter password: *******
+            Welcome to the Data Lab, myusername
+
+        or,
+
+            dl.login()
+            Enter username: myusername
+            Enter password: *******
+            Welcome to the Data Lab, myusername
+
         '''
         # Check if we are already logged in.  The 'user' field of the 
         # configuration contains the currently active user and token,
@@ -237,8 +261,12 @@ class Dlinterface:
                 else:
                     DOLOGIN = False
                     print ("User '%s' is already logged in to the Data Lab" % user)
+            elif user is None:
+                DOLOGIN = False
+                print ("User '%s' is already logged in to the Data Lab" % user)
             # Different username
             else:
+
                 # We're logging in as a different user.
                 print ("You are currently logged in as user '%s'. Switching to %s." % (_user, user))
                 DOLOGIN = True
@@ -392,7 +420,7 @@ class Dlinterface:
 
 
     def query(self, query=None, type='sql', fmt='csv', out=None, async=False, profile='default'):
-        """
+        '''
         Send a query to a remote query service.
 
         Parameters
@@ -461,10 +489,11 @@ class Dlinterface:
               315.00408275885701,35.2665448169895797
               314.996334457679438,35.2673478725552698
 
-        """
+        '''
         # Not enough information input
         if (query is None):
-            print "Syntax - dl.query(query, type='sql', fmt='csv', out='', async=False, profile='default')"
+            print "Syntax - dl.query(query, type='sql|adql', fmt='csv|string|array|structarray|pandas|table|votable',"
+            print "                  out='', async=False, profile='default')"
             return
 
         # Check if we are logged in

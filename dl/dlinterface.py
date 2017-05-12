@@ -32,6 +32,7 @@ except ImportError:
 # std lib imports
 import getpass
 from functools import partial
+from cStringIO import StringIO
 from collections import OrderedDict
 import numpy as np
 from pandas import read_csv
@@ -77,6 +78,14 @@ def getUserToken (self):
     else:
         return _token
 
+def checkLogin (self):
+    '''  Check if the user is already logged in.  If not, give a warning message
+    '''
+    if self.loginstatus != 'loggedin':
+        print "You are not currently logged in.  Please use dl.login() to do so."
+        return False
+    else:
+        return True
 
 class DLInteract:
     '''
@@ -130,21 +139,17 @@ class DLInteract:
         with open('%s/dl.conf' % self.home, 'wb') as configfile:
             self.config.write(configfile)
 
-class Dldo:
+class Dlinterface:
     '''
-       dldo super-class
+       dlinterface super-class
     '''
-    def __init__(self):
+    def __init__(self, verbose=True):
         dlinteract = DLInteract()
         self.dl = dlinteract
         self.loginstatus = ""
-        #self.token = ""
-        #self.user = ""
-        #self.mount = ""
-        #self.unmount = ""
-        #pass
-    
+        self.verbose = verbose
 
+        
 ################################################
 #  Account Login Tasks
 ################################################
@@ -288,7 +293,10 @@ class Dldo:
         ''' 
         Add a capability to a VOSpace container
         '''
-
+        # Check if we are logged in
+        if not checkLogin(self):
+            return
+        
         if self.listcap.value:
             print ("The available capabilities are: ")
             for file in glob.glob(self.capsdir):
@@ -395,6 +403,10 @@ class Dldo:
             print "Syntax - dl.query(query, type='sql', fmt='csv', out='', async=False, profile='default')"
             return
 
+        # Check if we are logged in
+        if not checkLogin(self):
+            return
+        
         # Check type
         if (type != 'sql') and (type != 'adql'):
             print "Only 'sql' and 'adql' queries are currently supported."
@@ -455,8 +467,8 @@ class Dldo:
             elif out == '' or out is None:
                 # Convert to the desired format
                 s = StringIO(res)
-                output = self.mapping[fmt][2](s)
-                print "Returning %s" % self.mapping[fmt][1]
+                output = mapping[fmt][2](s)
+                print "Returning %s" % mapping[fmt][1]
                 return output
                     
         except Exception as e:
@@ -591,6 +603,9 @@ class Dldo:
         '''
         The list command method
         '''
+        # Check if we are logged in
+        if not checkLogin(self):
+            return
         token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(token):

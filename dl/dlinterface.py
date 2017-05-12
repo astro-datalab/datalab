@@ -139,6 +139,9 @@ class DLInteract:
         with open('%s/dl.conf' % self.home, 'wb') as configfile:
             self.config.write(configfile)
 
+
+#### Main Data Lab Interface Class and method #####
+
 class Dlinterface:
     '''
        dlinterface super-class
@@ -146,7 +149,7 @@ class Dlinterface:
     def __init__(self, verbose=True):
         dlinteract = DLInteract()
         self.dl = dlinteract
-        self.loginstatus = ""
+        self.loginstatus = "loggedout"
         self.verbose = verbose
         if verbose is True:
             print "Welcome to the Data Lab python interface.  Type dl.help() for help."
@@ -218,7 +221,7 @@ class Dlinterface:
     
     def login(self, user=None):
         '''
-        Login to Data Lab
+        Login to Data Lab using username.
 
         Parameters
         ----------
@@ -230,6 +233,8 @@ class Dlinterface:
         -------
 
         .. code-block:: python
+
+        Login and give the username,
 
             dl.login('myusername')
             Enter password: *******
@@ -320,8 +325,20 @@ class Dlinterface:
 
     def logout(self, unmount=None):
         '''
-        Logout out of the Data Lab
+        Logout out of the Data Lab.
+
+        Example
+        -------
+
+        .. code-block:: python
+
+        Logout of Data Lab.
+
+            dl.logout()
+            'myusername' is now logged out of the Data Lab
+
         '''
+
         if self.loginstatus == 'loggedout':
             print ("No user is currently logged into the Data Lab")
             return

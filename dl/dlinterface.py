@@ -201,7 +201,7 @@ class Dlinterface:
             #print "dl.mount()          - mount the default Virtual Storage"
 
          # Help on a specific command
-         else:
+        else:
             cmd = getattr(dl, command, None)
             if cmd is not None:
                 print cmd.__doc__

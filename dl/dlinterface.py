@@ -39,6 +39,9 @@ from pandas import read_csv
 from astropy.table import Table
 from astropy.io.votable import parse_single_table
 
+# use this for SIA service for now
+from pyvo.dal import sia
+
 # Data Lab Client interfaces
 from dl import authClient, storeClient, queryClient
 
@@ -57,11 +60,15 @@ AM_URL = "http://dlsvcs.datalab.noao.edu/auth"      # Auth Manager
 SM_URL = "http://dlsvcs.datalab.noao.edu/storage"   # Storage Manager
 QM_URL = "http://dlsvcs.datalab.noao.edu/query"     # Query Manager
 
+# SIA service
+SIA_DEF_ACCESS_URL = "http://datalab.noao.edu/sia/smash"
+SIA_DEF_SIZE = 0.0085  # degrees
 
 def getUserName (self):
     '''  Get the currently logged-in user token.  If we haven't logged in
          return the anonymous username.
     '''
+    # could also use self.loginuser
     _user = self.dl.get("login", "user")
     if _user is None or _user == '':
         return "anonymous"
@@ -1268,7 +1275,22 @@ class Dlinterface:
 
     def mkdir(self, name=None):
         ''' 
-        Create a directory in Data Lab
+        Create a directory in Data Lab VOSpace.
+
+        Parameters
+        ----------
+        name : str
+             The name of the directory in VOSpace to create, e.g. ``results``.
+
+        Example
+        -------
+
+        Create the directory ``data1/``.
+
+        .. code-block:: python
+
+            dl.mkdir('data1')
+
         '''
         # Not enough information input
         if (name is None):
@@ -1287,7 +1309,22 @@ class Dlinterface:
 
     def rmdir(self, name=None):
         ''' 
-        Delete a directory in Data Lab
+        Delete a directory in Data Lab VOSpace.
+
+        Parameters
+        ----------
+        name : str
+             The name of the directory in VOSpace to delete, e.g. ``results``.
+
+        Example
+        -------
+
+        Delete the directory ``data1/``.
+
+        .. code-block:: python
+
+            dl.rmdir('data1')
+
         '''
         # Not enough information input
         if (name is None):
@@ -1303,24 +1340,24 @@ class Dlinterface:
         # Run the RMDIR command
         storeClient.rmdir (token, name=name)
 
-    def resolve(self, name=None):
-        ''' 
-        Resolve a vos short form identifier     -- FIXME
-        '''
-        # Not enough information input
-        if (name is None):
-            print "Syntax - dl.resolve(name)"
-            return
-        # Check if we are logged in
-        if not checkLogin(self):
-            return
-        token = getUserToken(self)
-        # Check that we have a good token
-        if not authClient.isValidToken(token):
-            raise Exception, "Invalid user name and/or password provided. Please try again."
-        # Run the command
-        r = requests.get(SM_URL + "resolve?name=%s" %
-                         name, headers={'X-DL-AuthToken': token})
+#    def resolve(self, name=None):
+#        ''' 
+#        Resolve a vos short form identifier     -- FIXME
+#        '''
+#        # Not enough information input
+#        if (name is None):
+#            print "Syntax - dl.resolve(name)"
+#            return
+#        # Check if we are logged in
+#        if not checkLogin(self):
+#            return
+#        token = getUserToken(self)
+#        # Check that we have a good token
+#        if not authClient.isValidToken(token):
+#            raise Exception, "Invalid user name and/or password provided. Please try again."
+#        # Run the command
+#        r = requests.get(SM_URL + "resolve?name=%s" %
+#                         name, headers={'X-DL-AuthToken': token})
 
 
 
@@ -1397,22 +1434,14 @@ class Dlinterface:
 
 # why not use queryClient SIAQUERY????
 
-    def siaquery(self, input=None, search=None, out=None):
+    def siaquery(self, ra=None, dec=None, dist=None, out=None):
         '''
         SIA query with an uploaded file
         '''
 
-        #def getUID(self):
-        #    ''' Get the UID for this user
-        #    '''
-        #    token = getUserToken(self)
-        #    parts = token.strip().split(".")
-        #    uid = parts[1]
-        #    return uid
-
         # Not enough information input
-        if (input is None) or (search is None):
-            print "Syntax - dl.siaquery(input, search)"
+        if (ra is None) or (dec is None):
+            print "Syntax - dl.siaquery(ra, dec, dist, out=None)"
             return
         # Check if we are logged in
         if not checkLogin(self):
@@ -1422,32 +1451,44 @@ class Dlinterface:
         parts = token.strip().split(".")
         uid = parts[1]
         
-        # If local input file, upload it
-        _input = input
-        shortname = '%s_%s' % (uid, input[input.rfind('/') + 1:])
-        if input[:input.find(':')] not in ['vos', 'mydb']:
-            #      target = 'vos://nvo.caltech!vospace/siawork/%s' % shortname
-            # Need to set this from config
-            target = 'vos://datalab.noao.edu!vospace/siawork/%s' % shortname
-            r = requests.get(SM_URL + "/put?name=%s" %
-                             target, headers={'X-DL-AuthToken': token})
-            file = open(input).read()
-            resp = requests.put(r.content, data=file, headers={
-                                'Content-type': 'application/octet-stream',
-                                'X-DL-AuthToken': token})
+        ## If local input file, upload it
+        #_input = input
+        #shortname = '%s_%s' % (uid, input[input.rfind('/') + 1:])
+        #if input[:input.find(':')] not in ['vos', 'mydb']:
+        #    #      target = 'vos://nvo.caltech!vospace/siawork/%s' % shortname
+        #    # Need to set this from config
+        #    target = 'vos://datalab.noao.edu!vospace/siawork/%s' % shortname
+        #    r = requests.get(SM_URL + "/put?name=%s" %
+        #                     target, headers={'X-DL-AuthToken': token})
+        #    file = open(input).read()
+        #    resp = requests.put(r.content, data=file, headers={
+        #                        'Content-type': 'application/octet-stream',
+        #                        'X-DL-AuthToken': token})
+        #
+        ## Query the Data Lab query service
+        #headers = {'Content-Type': 'text/ascii', 
+        #           'X-DL-AuthToken': token}
+        #dburl = '%s/sia?in=%s&radius=%s&out=%s' % (
+        #    QM_URL, shortname, search, out)
+        #r = requests.get(dburl, headers=headers)
 
-        # Query the Data Lab query service
-        headers = {'Content-Type': 'text/ascii', 
-                   'X-DL-AuthToken': token}
-        dburl = '%s/sia?in=%s&radius=%s&out=%s' % (
-            QM_URL, shortname, search, out)
-        r = requests.get(dburl, headers=headers)
+        # Use pyvo.dal.sia for now
 
-        # Output value
-        if out != '':
-            if out[:out.index(':')] not in ['vos']:
-                file = open(out, 'wb')
-                file.write(r.content)
-                file.close()
+        svc = sia.SIAService (SIA_DEF_ACCESS_URL)
+        if size is None:
+            _dist = SIA_DEF_SIZe
         else:
-            print (r.content)
+            _dist = dist
+
+        images = svc.search((ra,dec), (dist/np.cos(dec*np.pi/180), dist), verbosity=2)
+        print "The image list contains",images.nrecs,"entries"
+        
+        ## Output value
+        #if out != '':
+        #    if out[:out.index(':')] not in ['vos']:
+        #        file = open(out, 'wb')
+        #        file.write(r.content)
+        #        file.close()
+        #else:
+        #    print (r.content)
+        return images

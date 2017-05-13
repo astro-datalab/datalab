@@ -809,7 +809,7 @@ class Dlinterface:
         token = getUserToken(self)
         try:
             queryClient.drop (token, table=table)
-            print ("Table %s was dropped." / %s)
+            print ("Table %s was dropped." / table)
         except Exception as e:
             print ("Error dropping table '%s'." % table)
 

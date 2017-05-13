@@ -770,7 +770,7 @@ class Dlinterface:
         else:
             if res == 'relation "" not known':
                 print "No tables in MyDB"
-                res = None
+                res = ''
             return res
             
     def dropmydb(self, table=None):
@@ -815,7 +815,7 @@ class Dlinterface:
         except Exception as e:
             print ("Error dropping table '%s'." % table)
         else:
-            print ("Table %s was dropped." % table)
+            print ("Table '%s' was dropped." % table)
             
     def queryprofiles(self, profile=None):
         '''

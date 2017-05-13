@@ -728,13 +728,35 @@ class Dlinterface:
             return
         token = getUserToken(self)
         res = (queryClient.results (token, jobId=jobid))
+        # CHANGE TO REQUESTED FORMAT??
         return res
         
-        # CHANGE TO REQUESTED FORMAT??
+
         
-    def listmydb(self, table=None):
+    def listmydb(self, table='' verbose=True):
         '''
         List the user's MyDB tables.
+
+        Parameters
+        ----------
+        table : str
+             The name of a specific table in mydb.  If this is blank then all tables will be listed.
+
+        Returns
+        -------
+        list : str
+            The list of properties of ``table`` or all tables in mydb.
+
+        Example
+        -------
+
+        List the MyDB tables.
+
+        .. code-block:: python
+     
+            dl.listmydb()
+
+
         '''
         # Check if we are logged in
         if not checkLogin(self):
@@ -745,8 +767,10 @@ class Dlinterface:
         except Exception as e:
             print ("Error listing MyDB tables.")
         else:
-            print (res)
-
+            if verbose is True:
+                print (res)
+            return res
+            
             
     def dropmydb(self, table=None):
         '''

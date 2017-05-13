@@ -1476,7 +1476,7 @@ class Dlinterface:
 
         svc = sia.SIAService (SIA_DEF_ACCESS_URL)
         if dist is None:
-            _dist = SIA_DEF_SIZe
+            _dist = SIA_DEF_SIZE
         else:
             _dist = dist
 

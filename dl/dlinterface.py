@@ -161,6 +161,7 @@ class Dlinterface:
         dlinteract = DLInteract()
         self.dl = dlinteract
         self.loginstatus = "loggedout"
+        self.loginuser = ""
         self.verbose = verbose
         if verbose is True:
             print "Welcome to the Data Lab python interface.  Type dl.help() for help."
@@ -272,7 +273,7 @@ class Dlinterface:
                 # See whether current token is still valid for this user.
                 _token = self.dl.get("login", "authtoken")
                 if not authClient.isValidToken (_token):
-                    print ("Current token for User '%s' no longer valid.  Please re-login." % user)
+                    print ("Current token for User '%s' no longer valid.  Please login again." % user)
                     DOLOGIN = True
                 else:
                     DOLOGIN = False
@@ -296,6 +297,7 @@ class Dlinterface:
                 user = raw_input('Enter user: ')
             if user == 'anonymous':
                 token = authClient.login('anonymous','')
+                self.loginuser = user
             else:
                 token = authClient.login(user,getpass.getpass(prompt='Enter password: '))
        
@@ -303,6 +305,7 @@ class Dlinterface:
                     print "Invalid user name and/or password provided. Please try again."
                     return
                 else:
+                    self.loginuser = user
                     print ("Welcome to the Data Lab, %s" % user)
                     #print "Authentication successful."
                     self.dl.save("login", "status", "loggedin")
@@ -489,6 +492,7 @@ class Dlinterface:
             .. code-block:: python
 
                 'select ra,dec from gaia_dr1.gaia_source limit 3'
+
         type : str
             The query format, SQL or ADQL.  SQL is used by default.
 
@@ -622,9 +626,9 @@ class Dlinterface:
             
             # Asynchronous
             if async:
-                print ("Asynchronous query JobID = %s " % res)                         # Return the JobID
+                print ("Asynchronous query JobID = %s " % res)                # Return the JobID
                 return res
-                # Synchronous
+            # Synchronous
             elif out == '' or out is None:
                 # Convert to the desired format
                 s = StringIO(res)
@@ -731,7 +735,6 @@ class Dlinterface:
         # CHANGE TO REQUESTED FORMAT??
         return res
         
-
         
     def listmydb(self, table=''):
         '''
@@ -819,7 +822,38 @@ class Dlinterface:
             
     def queryprofiles(self, profile=None):
         '''
-        List the available Query Manager profiles.
+        List the available Query Manager profiles to use with a :func:`dl.query`.
+
+        Parameters
+        ----------
+        profile : str
+             The name of a specific Query Manager profile to check.  If this is blank
+             then all of the available profile names will be listed.
+
+        Returns
+        -------
+        results : str
+            The list of properties of profile ``profile``, or a list of all available profiles.
+
+        Example
+        -------
+
+        List of available profiles.
+
+        .. code-block:: python
+     
+            dl.queryprofiles()
+            default,IRSA,HEASARC,Vizier,GAVO,SIMBAD,zeus1,SDSS-DR9,STScI-RegTAP,GALEX-DR6,dldb1
+
+        Get profile information on profile ``dldb1``.
+
+            dl.queryprofiles('dldb1')
+            {u'accessURL': u'http://dldb1.sdm.noao.edu:8080/ivoa-dal/tap', u'dbport': 5432, u'password':
+            u'datalab', u'description': u'Development NOAO Data Lab TAP Service / Database on dldb1',
+            u'database': u'tapdb', u'host': u'dldb1.sdm.noao.edu', u'vosRoot': u'vos://datalab.noao!vospace',
+            u'vosEndpoint': u'http://dldb1.sdm.noao.edu:8080/vospace-2.0/vospace', u'user': u'dlquery',
+            u'vosRootDir': u'/data/vospace/users', u'type': u'datalab'}
+
         '''
         # Check if we are logged in
         if not checkLogin(self):
@@ -897,7 +931,31 @@ class Dlinterface:
         
     def ls(self, name='vos://', format='csv'):
         '''
-        The list command method
+        List files in VOSpace.
+
+        Parameters
+        ----------
+        name : str
+             The name of a specific file to list.  If name is blank then all files will be listed.
+
+        format : str
+             The format to use.
+
+        Returns
+        -------
+        results : str
+            The list of files in VOSpace.
+
+        Example
+        -------
+
+        List the files.
+
+        .. code-block:: python
+     
+            dl.ls()
+
+
         '''
         # Check if we are logged in
         if not checkLogin(self):
@@ -913,6 +971,30 @@ class Dlinterface:
     def get(self, source=None, destination=None, verbose=True):
         '''
         Get one or more files from Data Lab.
+
+        Parameters
+        ----------
+        source : str
+             The name of the source file on VOSpace with file system prefix, e.g. ``vos://file2.txt``.
+
+        destination : str
+             The name of the local destination file, e.g. ``file1.txt``.
+
+        Returns
+        -------
+        results : str
+            The list of files in VOSpace.
+
+        Example
+        -------
+
+        List the files.
+
+        .. code-block:: python
+     
+            dl.ls()
+
+
         '''
         # Not enough information input
         if (source is None) or (destination is None):
@@ -931,7 +1013,31 @@ class Dlinterface:
 
     def put(self, source=None, destination=None, verbose=True):
         '''
-        Put files into Data Lab.
+        Put files into Data Lab VOSpace.
+
+        Parameters
+        ----------
+        source : str
+             The name of a local file to upload to VOSpace, e.g. ``file1.txt``.
+
+        destination : str
+             The name of the destination file with file system prefix, e.g. ``vos://file2.txt``.
+
+        Returns
+        -------
+        results : str
+            The list of files in VOSpace.
+
+        Example
+        -------
+
+        List the files.
+
+        .. code-block:: python
+     
+            dl.ls()
+
+
         '''
         # Not enough information input
         if (source is None) or (destination is None):

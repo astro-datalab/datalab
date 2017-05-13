@@ -768,6 +768,9 @@ class Dlinterface:
         except Exception as e:
             print ("Error listing MyDB tables.")
         else:
+            if res == 'relation "" not known':
+                print "No tables in MyDB"
+                res = ''
             return res
             
     def dropmydb(self, table=None):

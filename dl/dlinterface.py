@@ -1008,7 +1008,7 @@ class Dlinterface:
         if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the GET command
-        storeClient.get (token, fr=source, to=destination,
+        storeClient.get (token, source, destination,
                             verbose=verbose)
 
     def put(self, source=None, destination=None, verbose=True):
@@ -1051,7 +1051,7 @@ class Dlinterface:
         if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the PUT command
-        storeClient.put (token, source, to=destination,
+        storeClient.put (token, source, destination,
                             verbose=verbose)
         
     def mv(self, source=None, destination=None, verbose=True):

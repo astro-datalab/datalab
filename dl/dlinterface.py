@@ -1304,8 +1304,13 @@ class Dlinterface:
         if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the MKDIR command
-        storeClient.mkdir (token, name=name)
-
+        #  currently this must have vos:// prefix
+        _name = name
+        if _name[0:6] != 'vos://':
+            _name = 'vos://'+_name
+        print _name
+        #storeClient.mkdir (token, name=name)
+        
 
     def rmdir(self, name=None):
         ''' 

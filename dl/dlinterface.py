@@ -770,10 +770,38 @@ class Dlinterface:
         else:
             return res
             
-            
     def dropmydb(self, table=None):
         '''
         Drop a user's MyDB table.
+
+        Parameters
+        ----------
+        table : str
+             The name of a specific table in mydb to drop.
+
+        Returns
+        -------
+        list : str
+            The list of properties of ``table`` or all tables in mydb.
+
+        Example
+        -------
+
+        Drop the MyDB table called ``table``.
+
+        .. code-block:: python
+     
+            print dl.listmydb()
+            table
+            table2
+
+            dl.dropmydb('table')
+            table
+            table2
+
+            print dl.listmydb()
+            table2
+
         '''
         # Check if we are logged in
         if not checkLogin(self):
@@ -781,6 +809,7 @@ class Dlinterface:
         token = getUserToken(self)
         try:
             queryClient.drop (token, table=table)
+            print ("Table %s was dropped." / %s)
         except Exception as e:
             print ("Error dropping table '%s'." % table)
 

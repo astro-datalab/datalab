@@ -770,7 +770,7 @@ class Dlinterface:
         else:
             if res == 'relation "" not known':
                 print "No tables in MyDB"
-                res = ''
+                res = None
             return res
             
     def dropmydb(self, table=None):

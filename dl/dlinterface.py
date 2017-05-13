@@ -728,8 +728,9 @@ class Dlinterface:
             return
         token = getUserToken(self)
         res = (queryClient.results (token, jobId=jobid))
-
-        # CHANGE TO REQUESTED FORMAT??  But how do we know what that was.
+        return res
+        
+        # CHANGE TO REQUESTED FORMAT??
         
     def listmydb(self, table=None):
         '''

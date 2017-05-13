@@ -812,10 +812,11 @@ class Dlinterface:
         token = getUserToken(self)
         try:
             queryClient.drop (token, table=table)
-            print ("Table %s was dropped." / table)
         except Exception as e:
             print ("Error dropping table '%s'." % table)
-
+        else:
+            print ("Table %s was dropped." % table)
+            
     def queryprofiles(self, profile=None):
         '''
         List the available Query Manager profiles.

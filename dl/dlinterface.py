@@ -81,7 +81,7 @@ def getUserToken (self):
 def checkLogin (self):
     '''  Check if the user is already logged in.  If not, give a warning message
     '''
-    if self.loginstatus != 'loggedin':
+    if self.loginstatus != 'loggedin' and self.loginuser != 'anonymous':
         print "You are not currently logged in.  Please use dl.login() to do so."
         return False
     else:

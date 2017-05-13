@@ -1480,7 +1480,7 @@ class Dlinterface:
         else:
             _dist = dist
 
-        images = svc.search((ra,dec), (dist/np.cos(dec*np.pi/180), dist), verbosity=2)
+        images = svc.search((ra,dec), (_dist/np.cos(dec*np.pi/180), _dist), verbosity=2)
         print "The image list contains",images.nrecs,"entries"
         
         ## Output value

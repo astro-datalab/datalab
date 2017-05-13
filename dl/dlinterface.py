@@ -733,7 +733,7 @@ class Dlinterface:
         
 
         
-    def listmydb(self, table='' verbose=True):
+    def listmydb(self, table=''):
         '''
         List the user's MyDB tables.
 
@@ -754,8 +754,9 @@ class Dlinterface:
 
         .. code-block:: python
      
-            dl.listmydb()
-
+            print dl.listmydb()
+            table
+            table2
 
         '''
         # Check if we are logged in
@@ -767,8 +768,6 @@ class Dlinterface:
         except Exception as e:
             print ("Error listing MyDB tables.")
         else:
-            if verbose is True:
-                print (res)
             return res
             
             

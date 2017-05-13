@@ -1475,7 +1475,7 @@ class Dlinterface:
         # Use pyvo.dal.sia for now
 
         svc = sia.SIAService (SIA_DEF_ACCESS_URL)
-        if size is None:
+        if dist is None:
             _dist = SIA_DEF_SIZe
         else:
             _dist = dist

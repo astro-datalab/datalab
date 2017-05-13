@@ -296,6 +296,8 @@ class Dlinterface:
             if user == None or user == '':
                 user = raw_input('Enter user: ')
             if user == 'anonymous':
+                if self.loginstatus == 'loggedin':   # logout previous user first
+                    self.logout(verbose=False)
                 token = authClient.login('anonymous','')
                 self.loginuser = user
             else:
@@ -337,7 +339,7 @@ class Dlinterface:
         #    #mount.run()
         return
 
-    def logout(self, unmount=None):
+    def logout(self, unmount=None, verbose=True):
         '''
         Logout out of the Data Lab.
 
@@ -373,7 +375,8 @@ class Dlinterface:
             self.dl.save("login", "status", "loggedout")
             self.dl.save("login", "user", "")
             self.dl.save("login", "authtoken", "")
-            print ("'%s' is now logged out of the Data Lab" % user)
+            if verbose is True:
+                print ("'%s' is now logged out of the Data Lab" % user)
             self.loginstatus = "loggedout"
             #self.user = ""
             #self.token = ""
@@ -975,25 +978,20 @@ class Dlinterface:
         Parameters
         ----------
         source : str
-             The name of the source file on VOSpace with file system prefix, e.g. ``vos://file2.txt``.
+             The name of the source file on VOSpace, e.g. ``file2.txt``.
 
         destination : str
              The name of the local destination file, e.g. ``file1.txt``.
 
-        Returns
-        -------
-        results : str
-            The list of files in VOSpace.
-
         Example
         -------
 
-        List the files.
+        Get a query output table called ``table1_output.txt`` from VOSpace.
 
         .. code-block:: python
      
-            dl.ls()
-
+            dl.get('table1_output.txt','table1_output.txt')
+            (1/1) [====================] [   9.1K] table1_output.txt
 
         '''
         # Not enough information input
@@ -1021,22 +1019,18 @@ class Dlinterface:
              The name of a local file to upload to VOSpace, e.g. ``file1.txt``.
 
         destination : str
-             The name of the destination file with file system prefix, e.g. ``vos://file2.txt``.
-
-        Returns
-        -------
-        results : str
-            The list of files in VOSpace.
+             The name of the destination file with, e.g. ``file2.txt``.  The destination
+             file can have the vos:// prefix but it is not required.
 
         Example
         -------
 
-        List the files.
+        Put a catalog called ``cat.fits`` into VOSpace.
 
         .. code-block:: python
      
-            dl.ls()
-
+            dl.put('cat.fits','cat.fits')
+            (1 / 1) cat.fits -> vos://cat.fits
 
         '''
         # Not enough information input
@@ -1056,7 +1050,44 @@ class Dlinterface:
         
     def mv(self, source=None, destination=None, verbose=True):
         '''
-        The move command method
+        Move a file in Data Lab VOSpace.
+
+        Parameters
+        ----------
+        source : str
+             The name the file in VOSpace to move/rename, e.g. ``file1.txt``.
+
+        destination : str
+             The new name of the file in VOSpace (e.g. ``newfile1.txt``) or the
+             directory to move it to.
+
+        Example
+        -------
+
+        Rename the file ``file.txt`` to ``newfile.txt``.
+
+        .. code-block:: python
+     
+            dl.ls()
+            file.txt
+
+            dl.mv('file.txt','newfile.txt')
+
+            dl.ls()
+            newfile.txt
+
+        Move the file ``output.fits`` to the ``results/`` directory.
+
+        .. code-block:: python
+     
+            dl.ls()
+            output.txt, results
+
+            dl.mv('output.fits','results/output.fits')
+
+            dl.ls()
+            results/output.txt
+
         '''
         # Not enough information input
         if (source is None) or (destination is None):
@@ -1075,7 +1106,31 @@ class Dlinterface:
 
     def cp(self, source=None, destination=None, verbose=True):
         '''
-        Copy a file in Data Lab
+        Copy a file in Data Lab VOSpace.
+
+        Parameters
+        ----------
+        source : str
+             The name of the file in VOSpace to copy, e.g. ``file1.txt``.
+
+        destination : str
+             The new name of the file in VOSpace, e.g. ``newfile1.txt``.
+
+        Example
+        -------
+
+        Copy the file ``file.txt`` to ``newfile.txt``.
+
+        .. code-block:: python
+     
+            dl.ls()
+            file1.txt
+
+            dl.cp('file1.txt','newfile.txt')
+
+            dl.ls()
+            file1.txt, newfile.txt
+
         '''
         # Not enough information input
         if (source is None) or (destination is None):
@@ -1094,7 +1149,28 @@ class Dlinterface:
 
     def rm(self, name=None, verbose=True):
         '''
-        Delete files in Data Lab
+        Delete files in Data Lab VOSpace.
+
+        Parameters
+        ----------
+        name : str
+             The name of the file in VOSpace to delete, e.g. ``file1.txt``.
+
+        Example
+        -------
+
+        Delete the file ``file1.txt``.
+
+        .. code-block:: python
+     
+            dl.ls()
+            file1.txt, file2.txt
+
+            dl.rm('file1.txt')
+
+            dl.ls()
+            file2.txt
+
         '''
         # Not enough information input
         if (name is None):
@@ -1113,7 +1189,31 @@ class Dlinterface:
         
     def ln(self, source=None, target=None):
         '''
-        Link a file in Data Lab
+        Link a file in Data Lab VOSpace.
+
+        Parameters
+        ----------
+        source : str
+             The name of the file in VOSpace to link, e.g. ``file1.txt``.
+
+        destination : str
+             The name of the link, e.g. ``file1link.txt``.
+
+        Example
+        -------
+
+        Create a link called ``iamlink`` to the file ``file1.txt``.
+
+        .. code-block:: python
+
+            dl.ls()
+            file1.txt
+     
+            dl.ln('file1.txt','iamlink')
+
+            dl.ls()
+            file1.txt, iamlink
+
         '''
         # Not enough information input
         if (source is None) or (target is None):
@@ -1132,7 +1232,25 @@ class Dlinterface:
         
     def tag(self, name=None, tag=None):
         '''
-        Tag a file in Data Lab
+        Tag or annotate a file or directory in Data Lab VOSpace.
+
+        Parameters
+        ----------
+        name : str
+             The name of the file or directory in VOSpace to tag, e.g. ``file1.txt``.
+
+        tag : str
+             The name of the tag, e.g. ``research``.
+
+        Example
+        -------
+
+        Tag the directory ``data1/`` with the tag ``results``.
+
+        .. code-block:: python
+
+            dl.tag('data1','results')
+
         '''
         # Not enough information input
         if (name is None) or (tag is None):

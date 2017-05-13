@@ -87,6 +87,17 @@ def checkLogin (self):
     else:
         return True
 
+# function/method to create the mapping, where to store it?, probabaly store it in "dl" object
+#    but only create it and load the necessary modules once it's been requested
+# function/method to process the output to preferred output
+# attribute of Dlinterface to store the submitted jobs with dict or ordereddict
+#    keep the jobid, query, async, fmt, username, time
+#    maybe make it a query "history" that contains all the settings and when it was submitted
+#    maybe clear the history when someone logs out or switches a user
+# Add -l like option to "ls" to give more information, if you use "raw" format then you get
+#    lots of stuff back that needs to be parsed.  Maybe return an array or structured array
+#    with all the info on the files, name, size date, file/directory, etc.
+
 class DLInteract:
     '''
        Main class for Data Lab interactions
@@ -636,22 +647,30 @@ class Dlinterface:
         Parameters
         ----------
         jobid : str
-             The unique job identifier for the asynchronous query which was returned by ql.query()
+             The unique job identifier for the asynchronous query which was returned by :func:`dl.query()`.
              when the query job was submitted.
+
+        Returns
+        -------
+        status : str
+            The status of the query, which can be one of the following:
+            ``QUEUED``     the query job is in queue and waiting to be executed.
+            ``EXECUTING``  the query job is currently running.
+            ``COMPLETED``  the query is done and the results are ready to be retrieved with :func:`dl.queryresults()`.
+            ``ERROR``      there was a problem with the query.
 
         Example
         -------
 
-        Submit an asynchronous query and then check the status
+        Submit an asynchronous query and then check the status.
 
         .. code-block:: python
      
-            jobid = dl.query('SELECT * from smash_dr1.source LIMIT 100',async=True)
+            jobid = dl.query('SELECT ra,dec from smash_dr1.source LIMIT 100',async=True)
             Asynchronous query JobID = uqrcs8a5n8s6d0je 
 
-            dl.status()
-            User myusername is logged into the Data Lab
-
+            dl.querystatus(jobid)
+            COMPLETED
 
         '''
         # Not enough information input
@@ -667,6 +686,38 @@ class Dlinterface:
     def queryresults(self, jobid=None):
         '''
         Get the async query results.
+
+        Parameters
+        ----------
+        jobid : str
+             The unique job identifier for the asynchronous query which was returned by :func:`ql.query`
+             when the query job was submitted.
+
+        Returns
+        -------
+        result : str
+            The result of the query in the requested format (see ``fmt`` in :func:`dl.query`.
+
+        Example
+        -------
+
+        Submit an asynchronous query and then check the status.
+
+        .. code-block:: python
+     
+            jobid = dl.query('SELECT ra,dec from smash_dr1.source LIMIT 3',async=True)
+            Asynchronous query JobID = uqrcs8a5n8s6d0je 
+
+            dl.querystatus(jobid)
+            COMPLETED
+
+            results = dl.queryresults(jobid)
+            print results
+            ra,dec
+            103.068354922718,-37.973538878907299
+            103.071774116284,-37.973599429479599
+            103.071597827998,-37.972329108796401
+
         '''
         # Not enough information input
         if (jobid is None):
@@ -676,8 +727,10 @@ class Dlinterface:
         if not checkLogin(self):
             return
         token = getUserToken(self)
-        print (queryClient.results (token, jobId=jobid))
+        res = (queryClient.results (token, jobId=jobid))
 
+        # CHANGE TO REQUESTED FORMAT??  But how do we know what that was.
+        
     def listmydb(self, table=None):
         '''
         List the user's MyDB tables.

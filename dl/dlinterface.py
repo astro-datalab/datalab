@@ -172,6 +172,18 @@ class Dlinterface:
         self.verbose = verbose
         if verbose is True:
             print "Welcome to the Data Lab python interface.  Type dl.help() for help."
+
+    '''
+       Print method, just print the help
+    '''
+    def __str__(self):
+        self.help()
+
+    '''
+       Represent method, just print the help
+    '''
+    def __repr__(self):
+        self.help()
         
 #### HELP ########
 

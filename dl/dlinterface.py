@@ -178,6 +178,7 @@ class Dlinterface:
     '''
     def __str__(self):
         self.help()
+        return " "
 
     '''
        Represent method, just print the help

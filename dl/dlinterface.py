@@ -184,6 +184,7 @@ class Dlinterface:
     '''
     def __repr__(self):
         self.help()
+        return " "
         
 #### HELP ########
 

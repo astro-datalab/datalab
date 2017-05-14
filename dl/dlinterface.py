@@ -1453,14 +1453,46 @@ class Dlinterface:
 
 # why not use queryClient SIAQUERY????
 
-    def siaquery(self, ra=None, dec=None, dist=None, out=None):
+    def siaquery(self, ra=None, dec=None, dist=None, file=None, out=None, verbose=False):
         '''
-        SIA query with an uploaded file
+        Perform a SIA query with a set of coordinates or from an uploaded file.
+
+        Parameters
+        ----------
+        ra : float
+             The right ascension (in degrees) of the point to use for the search.
+
+        dec : float
+             The declination (in degrees) of the point to use for the search.
+
+        dist : float
+             The search distance (radius) in degrees.  The default is 0.0085 deg.
+
+        file : str
+             The name of a file with coordinates and search radii to use for the search.
+
+        out : str
+             The output method.  The options are to VOSpace or mydb.  The default is to
+             return the results to the command line.
+
+        verbose : bool
+             Use verbose output.  The default is False.
+
+        Example
+        -------
+
+        Perform a simple SIA search.
+
+        .. code-block:: python
+
+            tab = dl.siaquery(0.0,0.0)
+
+
         '''
 
         # Not enough information input
-        if (ra is None) or (dec is None):
-            print "Syntax - dl.siaquery(ra, dec, dist, out=None)"
+        if ((ra is None) or (dec is None)) :
+            print "Syntax - dl.siaquery(ra, dec, dist, file=None, out=None, verbose=False)"
             return
         # Check if we are logged in
         if not checkLogin(self):
@@ -1501,6 +1533,10 @@ class Dlinterface:
 
         images = svc.search((ra,dec), (_dist/np.cos(dec*np.pi/180), _dist), verbosity=2)
         print "The image list contains",images.nrecs,"entries"
+        vot = images.votable
+        # Print the results if verbose set
+        if verbose is True:
+            print vot
         
         ## Output value
         #if out != '':
@@ -1510,4 +1546,4 @@ class Dlinterface:
         #        file.close()
         #else:
         #    print (r.content)
-        return images
+        return vot

@@ -23,11 +23,20 @@ import os
 from subprocess import Popen, PIPE
 from time import gmtime, strftime, sleep
 try:
-    import ConfigParser                         # Python 2
-    from urllib import quote_plus               # Python 2
+    import ConfigParser
+    from urllib import quote_plus, urlencode		# Python 2
+    from urllib2 import urlopen, Request                # Python 2
 except ImportError:
-    import configParse as ConfigParser          # Python 2
-    from urllib.parse import quote_plus         # Python 3
+    import configParse as ConfigParser                  # Python 2
+    from urllib.parse import quote_plus, urlencode      # Python 3
+    from urllib.request import urlopen, Request         # Python 3
+
+#try:
+#    import ConfigParser                         # Python 2
+#    from urllib import quote_plus               # Python 2
+#except ImportError:
+#    import configParse as ConfigParser          # Python 2
+#    from urllib.parse import quote_plus         # Python 3
     
 # std lib imports
 import getpass
@@ -96,7 +105,7 @@ def checkLogin (self):
 
 # function/method to create the mapping, where to store it?, probabaly store it in "dl" object
 #    but only create it and load the necessary modules once it's been requested
-# function/method to process the output to preferred output
+# function/method to process the query output to preferred output
 # attribute of Dlinterface to store the submitted jobs with dict or ordereddict
 #    keep the jobid, query, async, fmt, username, time
 #    maybe make it a query "history" that contains all the settings and when it was submitted
@@ -245,7 +254,35 @@ class Dlinterface:
                 help(cmd)
             else:
                 print ("%s is not a supported command." % command)
+
+    def servicestatus():
+        '''
+        This checks on the status of the DL services.
+        '''
+
+        # Check that the auth Manager/service is running
+        if authClient.isAlive() is True:
+            print "Authorization Manager is running"
+        else:
+            print "Authorization Manager is NOT running"
         
+        # Do a simple authClient token request
+        #token = authClient.login('anonymous')
+        
+        # Check that the store Manager/service is running
+        request = Request("http://dlsvcs.datalab.noao.edu/auth")
+        response = urlopen(request).read()
+        if reponse is True:
+            print "Storage Manager is running"
+        else:
+            print "Storage Manager is NOT running"
+        
+        # Do a simple VOSpace check with anonyous
+
+        # Check that the query Manager/service is running
+
+        # Do simple query
+                
         
 ################################################
 #  Account Login Tasks

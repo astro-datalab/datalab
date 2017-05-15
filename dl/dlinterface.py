@@ -270,9 +270,14 @@ class Dlinterface:
         #token = authClient.login('anonymous')
         
         # Check that the store Manager/service is running
-        request = Request("http://dlsvcs.datalab.noao.edu/auth")
-        response = urlopen(request).read()
-        if response is True:
+        try:
+            request = Request("http://dlsvcs.datalab.noao.edu/store")
+            response = urlopen(request).read()
+        except Exception:
+            storerunning = False
+        else:
+            storerunning = (True if response is not None else False)
+        if storerunning is True:
             print "Storage Manager is running"
         else:
             print "Storage Manager is NOT running"

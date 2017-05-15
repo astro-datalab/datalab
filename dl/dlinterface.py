@@ -286,9 +286,21 @@ class Dlinterface:
         # Do a simple VOSpace check with anonyous
 
         # Check that the query Manager/service is running
-
+        try:
+            request = Request("http://dlsvcs.datalab.noao.edu/query")
+            response = urlopen(request).read()
+            print response
+        except Exception:
+            queryrunning = False
+        else:
+            queryrunning = (True if response is not None else False)
+        if storerunning is True:
+            print "Query Manager is running"
+        else:
+            print "Query Manager is NOT running"
+        
         # Do simple query
-                
+
         
 ################################################
 #  Account Login Tasks

@@ -272,7 +272,7 @@ class Dlinterface:
         # Check that the store Manager/service is running
         request = Request("http://dlsvcs.datalab.noao.edu/auth")
         response = urlopen(request).read()
-        if reponse is True:
+        if response is True:
             print "Storage Manager is running"
         else:
             print "Storage Manager is NOT running"

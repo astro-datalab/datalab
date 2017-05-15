@@ -271,7 +271,7 @@ class Dlinterface:
         
         # Check that the store Manager/service is running
         try:
-            request = Request("http://dlsvcs.datalab.noao.edu/store")
+            request = Request("http://dlsvcs.datalab.noao.edu/storage")
             response = urlopen(request).read()
             print response
         except Exception:

@@ -273,6 +273,7 @@ class Dlinterface:
         try:
             request = Request("http://dlsvcs.datalab.noao.edu/store")
             response = urlopen(request).read()
+            print response
         except Exception:
             storerunning = False
         else:

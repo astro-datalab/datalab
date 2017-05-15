@@ -255,7 +255,7 @@ class Dlinterface:
             else:
                 print ("%s is not a supported command." % command)
 
-    def servicestatus():
+    def servicestatus(self):
         '''
         This checks on the status of the DL services.
         '''

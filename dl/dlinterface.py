@@ -816,7 +816,7 @@ class Dlinterface:
         if self.qhistory is None:
             print "No queries made so far"
         else:
-            keys = self.qhistory.keys().sort()
+            keys = sorted(self.qhistory.keys())
             for k in keys:
                 v = self.qhistory[k]
                 # qid, type, async, query, time, jobid, username, format, status/nrows

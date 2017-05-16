@@ -927,13 +927,13 @@ class Dlinterface:
         # QID was input
         if (type(jobid) is int) or (type(jobid) is str and jobid.isdigit() is True):
             keys = sorted(self.qhistory.keys())
-            if ((jobid in keys) is False):           # no QID 
-                print ("QID %s not found" % str(jobid))
+            if ((int(jobid) in keys) is False):           # no QID 
+                print ("QID = %s not found" % str(jobid))
                 return
-            v = self.qhistory[jobid]
+            v = self.qhistory[int(jobid)]
             # qid, type, async, query, time, jobid, username, format, status/nrows
             if v[2] is False:         # not an async query
-                print ("QID = %s is not an ASYNC query" % jobid)
+                print ("QID = %s is not an ASYNC query" % str(jobid))
                 return
             _jobid = v[5]
         # Get the status

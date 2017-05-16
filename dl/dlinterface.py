@@ -932,6 +932,9 @@ class Dlinterface:
                 return
             v = self.qhistory[jobid]
             # qid, type, async, query, time, jobid, username, format, status/nrows
+            if v[2] is False:         # not an async query
+                print ("QID = %s is not an ASYNC query" % jobid)
+                return
             _jobid = v[5]
         # Get the status
         print (queryClient.status (token, jobId=_jobid))

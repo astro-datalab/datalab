@@ -132,7 +132,7 @@ def areLoginsWorking():
     if authClient.isAlive() is True:
         # Do simple token request
         url = "http://dlsvcs.datalab.noao.edu/auth/login?"
-        query_args = {"username": "anonymous", "password": " ",
+        query_args = {"username": "datalab", "password": "datalab",
                       "profile": "default", "debug": False}
         try:
             r = requests.get(url, params=query_args, timeout=1)

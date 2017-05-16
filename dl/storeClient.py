@@ -22,6 +22,10 @@ Import via
 import os, sys
 import fnmatch, glob
 import requests
+try:
+    from urllib2 import urlopen, Request                # Python 2
+except ImportError:
+    from urllib.request import urlopen, Request         # Python 3
 from io import StringIO		# Python 2/3 compatible
 import json
 
@@ -40,6 +44,20 @@ class storeClientError (Exception):
     def __init__(self, message):
         self.message = message
 
+
+def isAlive(svc_url=DEF_SERVICE_URL):
+    """ Check whether the StoreManager service at the given URL is
+        alive and responding.  This is a simple call to the root 
+        service URL or ping() method.
+    """
+    try:
+        request = Request(svc_url)
+        response = urlopen(request).read()
+    except Exception:
+        return False
+    else:
+        return (True if response is not None else False)
+        
 
 # Pretty-printer for file sizes.
 def sizeof_fmt(num):

@@ -41,13 +41,7 @@ import requests
     
 # std lib imports
 import getpass
-from functools import partial
-from cStringIO import StringIO
-from collections import OrderedDict
-import numpy as np
-from pandas import read_csv
-from astropy.table import Table
-from astropy.io.votable import parse_single_table
+
 
 # use this for SIA service for now
 from pyvo.dal import sia
@@ -164,6 +158,31 @@ def isListWorking():
 
     return storeworking
 
+def addFormatMapping(self):
+    ''' Add the format mapping information to the DL object
+    '''
+    from functools import partial
+    from cStringIO import StringIO
+    from collections import OrderedDict
+    import numpy as np
+    from pandas import read_csv
+    from astropy.table import Table
+    from astropy.io.votable import parse_single_table
+
+    # map outfmt container types to a tuple:
+    # (:func:`queryClient.query()` fmt-value, descriptive title,
+    # processing function for the result string)
+    mapping = OrderedDict([
+            ('csv'         , ('csv',     'CSV formatted table as a string', lambda x: x.getvalue())),
+            ('string'      , ('csv',     'CSV formatted table as a string', lambda x: x.getvalue())),
+            ('array'       , ('csv',     'Numpy array',                     partial(np.loadtxt,unpack=False,skiprows=1,delimiter=','))),
+            ('structarray' , ('csv',     'Numpy structured / record array', partial(np.genfromtxt,dtype=float,delimiter=',',names=True))),
+            ('pandas'      , ('csv',     'Pandas dataframe',                read_csv)),
+            ('table'       , ('csv',     'Astropy Table',                   partial(Table.read,format='csv'))),
+            ('votable'     , ('votable', 'Astropy VOtable',                 parse_single_table))
+        ])
+    self.fmtmapping = mapping
+    
     
 # function/method to create the mapping, where to store it?, probabaly store it in "dl" object
 #    but only create it and load the necessary modules once it's been requested
@@ -241,6 +260,7 @@ class Dlinterface:
         self.loginstatus = "loggedout"
         self.loginuser = ""
         self.verbose = verbose
+        self.fmtmapping = None
         if verbose is True:
             print "Welcome to the Data Lab python interface.  Type dl.help() for help."
 
@@ -275,10 +295,11 @@ class Dlinterface:
             print "Use dl.help(<command>) for specific help on a command."
             print " "
             print "-- Login and authentication --"
-            print "dl.login()     - Login to the Data Lab"
-            print "dl.logout()    - Logout of the Data Lab"
-            print "dl.status()    - Report on the user status"
-            print "dl.whoami()    - Print the current active user"
+            print "dl.login()          - Login to the Data Lab"
+            print "dl.logout()         - Logout of the Data Lab"
+            print "dl.status()         - Report on the user status"
+            print "dl.whoami()         - Print the current active user"
+            print "dl.servicestatus()  - Report on the status of the DL services"
             print " "
             print "-- File system operations --"
             print "dl.ls()        - List a location in Data Lab"
@@ -711,19 +732,20 @@ class Dlinterface:
         else:
             adql = _query
 
-        # map outfmt container types to a tuple:
-        # (:func:`queryClient.query()` fmt-value, descriptive title,
-        # processing function for the result string)
-        mapping = OrderedDict([
-            ('csv'         , ('csv',     'CSV formatted table as a string', lambda x: x.getvalue())),
-            ('string'      , ('csv',     'CSV formatted table as a string', lambda x: x.getvalue())),
-            ('array'       , ('csv',     'Numpy array',                     partial(np.loadtxt,unpack=False,skiprows=1,delimiter=','))),
-            ('structarray' , ('csv',     'Numpy structured / record array', partial(np.genfromtxt,dtype=float,delimiter=',',names=True))),
-            ('pandas'      , ('csv',     'Pandas dataframe',                read_csv)),
-            ('table'       , ('csv',     'Astropy Table',                   partial(Table.read,format='csv'))),
-            ('votable'     , ('votable', 'Astropy VOtable',                 parse_single_table))
-        ])
-
+        ## map outfmt container types to a tuple:
+        ## (:func:`queryClient.query()` fmt-value, descriptive title,
+        ## processing function for the result string)
+        #mapping = OrderedDict([
+        #    ('csv'         , ('csv',     'CSV formatted table as a string', lambda x: x.getvalue())),
+        #    ('string'      , ('csv',     'CSV formatted table as a string', lambda x: x.getvalue())),
+        #    ('array'       , ('csv',     'Numpy array',                     partial(np.loadtxt,unpack=False,skiprows=1,delimiter=','))),
+        #    ('structarray' , ('csv',     'Numpy structured / record array', partial(np.genfromtxt,dtype=float,delimiter=',',names=True))),
+        #    ('pandas'      , ('csv',     'Pandas dataframe',                read_csv)),
+        #    ('table'       , ('csv',     'Astropy Table',                   partial(Table.read,format='csv'))),
+        #    ('votable'     , ('votable', 'Astropy VOtable',                 parse_single_table))
+        #])
+        mapping = self.fmtmapping
+        
         # The queryClient "fmt" will depend on the requested output format
         try:
             qcfmt = mapping[fmt][0]

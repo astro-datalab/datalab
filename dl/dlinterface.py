@@ -123,9 +123,9 @@ def areQueriesWorking (self):
             if type(r.content) == str and len(r.content.split('/n')) == 4 and r.content[0:6] == 'ra,dec':
                 queryalive = True
     if queryalive is True:
-        print "Query service is working"
+        print ("Query service is working")
     else:
-        print "Query service is NOT working"
+        print ("Query service is NOT working")
     
     
 # function/method to create the mapping, where to store it?, probabaly store it in "dl" object

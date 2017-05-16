@@ -104,7 +104,7 @@ def checkLogin (self):
     else:
         return True
 
-def areQueriesWorking (self):
+def areQueriesWorking ():
     ''' This checks if the Query Manager is returning proper queries.
     '''
     queryworking = False             # dead until proven alive

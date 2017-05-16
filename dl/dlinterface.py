@@ -181,10 +181,33 @@ def addFormatMapping(self):
             ('votable'     , ('votable', 'Astropy VOtable',                 parse_single_table))
         ])
     self.fmtmapping = mapping
+
+def reformatQueryOutput(self, res=None, fmt='csv'):
+    ''' Reformat the output of a query based on a format.
+    '''
+
+    # Not enough inputs
+    if res is None:
+        print ("Syntax - reformatQueryOutput(dl, results, fmt='csv'")
+        return ""
     
-    
-# function/method to create the mapping, where to store it?, probabaly store it in "dl" object
-#    but only create it and load the necessary modules once it's been requested
+    # Add the mapping information if not already loaded
+    if self.fmtmapping is None:
+        addFormatMapping(self)
+    mapping = self.fmtmapping
+        
+    # Check that this format is supported
+    if mapping.has_key(fmt) is False:
+        print ("Format %s not supported." % fmt)
+        return ""
+            
+    # Convert to the desired format
+    s = StringIO(res)
+    output = mapping[fmt][2](s)
+    print "Returning %s" % mapping[fmt][1]
+    return output
+                    
+        
 # function/method to process the query output to preferred output
 # attribute of Dlinterface to store the submitted jobs with dict or ordereddict
 #    keep the jobid, query, async, fmt, username, time
@@ -731,18 +754,7 @@ class Dlinterface:
         else:
             adql = _query
 
-        ## map outfmt container types to a tuple:
-        ## (:func:`queryClient.query()` fmt-value, descriptive title,
-        ## processing function for the result string)
-        #mapping = OrderedDict([
-        #    ('csv'         , ('csv',     'CSV formatted table as a string', lambda x: x.getvalue())),
-        #    ('string'      , ('csv',     'CSV formatted table as a string', lambda x: x.getvalue())),
-        #    ('array'       , ('csv',     'Numpy array',                     partial(np.loadtxt,unpack=False,skiprows=1,delimiter=','))),
-        #    ('structarray' , ('csv',     'Numpy structured / record array', partial(np.genfromtxt,dtype=float,delimiter=',',names=True))),
-        #    ('pandas'      , ('csv',     'Pandas dataframe',                read_csv)),
-        #    ('table'       , ('csv',     'Astropy Table',                   partial(Table.read,format='csv'))),
-        #    ('votable'     , ('votable', 'Astropy VOtable',                 parse_single_table))
-        #])
+        # Add the mapping information if not already loaded
         if self.fmtmapping is None:
             addFormatMapping(self)
         mapping = self.fmtmapping
@@ -772,10 +784,11 @@ class Dlinterface:
             # Synchronous
             elif out == '' or out is None:
                 # Convert to the desired format
-                s = StringIO(res)
-                output = mapping[fmt][2](s)
-                print "Returning %s" % mapping[fmt][1]
-                return output
+                return reformatQueryOutput(dl,res,fmt)
+                #s = StringIO(res)
+                #output = mapping[fmt][2](s)
+                #print "Returning %s" % mapping[fmt][1]
+                #return output
                     
         except Exception as e:
             if not async and e.message is not None:

@@ -859,11 +859,17 @@ class Dlinterface:
                 if sum(asyncv) == 0:
                     print "No ASYNC queries made so far"
                     return
-
+                
+            # Loop through the query history
             for k in keys:
-                v = self.qhistory[k]
                 # qid, type, async, query, time, jobid, username, format, status/nrows
-                # get the query status for ASYNC queries
+                v = self.qhistory[k]
+                # Get the query status for ASYNC queries
+                if v[2] is True:
+                    jobid = v[5]
+                    token = getUserToken(self)
+                    stat = queryClient.querystatus(token, jobID=jobid)
+                    v[8] = stat
                 if (async is True and v[2] == True) or (async is not True):
                     print ("%d  %s  %s  %s  %s  %s  %s  '%s'" %
                            (v[0], strftime('%Y-%m-%d %H:%M:%S', localtime(v[4])), v[1], 'ASYNC' if v[2] else 'SYNC', v[7], 

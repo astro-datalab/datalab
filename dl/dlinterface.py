@@ -283,7 +283,7 @@ class Dlinterface:
         self.loginuser = ""
         self.verbose = verbose
         self.fmtmapping = None
-        self.queryhistory = None
+        self.qhistory = None
         if verbose is True:
             print "Welcome to the Data Lab python interface.  Type dl.help() for help."
 
@@ -783,12 +783,12 @@ class Dlinterface:
             if async:
                 jobid = res
                 status = 'SUBMITTED'
-            if self.queryhistory is None:
+            if self.qhistory is None:
                 qid = 1
-                self.queryhistory = {qid : (qid, type, async, _query, time(), jobid, getUserName(self), fmt, status)}
+                self.qhistory = {qid : (qid, type, async, _query, time(), jobid, getUserName(self), fmt, status)}
             else:
-                qid = int(max(self.queryhistory.keys())) + 1
-                self.queryhistory[qid] = (qid, type, async, _query, time(), jobid, getUserName(self), fmt, status) 
+                qid = int(max(self.qhistory.keys())) + 1
+                self.qhistory[qid] = (qid, type, async, _query, time(), jobid, getUserName(self), fmt, status) 
             
             # Return the results
             
@@ -813,12 +813,12 @@ class Dlinterface:
         '''
         Report the history of queries made so far.
         '''
-        if self.queryhistory is None:
+        if self.qhistory is None:
             print "No queries made so far"
         else:
-            keys = self.queryhistory.keys().sort()
+            keys = self.qhistory.keys().sort()
             for k in keys:
-                v = self.queryhistory[k]
+                v = self.qhistory[k]
                 # qid, type, async, query, time, jobid, username, format, status/nrows
                 print (v[0], v[1], v[2], v[3], strftime('%Y-%m-%d %H:%M:%S', localtime(v[4])),
                        v[5], v[6], v[7])

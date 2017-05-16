@@ -21,7 +21,7 @@ Import via
 
 import os
 from subprocess import Popen, PIPE
-from time import gmtime, strftime, sleep
+from time import time, gmtime, strftime, sleep
 try:
     import ConfigParser
     from urllib import quote_plus, urlencode		# Python 2
@@ -209,7 +209,6 @@ def reformatQueryOutput(self, res=None, fmt='csv', verbose=True):
     return output
                     
         
-# function/method to process the query output to preferred output
 # attribute of Dlinterface to store the submitted jobs with dict or ordereddict
 #    keep the jobid, query, async, fmt, username, time
 #    maybe make it a query "history" that contains all the settings and when it was submitted
@@ -284,6 +283,7 @@ class Dlinterface:
         self.loginuser = ""
         self.verbose = verbose
         self.fmtmapping = None
+        self.queryhistory = None
         if verbose is True:
             print "Welcome to the Data Lab python interface.  Type dl.help() for help."
 
@@ -766,6 +766,26 @@ class Dlinterface:
         except:
             print ("Format %s not supported." % fmt)
             return
+
+
+
+
+# attribute of Dlinterface to store the submitted jobs with dict or ordereddict
+#    keep the jobid, query, async, fmt, username, time
+#    maybe make it a query "history" that contains all the settings and when it was submitted
+#    maybe clear the history when someone logs out or switches a user
+                 
+    mapping = OrderedDict([
+            ('csv'         , ('csv',     'CSV formatted table as a string', lambda x: x.getvalue())),
+            ('string'      , ('csv',     'CSV formatted table as a string', lambda x: x.getvalue())),
+            ('array'       , ('csv',     'Numpy array',                     partial(np.loadtxt,unpack=False,skiprows=1,delimiter=','))),
+            ('structarray' , ('csv',     'Numpy structured / record array', partial(np.genfromtxt,dtype=float,delimiter=',',names=True))),
+            ('pandas'      , ('csv',     'Pandas dataframe',                read_csv)),
+            ('table'       , ('csv',     'Astropy Table',                   partial(Table.read,format='csv'))),
+            ('votable'     , ('votable', 'Astropy VOtable',                 parse_single_table))
+        ])
+    self.fmtmapping = mapping
+        
         
         # Execute the query.
         if profile != "default":
@@ -776,6 +796,13 @@ class Dlinterface:
             res = queryClient.query (token, adql=adql, sql=sql, 
                                      fmt=qcfmt, out=out, async=async)
 
+            # Add this query to the query history
+            QID = int(max(self.queryhistory.keys()))+1
+            jobid = None
+            if async:
+                jobid = res
+            self.queryhistory[QID] = (QID, type, async, _query, time.time(), jobid, getUserName(), fmt) 
+            
             # Return the results
             
             # Asynchronous

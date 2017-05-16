@@ -856,15 +856,14 @@ class Dlinterface:
                 asyncv.append(v[2])      # add async/sync values
                 # qid, type, async, query, time, jobid, username, format, status/nrows
                 # get the query status for ASYNC queries
-                if (async is True and v[2] == 'async') or (async is False):
+                if (async is True and v[2] == True) or (async is False):
                     print ("%d  %s  %s  %s  %s  %s  %s  '%s'" %
                            (v[0], strftime('%Y-%m-%d %H:%M:%S', localtime(v[4])), v[1], 'ASYNC' if v[2] else 'SYNC', v[7], 
                             str(v[8]), v[5] if v[2] else "--", v[3]))
                 # Maybe leave off the jobid if we are using QID instead??!!
             # No async queries?
-            #if async is True and 
-            print asyncv
-                
+            if async is True and sum(asyncv) == 0:
+                print "No ASYNC queries made so far"
                 
     def querystatus(self, jobid=None):
         '''

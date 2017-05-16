@@ -766,26 +766,6 @@ class Dlinterface:
         except:
             print ("Format %s not supported." % fmt)
             return
-
-
-
-
-# attribute of Dlinterface to store the submitted jobs with dict or ordereddict
-#    keep the jobid, query, async, fmt, username, time
-#    maybe make it a query "history" that contains all the settings and when it was submitted
-#    maybe clear the history when someone logs out or switches a user
-                 
-    mapping = OrderedDict([
-            ('csv'         , ('csv',     'CSV formatted table as a string', lambda x: x.getvalue())),
-            ('string'      , ('csv',     'CSV formatted table as a string', lambda x: x.getvalue())),
-            ('array'       , ('csv',     'Numpy array',                     partial(np.loadtxt,unpack=False,skiprows=1,delimiter=','))),
-            ('structarray' , ('csv',     'Numpy structured / record array', partial(np.genfromtxt,dtype=float,delimiter=',',names=True))),
-            ('pandas'      , ('csv',     'Pandas dataframe',                read_csv)),
-            ('table'       , ('csv',     'Astropy Table',                   partial(Table.read,format='csv'))),
-            ('votable'     , ('votable', 'Astropy VOtable',                 parse_single_table))
-        ])
-    self.fmtmapping = mapping
-        
         
         # Execute the query.
         if profile != "default":

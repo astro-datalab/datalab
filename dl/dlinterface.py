@@ -285,49 +285,29 @@ class Dlinterface:
         This checks on the status of the DL services.
         '''
 
-        # Check that the auth Manager/service is running
-        if authClient.isAlive() is True:
-            print "Authorization service is running"
-        else:
-            print "Authorization service is NOT running"
+        ## Check that the auth Manager/service is running
+        #if authClient.isAlive() is True:
+        #    print "Authorization service is running"
+        #else:
+        #    print "Authorization service is NOT running"
         
         # Do a simple authClient token request
         #token = authClient.login('anonymous')
         
-        # Check that the store Manager/service is running
-        storealive = storeClient.isAlive()
-        if storealive is True:
-            print "Storage service is running"
-        else:
-            print "Storage service is NOT running"
+        ## Check that the store Manager/service is running
+        #storealive = storeClient.isAlive()
+        #if storealive is True:
+        #    print "Storage service is running"
+        #else:
+        #    print "Storage service is NOT running"
 
-        # Check that the query Manager/service is running
-        if queryClient.isAlive() is True:
-            print "Query Manager is running"
-            queryalive = True
-        else:
-            print "Query Manager is NOT running"
-            queryalive = False
-
-        queryalive = False
-        if queryClient.isAlive() is True:
-            # Do simple query with timeout
-            headers = {'Content-Type': 'text/ascii', 'X-DL-AuthToken': ANON_TOKEN}
-            query = quote_plus('select ra,dec from smash_dr1.object limit 2')
-            dburl = '%s/query?sql=%s&ofmt=%s&out=%s&async=%s' % (
-                "http://dlsvcs.datalab.noao.edu/query", query, "csv", None, False)
-            try:
-                r = requests.get(dburl, headers=headers, timeout=1)
-            except:
-                print "Query service is NOT running"
-            else:
-
-            
-            print "Query service is running"
-        else:
-
-            print "Query service is NOT running"
-        
+        ## Check that the query Manager/service is running
+        #if queryClient.isAlive() is True:
+        #    print "Query Manager is running"
+        #    queryalive = True
+        #else:
+        #    print "Query Manager is NOT running"
+        #    queryalive = False
 
         
 ################################################

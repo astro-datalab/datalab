@@ -927,7 +927,7 @@ class Dlinterface:
         # QID was input
         if (type(jobid) is int) or (type(jobid) is str and jobid.isdigit() is True):
             keys = sorted(self.qhistory.keys())
-            if (jobid in keys is False):           # no QID 
+            if ((jobid in keys) is False):           # no QID 
                 print ("QID %s not found" % str(jobid))
                 return
             v = self.qhistory[jobid]

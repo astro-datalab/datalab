@@ -1011,6 +1011,11 @@ class Dlinterface:
                    fmt = v[7]
                    break
 
+        # Check first if the job has been completed
+        stat = queryClient.status (token, jobId=_jobid)
+        if stat != 'COMPLETED':
+            print "The job has not yet completed"
+            return
         # Get the results
         res = (queryClient.results (token, jobId=_jobid))
         # Convert to the desired format

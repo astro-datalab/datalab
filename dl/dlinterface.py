@@ -863,7 +863,7 @@ class Dlinterface:
             # Loop through the query history
             for k in keys:
                 # qid, type, async, query, time, jobid, username, format, status/nrows
-                v = self.qhistory[k]
+                v = list(self.qhistory[k])
                 # Get the query status for ASYNC queries
                 if v[2] is True:
                     jobid = v[5]

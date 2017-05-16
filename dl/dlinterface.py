@@ -916,12 +916,24 @@ class Dlinterface:
         '''
         # Not enough information input
         if (jobid is None):
-            print "Syntax - dl.querystatus(jobid)"
+            print "Syntax - dl.querystatus(jobId/QID)"
             return
         # Check if we are logged in
         if not checkLogin(self):
             return
         token = getUserToken(self)
+        # Was a QID or JobId input?
+        _jobid = jobid      # assume a jobid was input
+        # QID was input
+        if (type(jobid) is int) or (type(jobid) is str and jobid.isdigit() is True):
+            keys = sorted(self.qhistory.keys())
+            if (jobid in keys is False):           # no QID 
+                print ("QID %s not found" % str(jobid))
+                return
+            v = self.qhistory[jobid]
+            # qid, type, async, query, time, jobid, username, format, status/nrows
+            _jobid = v[5]
+        # Get the status
         print (queryClient.status (token, jobId=jobid))
 
     def queryresults(self, jobid=None):

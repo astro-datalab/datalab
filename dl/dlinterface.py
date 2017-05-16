@@ -340,7 +340,7 @@ class Dlinterface:
             print "dl.query()          - Query a remote data service in the Data Lab"
             print "dl.dropdb()         - Drop a user MyDB table"
             print "dl.listdb()         - List the user MyDB tables"
-            print "dl.queryhistory()   - List history of all queries made"
+            print "dl.queryhistory()   - List history of queries made"
             print "dl.queryresults()   - Get the async query results"
             print "dl.querystatus()    - Get an async query job status"
             print "dl.siaquery()       - Query a SIA service in the Data Lab"
@@ -812,18 +812,57 @@ class Dlinterface:
     def queryhistory(self, async=None):
         '''
         Report the history of queries made so far.
+
+        Parameters
+        ----------
+        async : bool
+            A boolean (True/False) of whether to only show the ASYNC queries.
+            By default all quries are shown.
+
+        Results
+        -------
+        The information on part queries is output to the screen with the following
+        columns: query ID, submission time, query type (sql/adql), sync or async query, jobid (for async queries),
+                 output format, status of query (or number of returned rows if sync query), query string
+
+        Examples
+        --------
+        Perform some queries and then list the history.
+
+        .. code-block:: python
+
+            data1 = dl.query('select ra,dec from smash_dr1.source limit 100',fmt='csv')
+            Returning CSV formatted table as a string
+
+            data2 = dl.query('select ra,dec from smash_dr1.source limit 500',fmt='pandas')
+            Returning Pandas dataframe
+
+            data3 = dl.query('select ra,dec from smash_dr1.source limit 1000',fmt='structarray')
+            Returning Numpy structured / record array
+
+            dl.queryhistory()
+            1  2017-05-16 13:27:34  sql  SYNC  pandas  100  --  'select ra,dec,gmag from smash_dr1.object limit 100'
+            2  2017-05-16 13:27:40  sql  SYNC  csv  500  --  'select ra,dec,gmag from smash_dr1.object limit 500'
+            3  2017-05-16 13:27:46  sql  SYNC  structarray  1000  --  'select ra,dec,gmag from smash_dr1.object limit 1000'
+
         '''
         if self.qhistory is None:
             print "No queries made so far"
         else:
             keys = sorted(self.qhistory.keys())
+            asyncv = ()
             for k in keys:
                 v = self.qhistory[k]
+                asyncv.append(v[2])
                 # qid, type, async, query, time, jobid, username, format, status/nrows
                 # get the query status for ASYNC queries
-                print ("%d  %s  %s  %s  %s  %s  %s  '%s'" %
-                       (v[0], strftime('%Y-%m-%d %H:%M:%S', localtime(v[4])), v[1], 'ASYNC' if v[2] else 'SYNC', v[7], 
-                        str(v[8]), v[5] if v[2] else "--", v[3]))
+                if (async is True and v[2] == 'async') or (async is False):
+                    print ("%d  %s  %s  %s  %s  %s  %s  '%s'" %
+                           (v[0], strftime('%Y-%m-%d %H:%M:%S', localtime(v[4])), v[1], 'ASYNC' if v[2] else 'SYNC', v[7], 
+                            str(v[8]), v[5] if v[2] else "--", v[3]))
+                # Maybe leave off the jobid if we are using QID instead??!!
+            print asyncv
+                
                 
     def querystatus(self, jobid=None):
         '''
@@ -832,8 +871,8 @@ class Dlinterface:
         Parameters
         ----------
         jobid : str
-             The unique job identifier for the asynchronous query which was returned by :func:`dl.query()`.
-             when the query job was submitted.
+            The unique job identifier for the asynchronous query which was returned by :func:`dl.query()`.
+            when the query job was submitted.
 
         Returns
         -------

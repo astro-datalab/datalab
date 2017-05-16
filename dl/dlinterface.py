@@ -141,7 +141,7 @@ def areLoginsWorking():
         else:
             # Check that the output looks right
             response = r.text
-            if type(r.content) == str and len(r.content.split('\n')) == 4 and r.content[0:6] == 'ra,dec':
+            if type(r.content) == str and r.content[0:7] == 'datalab':
                 authworking = True
 
     return authworking

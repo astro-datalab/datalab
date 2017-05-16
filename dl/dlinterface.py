@@ -182,7 +182,7 @@ def addFormatMapping(self):
         ])
     self.fmtmapping = mapping
 
-def reformatQueryOutput(self, res=None, fmt='csv'):
+def reformatQueryOutput(self, res=None, fmt='csv', verbose=True):
     ''' Reformat the output of a query based on a format.
     '''
 
@@ -204,7 +204,8 @@ def reformatQueryOutput(self, res=None, fmt='csv'):
     # Convert to the desired format
     s = StringIO(res)
     output = mapping[fmt][2](s)
-    print "Returning %s" % mapping[fmt][1]
+    if verbose is True:
+        print "Returning %s" % mapping[fmt][1]
     return output
                     
         
@@ -639,7 +640,7 @@ class Dlinterface:
 ################################################
 
 
-    def query(self, query=None, type='sql', fmt='csv', out=None, async=False, profile='default'):
+    def query(self, query=None, type='sql', fmt='csv', out=None, async=False, profile='default', verbose=True):
         '''
         Send a query to a remote query service.
 
@@ -784,7 +785,7 @@ class Dlinterface:
             # Synchronous
             elif out == '' or out is None:
                 # Convert to the desired format
-                return reformatQueryOutput(dl,res,fmt)
+                return reformatQueryOutput(self,res,fmt,verbose=verbose)
                 #s = StringIO(res)
                 #output = mapping[fmt][2](s)
                 #print "Returning %s" % mapping[fmt][1]

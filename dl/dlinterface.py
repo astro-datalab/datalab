@@ -862,7 +862,7 @@ class Dlinterface:
                 
             # Loop through the query history
             print ("-----------------------------------------------------------------------------------------------")
-            print ("QID        DATE        Typ e A/SYNC   Format    Status    JobID       Query")
+            print ("QID        DATE        Type  A/SYNC  Format   Status   JobID       Query")
             print ("-----------------------------------------------------------------------------------------------")
             for k in keys:
                 # qid, type, async, query, time, jobid, username, format, status/nrows
@@ -874,10 +874,11 @@ class Dlinterface:
                     stat = queryClient.status(token, jobId=jobid)
                     v[8] = stat
                 if (async is True and v[2] == True) or (async is not True):
-                    print ("%d  %s  %s  %s  %s  %s  %s  '%s'" %
+                    print ("%3d  %19s  %4s  %4s  %11s  %10s  %18s  '%s'" %
                            (v[0], strftime('%Y-%m-%d %H:%M:%S', localtime(v[4])), v[1], 'ASYNC' if v[2] else 'SYNC', v[7], 
                             str(v[8]), v[5] if v[2] else "--", v[3]))
-                # Maybe leave off the jobid if we are using QID instead??!!
+            print ("-----------------------------------------------------------------------------------------------")
+                    # Maybe leave off the jobid if we are using QID instead??!!
 
                 
     def querystatus(self, jobid=None):

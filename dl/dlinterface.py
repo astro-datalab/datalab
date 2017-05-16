@@ -30,7 +30,8 @@ except ImportError:
     import configParse as ConfigParser                  # Python 2
     from urllib.parse import quote_plus, urlencode      # Python 3
     from urllib.request import urlopen, Request         # Python 3
-
+import requests
+    
 #try:
 #    import ConfigParser                         # Python 2
 #    from urllib import quote_plus               # Python 2
@@ -103,6 +104,30 @@ def checkLogin (self):
     else:
         return True
 
+def areQueriesWorking (self):
+    ''' This checks if the Query Manager is returning proper queries.
+    '''
+    queryalive = False             # dead until proven alive
+    if queryClient.isAlive() is True:
+        # Do simple query with timeout
+        headers = {'Content-Type': 'text/ascii', 'X-DL-AuthToken': ANON_TOKEN}
+        query = quote_plus('select ra,dec from smash_dr1.object limit 2')
+        dburl = '%s/query?sql=%s&ofmt=%s&out=%s&async=%s' % (
+                "http://dlsvcs.datalab.noao.edu/query", query, "csv", None, False)
+        try:
+            r = requests.get(dburl, headers=headers, timeout=1)
+        except:
+            pass
+        else:
+            # Check that the output looks right
+            if type(r.content) == str and len(r.content.split('/n')) == 4 and r.content[0:6] == 'ra,dec':
+                queryalive = True
+    if queryalive is True:
+        print "Query service is working"
+    else:
+        print "Query service is NOT working"
+    
+    
 # function/method to create the mapping, where to store it?, probabaly store it in "dl" object
 #    but only create it and load the necessary modules once it's been requested
 # function/method to process the query output to preferred output
@@ -262,42 +287,47 @@ class Dlinterface:
 
         # Check that the auth Manager/service is running
         if authClient.isAlive() is True:
-            print "Authorization Manager is running"
+            print "Authorization service is running"
         else:
-            print "Authorization Manager is NOT running"
+            print "Authorization service is NOT running"
         
         # Do a simple authClient token request
         #token = authClient.login('anonymous')
         
         # Check that the store Manager/service is running
-        try:
-            request = Request("http://dlsvcs.datalab.noao.edu/storage")
-            response = urlopen(request).read()
-        except Exception:
-            storerunning = False
+        storealive = storeClient.isAlive()
+        if storealive is True:
+            print "Storage service is running"
         else:
-            storerunning = (True if response is not None else False)
-        if storerunning is True:
-            print "Storage Manager is running"
-        else:
-            print "Storage Manager is NOT running"
-        
-        # Do a simple VOSpace check with anonyous
+            print "Storage service is NOT running"
 
         # Check that the query Manager/service is running
-        try:
-            request = Request("http://dlsvcs.datalab.noao.edu/query")
-            response = urlopen(request).read()
-        except Exception:
-            queryrunning = False
-        else:
-            queryrunning = (True if response is not None else False)
-        if storerunning is True:
+        if queryClient.isAlive() is True:
             print "Query Manager is running"
+            queryalive = True
         else:
             print "Query Manager is NOT running"
+            queryalive = False
+
+        queryalive = False
+        if queryClient.isAlive() is True:
+            # Do simple query with timeout
+            headers = {'Content-Type': 'text/ascii', 'X-DL-AuthToken': ANON_TOKEN}
+            query = quote_plus('select ra,dec from smash_dr1.object limit 2')
+            dburl = '%s/query?sql=%s&ofmt=%s&out=%s&async=%s' % (
+                "http://dlsvcs.datalab.noao.edu/query", query, "csv", None, False)
+            try:
+                r = requests.get(dburl, headers=headers, timeout=1)
+            except:
+                print "Query service is NOT running"
+            else:
+
+            
+            print "Query service is running"
+        else:
+
+            print "Query service is NOT running"
         
-        # Do simple query
 
         
 ################################################

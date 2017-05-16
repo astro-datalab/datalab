@@ -934,7 +934,7 @@ class Dlinterface:
             # qid, type, async, query, time, jobid, username, format, status/nrows
             _jobid = v[5]
         # Get the status
-        print (queryClient.status (token, jobId=jobid))
+        print (queryClient.status (token, jobId=_jobid))
 
     def queryresults(self, jobid=None):
         '''

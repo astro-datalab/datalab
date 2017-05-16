@@ -41,7 +41,7 @@ import requests
     
 # std lib imports
 import getpass
-
+from cStringIO import StringIO
 
 # use this for SIA service for now
 from pyvo.dal import sia
@@ -162,7 +162,6 @@ def addFormatMapping(self):
     ''' Add the format mapping information to the DL object
     '''
     from functools import partial
-    from cStringIO import StringIO
     from collections import OrderedDict
     import numpy as np
     from pandas import read_csv

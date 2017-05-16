@@ -107,7 +107,7 @@ def checkLogin (self):
 def areQueriesWorking (self):
     ''' This checks if the Query Manager is returning proper queries.
     '''
-    queryalive = False             # dead until proven alive
+    queryworking = False             # dead until proven alive
     if queryClient.isAlive() is True:
         # Do simple query with timeout
         headers = {'Content-Type': 'text/ascii', 'X-DL-AuthToken': ANON_TOKEN}
@@ -121,11 +121,9 @@ def areQueriesWorking (self):
         else:
             # Check that the output looks right
             if type(r.content) == str and len(r.content.split('/n')) == 4 and r.content[0:6] == 'ra,dec':
-                queryalive = True
-    if queryalive is True:
-        print ("Query service is working")
-    else:
-        print ("Query service is NOT working")
+                queryworking = True
+
+    return queryworking
     
     
 # function/method to create the mapping, where to store it?, probabaly store it in "dl" object
@@ -285,6 +283,25 @@ class Dlinterface:
         This checks on the status of the DL services.
         '''
 
+        # Check the Auth Manager
+        #if areLoginsWorking() is True:
+        #    print ("Autherization service is working")
+        #else:
+        #    print ("Autherization serivce is NOT working")
+
+        # Check the Query Manager
+        if areQueriesWorking() is True:
+            print ("Query service is working")
+        else:
+            print ("Query serivce is NOT working")
+
+        # Check the Storage Manager
+        #if isListWorking() is True:
+        #    print ("Storage service is working")
+        #else:
+        #    print ("Storage serivce is NOT working")
+            
+        
         ## Check that the auth Manager/service is running
         #if authClient.isAlive() is True:
         #    print "Authorization service is running"

@@ -745,7 +745,7 @@ class Dlinterface:
         #    ('votable'     , ('votable', 'Astropy VOtable',                 parse_single_table))
         #])
         if self.fmtmapping is None:
-            self.addFormatMapping()
+            addFormatMapping(self)
         mapping = self.fmtmapping
         
         # The queryClient "fmt" will depend on the requested output format

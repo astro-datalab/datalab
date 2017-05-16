@@ -820,9 +820,9 @@ class Dlinterface:
             for k in keys:
                 v = self.qhistory[k]
                 # qid, type, async, query, time, jobid, username, format, status/nrows
-                print ("%d  %s  %s  %s  %s  %s  %s" %
+                print ("%d  %s  %s  '%s'  %s  %s  %s" %
                        (v[0], v[1], 'ASYNC' if v[2] else 'SYNC', v[3], strftime('%Y-%m-%d %H:%M:%S', localtime(v[4])),
-                       v[5], v[7]))
+                       v[5] if v[2] else "--", v[7]))
                 #print (v[0], v[1], 'ASYNC' if v[2] else 'SYNC', v[3], strftime('%Y-%m-%d %H:%M:%S', localtime(v[4])),
                 #       v[5], v[7])
                 # remove commas and tick marks and parentheses, better formatted output

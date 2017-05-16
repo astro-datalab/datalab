@@ -1014,7 +1014,7 @@ class Dlinterface:
         # Get the results
         res = (queryClient.results (token, jobId=_jobid))
         # Convert to the desired format
-        return reformatQueryOutput(self,res,fmt,verbose=verbose)
+        return reformatQueryOutput(self,res,fmt,verbose=True)
         
         
     def listmydb(self, table=''):

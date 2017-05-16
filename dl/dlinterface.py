@@ -120,7 +120,7 @@ def areQueriesWorking ():
             pass
         else:
             # Check that the output looks right
-            if type(r.content) == str and len(r.content.split('/n')) == 4 and r.content[0:6] == 'ra,dec':
+            if type(r.content) == str and len(r.content.split('\n')) == 4 and r.content[0:6] == 'ra,dec':
                 queryworking = True
 
     return queryworking
@@ -293,7 +293,7 @@ class Dlinterface:
         if areQueriesWorking() is True:
             print ("Query service is working")
         else:
-            print ("Query serivce is NOT working")
+            print ("Query service is NOT working")
 
         # Check the Storage Manager
         #if isListWorking() is True:

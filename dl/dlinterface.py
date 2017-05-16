@@ -21,7 +21,7 @@ Import via
 
 import os
 from subprocess import Popen, PIPE
-from time import time, gmtime, strftime, sleep
+from time import time, localtime, gmtime, strftime, sleep
 try:
     import ConfigParser
     from urllib import quote_plus, urlencode		# Python 2
@@ -340,6 +340,7 @@ class Dlinterface:
             print "dl.query()          - Query a remote data service in the Data Lab"
             print "dl.dropdb()         - Drop a user MyDB table"
             print "dl.listdb()         - List the user MyDB tables"
+            print "dl.queryhistory()   - List history of all queries made"
             print "dl.queryresults()   - Get the async query results"
             print "dl.querystatus()    - Get an async query job status"
             print "dl.siaquery()       - Query a SIA service in the Data Lab"
@@ -778,14 +779,16 @@ class Dlinterface:
 
             # Add this query to the query history
             jobid = None
+            status = len(res.split('\n'))-2     # number of rows returned
             if async:
                 jobid = res
+                status = 'SUBMITTED'
             if self.queryhistory is None:
                 qid = 1
-                self.queryhistory = {str(qid) : (qid, type, async, _query, time.time(), jobid, getUserName(), fmt)}
+                self.queryhistory = {qid : (qid, type, async, _query, time(), jobid, getUserName(self), fmt, status)}
             else:
                 qid = int(max(self.queryhistory.keys())) + 1
-                self.queryhistory[str(qid)] = (qid, type, async, _query, time.time(), jobid, getUserName(), fmt) 
+                self.queryhistory[qid] = (qid, type, async, _query, time(), jobid, getUserName(self), fmt, status) 
             
             # Return the results
             
@@ -797,10 +800,6 @@ class Dlinterface:
             elif out == '' or out is None:
                 # Convert to the desired format
                 return reformatQueryOutput(self,res,fmt,verbose=verbose)
-                #s = StringIO(res)
-                #output = mapping[fmt][2](s)
-                #print "Returning %s" % mapping[fmt][1]
-                #return output
                     
         except Exception as e:
             if not async and e.message is not None:
@@ -810,6 +809,21 @@ class Dlinterface:
             else:
                 print (e.message)
 
+    def queryhistory(self, async=None):
+        '''
+        Report the history of queries made so far.
+        '''
+        if self.queryhistory is None:
+            print "No queries made so far"
+        else:
+            keys = self.queryhistory.keys().sort()
+            for k in keys:
+                v = self.queryhistory[k]
+                # qid, type, async, query, time, jobid, username, format, status/nrows
+                print (v[0], v[1], v[2], v[3], strftime('%Y-%m-%d %H:%M:%S', localtime(v[4])),
+                       v[5], v[6], v[7])
+
+                
     def querystatus(self, jobid=None):
         '''
         Get the async query job status.

@@ -868,7 +868,7 @@ class Dlinterface:
                 if v[2] is True:
                     jobid = v[5]
                     token = getUserToken(self)
-                    stat = queryClient.status(token, jobID=jobid)
+                    stat = queryClient.status(token, jobId=jobid)
                     v[8] = stat
                 if (async is True and v[2] == True) or (async is not True):
                     print ("%d  %s  %s  %s  %s  %s  %s  '%s'" %

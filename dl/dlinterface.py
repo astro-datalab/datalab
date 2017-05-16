@@ -124,7 +124,46 @@ def areQueriesWorking ():
                 queryworking = True
 
     return queryworking
-    
+
+def areLoginsWorking():
+    ''' This checks if the Authentication Manager is returning proper tokens.
+    '''
+    authworking = False             # dead until proven alive
+    if authClient.isAlive() is True:
+        # Do simple token request
+        url = "http://dlsvcs.datalab.noao.edu/auth/login?"
+        query_args = {"username": "anonymous", "password": " ",
+                      "profile": "default", "debug": False}
+        try:
+            r = requests.get(url, params=query_args, timeout=1)
+        except:
+            pass
+        else:
+            # Check that the output looks right
+            response = r.text
+            if type(r.content) == str and len(r.content.split('\n')) == 4 and r.content[0:6] == 'ra,dec':
+                authworking = True
+
+    return authworking
+
+def isListWorking():
+    ''' This checks if the Storage Manager is returning proper list queries:
+    '''
+    storeworking = False             # dead until proven alive
+    if storeClient.isAlive() is True:
+        # Do simple list queries timeout
+        url = "http://dlsvcs.datalab.noao.edu/storage/ls?name=vos://&format=csv"
+        try:
+            r = requests.get(url, headers={'X-DL-AuthToken': ANON_TOKEN}, timeout=1)
+        except:
+            pass
+        else:
+            # Check that the output looks right
+            if type(r.content) == str:
+                storeworking = True
+
+    return storeworking
+
     
 # function/method to create the mapping, where to store it?, probabaly store it in "dl" object
 #    but only create it and load the necessary modules once it's been requested
@@ -284,10 +323,10 @@ class Dlinterface:
         '''
 
         # Check the Auth Manager
-        #if areLoginsWorking() is True:
-        #    print ("Autherization service is working")
-        #else:
-        #    print ("Autherization serivce is NOT working")
+        if areLoginsWorking() is True:
+            print ("Autherization service is working")
+        else:
+            print ("Autherization serivce is NOT working")
 
         # Check the Query Manager
         if areQueriesWorking() is True:
@@ -296,35 +335,10 @@ class Dlinterface:
             print ("Query service is NOT working")
 
         # Check the Storage Manager
-        #if isListWorking() is True:
-        #    print ("Storage service is working")
-        #else:
-        #    print ("Storage serivce is NOT working")
-            
-        
-        ## Check that the auth Manager/service is running
-        #if authClient.isAlive() is True:
-        #    print "Authorization service is running"
-        #else:
-        #    print "Authorization service is NOT running"
-        
-        # Do a simple authClient token request
-        #token = authClient.login('anonymous')
-        
-        ## Check that the store Manager/service is running
-        #storealive = storeClient.isAlive()
-        #if storealive is True:
-        #    print "Storage service is running"
-        #else:
-        #    print "Storage service is NOT running"
-
-        ## Check that the query Manager/service is running
-        #if queryClient.isAlive() is True:
-        #    print "Query Manager is running"
-        #    queryalive = True
-        #else:
-        #    print "Query Manager is NOT running"
-        #    queryalive = False
+        if isListWorking() is True:
+            print ("Storage service is working")
+        else:
+            print ("Storage serivce is NOT working")
 
         
 ################################################

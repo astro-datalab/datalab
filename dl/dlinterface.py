@@ -777,11 +777,15 @@ class Dlinterface:
                                      fmt=qcfmt, out=out, async=async)
 
             # Add this query to the query history
-            QID = int(max(self.queryhistory.keys()))+1
             jobid = None
             if async:
                 jobid = res
-            self.queryhistory[QID] = (QID, type, async, _query, time.time(), jobid, getUserName(), fmt) 
+            if self.queryhistory is None:
+                qid = 1
+                self.queryhistory = {str(qid) : (qid, type, async, _query, time.time(), jobid, getUserName(), fmt)}
+            else:
+                qid = int(max(self.queryhistory.keys())) + 1
+                self.queryhistory[str(qid)] = (qid, type, async, _query, time.time(), jobid, getUserName(), fmt) 
             
             # Return the results
             

@@ -821,9 +821,9 @@ class Dlinterface:
                 v = self.qhistory[k]
                 # qid, type, async, query, time, jobid, username, format, status/nrows
                 # get the query status for ASYNC queries
-                print ("%d  %s  %s  %s  %s  %s  '%s'" %
-                       (v[0], strftime('%Y-%m-%d %H:%M:%S', localtime(v[4])), v[1], 'ASYNC' if v[2] else 'SYNC', str(v[7]), 
-                        v[5] if v[2] else "--", v[3]))
+                print ("%d  %s  %s  %s  %s  %s  %s  '%s'" %
+                       (v[0], strftime('%Y-%m-%d %H:%M:%S', localtime(v[4])), v[1], 'ASYNC' if v[2] else 'SYNC', v[7], 
+                        str(v[8]), v[5] if v[2] else "--", v[3]))
                 
     def querystatus(self, jobid=None):
         '''

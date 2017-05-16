@@ -861,9 +861,9 @@ class Dlinterface:
                     return
                 
             # Loop through the query history
-            print ("---------------------------------------------------------------------------------------------------------")
-            print ("QID          DATE        Type  A/SYNC   Format    Status          JobID                 Query")
-            print ("---------------------------------------------------------------------------------------------------------")
+            print ("-------------------------------------------------------------------------------------------------------------------")
+            print ("QID          DATE        Type  A/SYNC  Format       Status          JobID                   Query")
+            print ("-------------------------------------------------------------------------------------------------------------------")
             for k in keys:
                 # qid, type, async, query, time, jobid, username, format, status/nrows
                 v = list(self.qhistory[k])    # convert to list
@@ -877,7 +877,7 @@ class Dlinterface:
                     print ("%-3d  %-19s  %-4s  %-5s  %-11s  %-10s  %-18s  '%-s'" %
                            (v[0], strftime('%Y-%m-%d %H:%M:%S', localtime(v[4])), v[1], 'ASYNC' if v[2] else 'SYNC', v[7], 
                             str(v[8]), v[5] if v[2] else "--", v[3]))
-            print ("---------------------------------------------------------------------------------------------------------")
+            print ("-------------------------------------------------------------------------------------------------------------------")
                     # Maybe leave off the jobid if we are using QID instead??!!
 
                 

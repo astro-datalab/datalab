@@ -888,8 +888,10 @@ class Dlinterface:
         Parameters
         ----------
         jobid : str
-            The unique job identifier for the asynchronous query which was returned by :func:`dl.query()`.
+            This can be either (1) the Query ID (QID) returned by the dl.queryhistory() command, or
+            (2) the unique job identifier for the asynchronous query which was returned by :func:`ql.query`
             when the query job was submitted.
+
 
         Returns
         -------
@@ -946,7 +948,8 @@ class Dlinterface:
         Parameters
         ----------
         jobid : str
-             The unique job identifier for the asynchronous query which was returned by :func:`ql.query`
+             This can be either (1) the Query ID (QID) returned by the dl.queryhistory() command, or
+             (2) the unique job identifier for the asynchronous query which was returned by :func:`ql.query`
              when the query job was submitted.
 
         Returns
@@ -977,15 +980,41 @@ class Dlinterface:
         '''
         # Not enough information input
         if (jobid is None):
-            print "Syntax - dl.queryresults(jobid)"
+            print "Syntax - dl.queryresults(jobId/QID)"
             return
         # Check if we are logged in
         if not checkLogin(self):
             return
         token = getUserToken(self)
-        res = (queryClient.results (token, jobId=jobid))
-        # CHANGE TO REQUESTED FORMAT??
-        return res
+        # Was a QID or JobId input?
+        _jobid = jobid      # assume a jobid was input
+        # QID was input
+        if (type(jobid) is int) or (type(jobid) is str and jobid.isdigit() is True):
+            keys = sorted(self.qhistory.keys())
+            if ((int(jobid) in keys) is False):           # no QID 
+                print ("QID = %s not found" % str(jobid))
+                return
+            v = self.qhistory[int(jobid)]
+            # qid, type, async, query, time, jobid, username, format, status/nrows
+            if v[2] is False:         # not an async query
+                print ("QID = %s is not an ASYNC query" % str(jobid))
+                return
+            _jobid = v[5]
+            fmt = v[7]
+        # JobID input, get the output format
+        else:
+           keys = sorted(self.qhistory.keys())
+           for k in keys:
+               v = self.qhistory[k]
+               # qid, type, async, query, time, jobid, username, format, status/nrows
+               if v[5] == jobid:
+                   fmt = v[7]
+                   break
+
+        # Get the results
+        res = (queryClient.results (token, jobId=_jobid))
+        # Convert to the desired format
+        return reformatQueryOutput(self,res,fmt,verbose=verbose)
         
         
     def listmydb(self, table=''):

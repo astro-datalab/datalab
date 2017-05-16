@@ -744,6 +744,8 @@ class Dlinterface:
         #    ('table'       , ('csv',     'Astropy Table',                   partial(Table.read,format='csv'))),
         #    ('votable'     , ('votable', 'Astropy VOtable',                 parse_single_table))
         #])
+        if self.fmtmapping is None:
+            self.addFormatMapping()
         mapping = self.fmtmapping
         
         # The queryClient "fmt" will depend on the requested output format

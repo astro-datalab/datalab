@@ -820,7 +820,9 @@ class Dlinterface:
             for k in keys:
                 v = self.qhistory[k]
                 # qid, type, async, query, time, jobid, username, format, status/nrows
-                print (v[0], v[1], v[2], v[3], strftime('%Y-%m-%d %H:%M:%S', localtime(v[4])),
+                
+                if v[2] is None
+                print (v[0], v[1], 'ASYNC' if v[2] else 'SYNC', v[3], strftime('%Y-%m-%d %H:%M:%S', localtime(v[4])),
                        v[5], v[6], v[7])
 
                 

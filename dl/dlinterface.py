@@ -1290,7 +1290,7 @@ class Dlinterface:
                 # Parse the information a bit more
                 name = vals['uri'][lenpathbase:]
                 if vals['type'] == 'vos:ContainerNode':    # append "/" for directories
-                name += '/'
+                    name += '/'
                 if vals['type'] == 'vos:LinkNode':         # use source -> target for links
                     target = vals['target'][lenpathbase:]
                     name += ' -> '+target

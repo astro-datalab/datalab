@@ -1260,7 +1260,7 @@ class Dlinterface:
         pathbase = 'vos://datalab.noao!vospace/'+getUserName(self)+'/'
         # Check if this is a directory lising
         if (len(root) == 1) and (root[0].attrib['{http://www.w3.org/2001/XMLSchema-instance}type'] == 'vos:ContainerNode'):
-            pathbase = root[0].attrib[uri]+'/'
+            pathbase = root[0].attrib['uri']+'/'
             for k in root[0]:
                 if (k.tag.endswith('nodes') is True):
                     root = k     # make the "nodes" the new root

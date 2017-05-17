@@ -1255,10 +1255,11 @@ class Dlinterface:
         if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Trim trailing / or /*, messes up directory listing
-        _name = (name if not name.endswith('/') else name[:-1])
-        _name = (_name if not _name.endswith('/*') else _name[:-2])
+        if name != 'vos://':
+            name = (name if not name.endswith('/') else name[:-1])
+            name = (name if not name.endswith('/*') else name[:-2])
         # Run the LS command
-        res = storeClient.ls (token, name=_name, format='raw')
+        res = storeClient.ls (token, name=name, format='raw')
         root = ET.fromstring('<data>'+res+'</data>')
         pathbase = 'vos://datalab.noao!vospace/'+getUserName(self)+'/'
         # Check if this is a directory lising

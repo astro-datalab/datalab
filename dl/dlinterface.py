@@ -1255,7 +1255,6 @@ class Dlinterface:
         if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the LS command
-        if verbose is True:
         res = storeClient.ls (token, name=name, format='raw')
         root = ET.fromstring('<data>'+res+'</data>')
         pathbase = 'vos://datalab.noao!vospace/'+getUserName(self)+'/'

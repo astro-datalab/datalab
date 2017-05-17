@@ -345,13 +345,13 @@ class Dlinterface:
             print "dl.queryresults()   - Get the async query results"
             print "dl.querystatus()    - Get an async query job status"
             print "dl.siaquery()       - Query a SIA service in the Data Lab"
-            print " "
-            print "-- Capabilities --"
-            print "dl.listcapability() - List the capabilities supported by this Virtual Storage"
-            print "dl.addcapability()  - Activate a capability on a Virtual Storage container"
-            print "dl.exec()           - Launch a remote task in the Data Lab"
-            print "dl.launch()         - Launch a plugin"
-            print "dl.broadcast()      - Broadcast a SAMP message"
+            #print " "
+            #print "-- Capabilities --"
+            #print "dl.listcapability() - List the capabilities supported by this Virtual Storage"
+            #print "dl.addcapability()  - Activate a capability on a Virtual Storage container"
+            #print "dl.exec()           - Launch a remote task in the Data Lab"
+            #print "dl.launch()         - Launch a plugin"
+            #print "dl.broadcast()      - Broadcast a SAMP message"
             #print "dl.mount()          - mount the default Virtual Storage"
 
          # Help on a specific command
@@ -599,43 +599,44 @@ class Dlinterface:
 #  Storage Manager Capability Tasks
 ################################################
 
-
-    def addcapability(self):
-        ''' 
-        Add a capability to a VOSpace container
-        '''
-        # Check if we are logged in
-        if not checkLogin(self):
-            return
-        
-        if self.listcap.value:
-            print ("The available capabilities are: ")
-            for file in glob.glob(self.capsdir):
-                print (file[:file.index("_cap.conf")])
-        else:
-            mountpoint = self.dl.get('vospace', 'mount')
-            if mountpoint is None:
-                print ("No mounted Virtual Storage can be found")
-            else:
-                if not os.path.exists("%s/%s_cap.conf" % \
-                    (self.capsdir, self.cap.value)):
-                        print ("The capability '%s' is not known" % \
-                            self.cap.value)
-                else:
-                    shutil.copy("%s/%s_cap.conf" % (self.capsdir, 
-                        self.cap.value), "%s/%s" % (mountpoint, self.dir.value))
-
-    def listcapability(self):
-        ''' 
-        Add a capability to a VOSpace container
-        '''
-        # Check if we are logged in
-        if not checkLogin(self):
-            return
-
-        print ("The available capabilities are: ")
-        for file in glob.glob("%s/*_cap.conf" % self.capsdir):
-            print ("  %s" % file[file.rindex("/") + 1:file.index("_cap.conf")])
+# NEED THE FUSE LAYER FOR THESE
+#
+#    def addcapability(self):
+#        ''' 
+#        Add a capability to a VOSpace container
+#        '''
+#        # Check if we are logged in
+#        if not checkLogin(self):
+#            return
+#        
+#        if self.listcap.value:
+#            print ("The available capabilities are: ")
+#            for file in glob.glob(self.capsdir):
+#                print (file[:file.index("_cap.conf")])
+#        else:
+#            mountpoint = self.dl.get('vospace', 'mount')
+#            if mountpoint is None:
+#                print ("No mounted Virtual Storage can be found")
+#            else:
+#                if not os.path.exists("%s/%s_cap.conf" % \
+#                    (self.capsdir, self.cap.value)):
+#                        print ("The capability '%s' is not known" % \
+#                            self.cap.value)
+#                else:
+#                    shutil.copy("%s/%s_cap.conf" % (self.capsdir, 
+#                        self.cap.value), "%s/%s" % (mountpoint, self.dir.value))
+#
+#    def listcapability(self):
+#        ''' 
+#        Add a capability to a VOSpace container
+#        '''
+#        # Check if we are logged in
+#        if not checkLogin(self):
+#            return
+#
+#        print ("The available capabilities are: ")
+#        for file in glob.glob("%s/*_cap.conf" % self.capsdir):
+#            print ("  %s" % file[file.rindex("/") + 1:file.index("_cap.conf")])
         
 ################################################
 #  Query Manager Tasks

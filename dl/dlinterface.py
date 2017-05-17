@@ -50,7 +50,7 @@ from pyvo.dal import sia
 
 # Data Lab Client interfaces
 from dl import authClient, storeClient, queryClient
-from vos.vos import Node
+from vos import vos
 
 # VOSpace imports
 #import vos as vos

@@ -393,27 +393,27 @@ class Dlinterface:
 
         # Check the Auth Manager
         if areLoginsWorking() is True:
-            print ("Autherization service is working")
+            print ("Autherization service is ALIVE")
         else:
-            print ("Autherization serivce is NOT working")
+            print ("Autherization serivce is DEAD")
 
         # Check that SYNC queries are working
         if areSyncQueriesWorking() is True:
-            print ("Query service is working")
+            print ("SYNC query service is ALIVE")
         else:
-            print ("Query service is NOT working")
+            print ("SYNC query service is DEAD")
 
         # Check that ASYNC queries and TAP are working
         if isTapWorking() is True:
-            print ("The ASYNC TAP query service is working")
+            print ("ASYNC query service is ALIVE")
         else:
-            print ("The ASYNC TAP query service is NOT working")
+            print ("ASYNC query service is DEAD")
 
         # Check the Storage Manager
         if isListWorking() is True:
-            print ("Storage service is working")
+            print ("Storage service is ALIVE")
         else:
-            print ("Storage serivce is NOT working")
+            print ("Storage serivce is DEAD")
 
         
 ################################################

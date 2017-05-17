@@ -42,8 +42,8 @@ import requests
 # std lib imports
 import getpass
 from cStringIO import StringIO
-#import xml.etree.ElementTree as ET
-from lxml import etree
+import xml.etree.ElementTree as ET
+#from lxml import etree
 
 # use this for SIA service for now
 from pyvo.dal import sia

@@ -124,11 +124,11 @@ def isTapWorking ():
     ''' This checks if the TAP service and Tomcat are running.
     '''
     tapworking = True             # True to start and many ways to make it False
-    # Check if the Availability endpoint is working
+    # Check if the availability/tables endpoint is working
     try:
         #request = Request("http://datalab.noao.edu/tap/avail")
         request = Request("http://datalab.noao.edu/tap/tables")
-        response = urlopen(request, timeout=1).read()
+        response = urlopen(request, timeout=2).read()
     except:
         tapworking = False
     else:

@@ -1542,17 +1542,17 @@ class Dlinterface:
         storeClient.rm (token, name=name, verbose=verbose)
 
         
-    def ln(self, source=None, target=None):
+    def ln(self, link=None, target=None):
         '''
         Link a file in Data Lab VOSpace.
 
         Parameters
         ----------
-        source : str
-             The name of the file in VOSpace to link, e.g. ``file1.txt``.
+        link : str
+             The name of the link, e.g. ``file1link``.
 
-        destination : str
-             The name of the link, e.g. ``file1link.txt``.
+        target : str
+             The name of the file in VOSpace to link to, e.g. ``file1.txt``.
 
         Example
         -------
@@ -1564,15 +1564,15 @@ class Dlinterface:
             dl.ls()
             file1.txt
      
-            dl.ln('file1.txt','iamlink')
+            dl.ln('iamlink','file1.txt')
 
             dl.ls()
             file1.txt, iamlink
 
         '''
         # Not enough information input
-        if (source is None) or (target is None):
-            print "Syntax - dl.ln(source, target)"
+        if (link is None) or (target is None):
+            print "Syntax - dl.ln(link, target)"
             return
         # Check if we are logged in
         if not checkLogin(self):
@@ -1582,12 +1582,12 @@ class Dlinterface:
         if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # They require vos:// prefix to work
-        src = (source if source.startswith("vos://") else ("vos://" + source))
+        lnk = (link if link.startswith("vos://") else ("vos://" + link))
         trg = (target if target.startswith("vos://") else ("vos://" + target))
         print ("src = %s" % src)
         print ("trg = %s" % trg)
         # Run the LN command
-        storeClient.ln (token, fr=src, target=trg)
+        storeClient.ln (token, fr=lnk, target=trg)
 
         
     def tag(self, name=None, tag=None):

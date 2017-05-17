@@ -42,13 +42,15 @@ import requests
 # std lib imports
 import getpass
 from cStringIO import StringIO
-import xml.etree.ElementTree as ET
+#import xml.etree.ElementTree as ET
+from lxml import etree
 
 # use this for SIA service for now
 from pyvo.dal import sia
 
 # Data Lab Client interfaces
 from dl import authClient, storeClient, queryClient
+from vos.vos import Node
 
 # VOSpace imports
 #import vos as vos
@@ -1294,66 +1296,97 @@ class Dlinterface:
             name = (name if not name.endswith('/*') else name[:-2])
         # Run the LS command
         res = storeClient.ls (token, name=name, format='raw')
+        #root = etree.fromstring('<data>'+res+'</data>')
         root = ET.fromstring('<data>'+res+'</data>')
-        pathbase = 'vos://datalab.noao!vospace/'+getUserName(self)+'/'
-        # Check if this is a directory listing
-        if (len(root) == 1) and (root[0].attrib['{http://www.w3.org/2001/XMLSchema-instance}type'] == 'vos:ContainerNode'):
-            pathbase = root[0].attrib['uri']+'/'
-            for k in root[0]:
-                if (k.tag.endswith('nodes') is True):
-                    root = k     # make the "nodes" the new root
-                    break
-        lenpathbase = len(pathbase)
+        NAMESPACES = {"vos": "http://www.ivoa.net/xml/VOSpace/v2.0"}
         if verbose is False:     # start output string list
             flist = []
-        # Loop over nodes
-        for node in root:
-            # Gather up all the necessary information for this node
-            vals = {'uri':'', 'type':'', 'length':'', 'MD5':'',
-                    'target':'', 'date':'', 'ispublic':'', 'caps':''}      # initialize blank dict
-            vals['uri'] = node.get('uri')
-            vals['type'] = node.get('{http://www.w3.org/2001/XMLSchema-instance}type')
-            # Gather more information for verbose output
+        for xnode in root.findall('vos:node', namespaces=NAMESPACES):
+            node = vos.Node(xnode)
             if verbose is True:
-                # Loop over properties/accepts/provides/capabilities/nodes
-                for p in node:
-                    if (p.tag.endswith('target') is True):
-                        vals['target'] = p.text
-                    # Loop over "children"
-                    for ch in p:
-                        if (p.tag.endswith('properties') is True) and (len(p) > 0):
-                            churi = ch.get('uri')
-                            n = churi.split('#')[1]
-                            vals[n] = ch.text                          
-                        if (p.tag.endswith('capabilities') is True) and (len(p) > 0):
-                            churi = ch.get('uri')
-                            cap = churi.split('#')[1]
-                            if vals['caps'] == '':
-                                vals['caps'] = cap
-                            else:
-                                vals['caps'] = vals['caps']+','+cap
+                # Get capabilities
+                VOSPACE_NS = 'http://www.ivoa.net/xml/VOSpace/v2.0'
+                capabilities = xnode.find('{%s}capabilities' % VOSPACE_NS)
+                caps = []
+                for capability in capabilities:
+                    caps.append(capability.get['uri'])
                 # Parse the information a bit more
-                name = vals['uri'][lenpathbase:]
-                if vals['type'] == 'vos:ContainerNode':    # append "/" for directories
-                    name += '/'
-                if vals['type'] == 'vos:LinkNode':         # use source -> target for links
-                    target = vals['target'][lenpathbase:]
-                    name += ' -> '+target
-                size = vals['length']
+                size = node.props['length']
                 if (type(size) is int) or (type(size) is str and size.isdigit() is True):
                     size = storeClient.sizeof_fmt(int(size))
+                name = node.name
+                name = (name + '/' if node.isdir() is True else name)
+                name = (name + ' -> '+node.target if node.islink() is True else name)
                 # Now print out the information          
-                print ("%6s  %s  %s  %s" % (size, vals['date'], name, vals['caps']))
+                print ("%10s  6s  %s  %s  %s" % (node.get_info()['permissions'], size,
+                                                 node.props['date'], name, ','.join(caps)))
             # Non-verbose output
             else:
-                # Parse the information a bit more
-                name = vals['uri'][lenpathbase:]
-                if vals['type'] == 'vos:ContainerNode':    # append "/" for directories
-                    name += '/'
+                name = (node.name if node.isdir() is False else node.name+'/')
                 flist.append("%s " % name)
-
         if verbose is False:
             print ' '.join(flist)
+        
+        #root = ET.fromstring('<data>'+res+'</data>')
+        #pathbase = 'vos://datalab.noao!vospace/'+getUserName(self)+'/'
+        ## Check if this is a directory listing
+        #if (len(root) == 1) and (root[0].attrib['{http://www.w3.org/2001/XMLSchema-instance}type'] == 'vos:ContainerNode'):
+        #    pathbase = root[0].attrib['uri']+'/'
+        #    for k in root[0]:
+        #        if (k.tag.endswith('nodes') is True):
+        #            root = k     # make the "nodes" the new root
+        #            break
+        #lenpathbase = len(pathbase)
+        #if verbose is False:     # start output string list
+        #    flist = []
+        ## Loop over nodes
+        #for node in root:
+        #    # Gather up all the necessary information for this node
+        #    vals = {'uri':'', 'type':'', 'length':'', 'MD5':'',
+        #            'target':'', 'date':'', 'ispublic':'', 'caps':''}      # initialize blank dict
+        #    vals['uri'] = node.get('uri')
+        #    vals['type'] = node.get('{http://www.w3.org/2001/XMLSchema-instance}type')
+        #    # Gather more information for verbose output
+        #    if verbose is True:
+        #        # Loop over properties/accepts/provides/capabilities/nodes
+        #        for p in node:
+        #            if (p.tag.endswith('target') is True):
+        #                vals['target'] = p.text
+        #            # Loop over "children"
+        #            for ch in p:
+        #                if (p.tag.endswith('properties') is True) and (len(p) > 0):
+        #                    churi = ch.get('uri')
+        #                    n = churi.split('#')[1]
+        #                    vals[n] = ch.text                          
+        #                if (p.tag.endswith('capabilities') is True) and (len(p) > 0):
+        #                    churi = ch.get('uri')
+        #                    cap = churi.split('#')[1]
+        #                    if vals['caps'] == '':
+        #                        vals['caps'] = cap
+        #                    else:
+        #                        vals['caps'] = vals['caps']+','+cap
+        #        # Parse the information a bit more
+        #        name = vals['uri'][lenpathbase:]
+        #        if vals['type'] == 'vos:ContainerNode':    # append "/" for directories
+        #            name += '/'
+        #        if vals['type'] == 'vos:LinkNode':         # use source -> target for links
+        #            target = vals['target'][lenpathbase:]
+        #            name += ' -> '+target
+        #        size = vals['length']
+        #        if (type(size) is int) or (type(size) is str and size.isdigit() is True):
+        #            size = storeClient.sizeof_fmt(int(size))
+        #        # Now print out the information          
+        #        print ("%6s  %s  %s  %s" % (size, vals['date'], name, vals['caps']))
+        #    # Non-verbose output
+        #    else:
+        #        # Parse the information a bit more
+        #        name = vals['uri'][lenpathbase:]
+        #        if vals['type'] == 'vos:ContainerNode':    # append "/" for directories
+        #            name += '/'
+        #        flist.append("%s " % name)
+        #
+        #if verbose is False:
+        #    print ' '.join(flist)
                 
         # want permissions, size, timestamp, filename with trailing "/" for directory
         #  need something separate for link, maybe name -> target

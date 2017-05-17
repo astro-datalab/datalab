@@ -1669,7 +1669,6 @@ class Dlinterface:
         #  currently this must have vos:// prefix
         if name[0:6] != 'vos://':
             name = 'vos://' + name
-        print _name
         storeClient.mkdir (token, name=name)
         
 

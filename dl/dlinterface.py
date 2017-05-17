@@ -1584,6 +1584,8 @@ class Dlinterface:
         # They require vos:// prefix to work
         src = (source if source.startswith("vos://") else ("vos://" + source))
         trg = (target if target.startswith("vos://") else ("vos://" + target))
+        print ("src = %s" % src)
+        print ("trg = %s" % trg)
         # Run the LN command
         storeClient.ln (token, fr=src, target=trg)
 

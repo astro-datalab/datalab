@@ -128,7 +128,10 @@ def isTapWorking ():
     try:
         #request = Request("http://datalab.noao.edu/tap/avail")
         request = Request("http://datalab.noao.edu/tap/tables")
-        response = urlopen(request, timeout=2).read()
+        #response = urlopen(request, timeout=2).read()
+        # The full read request of tables take a couple seconds, just
+        #   try to get the header
+        #r = requests.head("http://datalab.noao.edu/tap/tables",timeout=2)
     except:
         tapworking = False
     else:

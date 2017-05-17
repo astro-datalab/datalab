@@ -399,21 +399,21 @@ class Dlinterface:
 
         # Check that SYNC queries are working
         if areSyncQueriesWorking() is True:
-            print ("SYNC query service is ALIVE")
+            print ("SYNC query service is    ALIVE")
         else:
-            print ("SYNC query service is DEAD")
+            print ("SYNC query service is    DEAD")
 
         # Check that ASYNC queries and TAP are working
         if isTapWorking() is True:
-            print ("ASYNC query service is ALIVE")
+            print ("ASYNC query service is   ALIVE")
         else:
-            print ("ASYNC query service is DEAD")
+            print ("ASYNC query service is   DEAD")
 
         # Check the Storage Manager
         if isListWorking() is True:
-            print ("Storage service is ALIVE")
+            print ("Storage service is       ALIVE")
         else:
-            print ("Storage serivce is DEAD")
+            print ("Storage serivce is       DEAD")
 
         
 ################################################

@@ -120,7 +120,7 @@ def areSyncQueriesWorking ():
 
     return queryworking
 
-def isTAPWorking ():
+def isTapWorking ():
     ''' This checks if the TAP service and Tomcat are running.
     '''
     tapworking = True             # True to start and many ways to make it False
@@ -398,13 +398,13 @@ class Dlinterface:
             print ("Autherization serivce is NOT working")
 
         # Check that SYNC queries are working
-        if areQueriesWorking() is True:
+        if areSyncQueriesWorking() is True:
             print ("Query service is working")
         else:
             print ("Query service is NOT working")
 
         # Check that ASYNC queries and TAP are working
-        if isTAPWorking() is True:
+        if isTapWorking() is True:
             print ("The ASYNC TAP query service is working")
         else:
             print ("The ASYNC TAP query service is NOT working")

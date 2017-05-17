@@ -1304,7 +1304,7 @@ class Dlinterface:
                 # Parse the information a bit more
                 name = vals['uri'][lenpathbase:]
                 if vals['type'] == 'vos:ContainerNode':    # append "/" for directories
-                name += '/'
+                    name += '/'
                 flist.append("%s " % name)
 
         if verbose if False:

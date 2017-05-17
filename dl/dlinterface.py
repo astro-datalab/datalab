@@ -1317,6 +1317,12 @@ class Dlinterface:
                 name = node.name
                 name = (name + '/' if node.isdir() is True else name)
                 name = (name + ' -> '+node.target if node.islink() is True else name)
+                print node.get_info()['permissions']
+                print name
+                print size
+                print node.props['date']
+                print name
+                print ','.join(caps)
                 # Now print out the information          
                 print ("%10s  6s  %s  %s  %s" % (node.get_info()['permissions'], size,
                                                  node.props['date'], name, ','.join(caps)))

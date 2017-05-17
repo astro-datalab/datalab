@@ -1259,7 +1259,7 @@ class Dlinterface:
         root = ET.fromstring('<data>'+res+'</data>')
         pathbase = 'vos://datalab.noao!vospace/'+getUserName(self)+'/'
         lenpathbase = len(pathbase)
-        if verbose is False:     # start output string
+        if verbose is False:     # start output string list
             flist = []
         # Loop over nodes
         for node in root:
@@ -1581,8 +1581,11 @@ class Dlinterface:
         # Check that we have a good token
         if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
+        # They require vos:// prefix to work
+        src = (source if source.startswith("vos://") else ("vos://" + source))
+        trg = (target if target.startswith("vos://") else ("vos://" + target))
         # Run the LN command
-        storeClient.ln (token, fr=source, target=target)
+        storeClient.ln (token, fr=src, target=trg)
 
         
     def tag(self, name=None, tag=None):

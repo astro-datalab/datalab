@@ -1291,8 +1291,11 @@ class Dlinterface:
                 if vals['type'] == 'vos:LinkNode':         # use source -> target for links
                     target = vals['target'][lenpathbase:]
                     name += ' -> '+target
+                size = vals['length']
+                if (type(size) is int) or (type(size) is str and size.isdigit() is True):
+                    size = storeClient.sizeof_fmt(int(size))
                 # Now print out the information          
-                print ("%s  %s  %s  %s" % (storeClient.sizeof_fmt(vals['length']), vals['date'], name, vals['caps']))
+                print ("%6s  %s  %s  %s" % (size, vals['date'], name, vals['caps']))
                 
         # want permissions, size, timestamp, filename with trailing "/" for directory
         #  need something separate for link, maybe name -> target

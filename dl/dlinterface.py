@@ -1256,17 +1256,21 @@ class Dlinterface:
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the LS command
         if verbose is True:
-            res = storeClient.ls (token, name=name, format='raw')
-            root = ET.fromstring('<data>'+res+'</data>')
-            pathbase = 'vos://datalab.noao!vospace/'+getUserName(self)+'/'
-            lenpathbase = len(pathbase)
-            # Loop over nodes
-            for node in root:
-                # Gather up all the necessary information for this node
-                vals = {'uri':'', 'type':'', 'length':'', 'MD5':'',
-                        'target':'', 'date':'', 'ispublic':'', 'caps':''}      # initialize blank dict
-                vals['uri'] = node.get('uri')
-                vals['type'] = node.get('{http://www.w3.org/2001/XMLSchema-instance}type')
+        res = storeClient.ls (token, name=name, format='raw')
+        root = ET.fromstring('<data>'+res+'</data>')
+        pathbase = 'vos://datalab.noao!vospace/'+getUserName(self)+'/'
+        lenpathbase = len(pathbase)
+        if verbose is False:     # start output string
+            flist = []
+        # Loop over nodes
+        for node in root:
+            # Gather up all the necessary information for this node
+            vals = {'uri':'', 'type':'', 'length':'', 'MD5':'',
+                    'target':'', 'date':'', 'ispublic':'', 'caps':''}      # initialize blank dict
+            vals['uri'] = node.get('uri')
+            vals['type'] = node.get('{http://www.w3.org/2001/XMLSchema-instance}type')
+            # Gather more information for verbose output
+            if verbose is True:
                 # Loop over properties/accepts/provides/capabilities/nodes
                 for p in node:
                     if (p.tag.endswith('target') is True):
@@ -1287,7 +1291,7 @@ class Dlinterface:
                 # Parse the information a bit more
                 name = vals['uri'][lenpathbase:]
                 if vals['type'] == 'vos:ContainerNode':    # append "/" for directories
-                    name += '/'
+                name += '/'
                 if vals['type'] == 'vos:LinkNode':         # use source -> target for links
                     target = vals['target'][lenpathbase:]
                     name += ' -> '+target
@@ -1296,6 +1300,16 @@ class Dlinterface:
                     size = storeClient.sizeof_fmt(int(size))
                 # Now print out the information          
                 print ("%6s  %s  %s  %s" % (size, vals['date'], name, vals['caps']))
+            # Non-verbose output
+            else:
+                # Parse the information a bit more
+                name = vals['uri'][lenpathbase:]
+                if vals['type'] == 'vos:ContainerNode':    # append "/" for directories
+                name += '/'
+                flist.append("%s " % name)
+
+        if verbose if False:
+            print flist.join(' ')
                 
         # want permissions, size, timestamp, filename with trailing "/" for directory
         #  need something separate for link, maybe name -> target
@@ -1309,8 +1323,8 @@ class Dlinterface:
                         
         # directories should have trailing "/" no matter what
 
-        else:
-            return storeClient.ls (token, name=name, format=format)
+        #else:
+        #    return storeClient.ls (token, name=name, format=format)
 
 
     def get(self, source=None, destination=None, verbose=True):

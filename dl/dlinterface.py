@@ -1667,11 +1667,10 @@ class Dlinterface:
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the MKDIR command
         #  currently this must have vos:// prefix
-        _name = name
-        if _name[0:6] != 'vos://':
-            _name = 'vos://'+_name
+        if name[0:6] != 'vos://':
+            name = 'vos://' + name
         print _name
-        #storeClient.mkdir (token, name=name)
+        storeClient.mkdir (token, name=name)
         
 
     def rmdir(self, name=None):

@@ -42,6 +42,7 @@ import requests
 # std lib imports
 import getpass
 from cStringIO import StringIO
+import xml.etree.ElementTree as ET
 
 # use this for SIA service for now
 from pyvo.dal import sia
@@ -1215,7 +1216,7 @@ class Dlinterface:
 ################################################
         
         
-    def ls(self, name='vos://', format='csv'):
+    def ls(self, name='vos://', format='csv', verbose=True):
         '''
         List files in VOSpace.
 
@@ -1226,6 +1227,9 @@ class Dlinterface:
 
         format : str
              The format to use.
+
+        verbose: bool
+             Give more verbose output, or just a list of files.  The default is verbose=True.
 
         Returns
         -------
@@ -1251,7 +1255,13 @@ class Dlinterface:
         if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the LS command
-        return storeClient.ls (token, name=name, format=format)
+        if verbose is True:
+            res = storeClient.ls (token, name=name, format='raw')
+            root = ET.fromstring('<data>'+res+'</data>')
+            for child in root:
+                print child.tag, child.attrib
+        else:
+            return storeClient.ls (token, name=name, format=format)
 
 
     def get(self, source=None, destination=None, verbose=True):

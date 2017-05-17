@@ -126,6 +126,7 @@ def isTapWorking ():
     tapworking = True             # True to start and many ways to make it False
     # Check if the Availability endpoint is working
     try:
+        #request = Request("http://datalab.noao.edu/tap/tables")
         request = Request("http://datalab.noao.edu/tap/avail")
         response = urlopen(request, timeout=1).read()
     except:

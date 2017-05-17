@@ -99,8 +99,8 @@ def checkLogin (self):
     else:
         return True
 
-def areQueriesWorking ():
-    ''' This checks if the Query Manager is returning proper queries.
+def areSyncQueriesWorking ():
+    ''' This checks if the Query Manager is returning proper Sync queries.
     '''
     queryworking = False             # dead until proven alive
     if queryClient.isAlive() is True:
@@ -119,6 +119,29 @@ def areQueriesWorking ():
                 queryworking = True
 
     return queryworking
+
+def isTAPWorking ():
+    ''' This checks if the TAP service and Tomcat are running.
+    '''
+    tapworking = True             # True to start and many ways to make it False
+    # Check if the Availability endpoint is working
+    try:
+        request = Request("http://datalab.noao.edu/tap/avail")
+        response = urlopen(request, timeout=1).read()
+    except:
+        tapworking = False
+    else:
+        tapworking = (tapworking if response is not None else False)
+    # Check if the Tomcat service is resonding
+    try:
+        request = Request("http://gp01.datalab.noao.edu:8080/")
+        response = urlopen(request, timeout=1).read()
+    except:
+        tapworking = False
+    else:
+        tapworking = (tapworking if response is not None else False)
+
+    return tapworking
 
 def areLoginsWorking():
     ''' This checks if the Authentication Manager is returning proper tokens.
@@ -374,11 +397,17 @@ class Dlinterface:
         else:
             print ("Autherization serivce is NOT working")
 
-        # Check the Query Manager
+        # Check that SYNC queries are working
         if areQueriesWorking() is True:
             print ("Query service is working")
         else:
             print ("Query service is NOT working")
+
+        # Check that ASYNC queries and TAP are working
+        if isTAPWorking() is True:
+            print ("The ASYNC TAP query service is working")
+        else:
+            print ("The ASYNC TAP query service is NOT working")
 
         # Check the Storage Manager
         if isListWorking() is True:

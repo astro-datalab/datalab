@@ -1258,8 +1258,54 @@ class Dlinterface:
         if verbose is True:
             res = storeClient.ls (token, name=name, format='raw')
             root = ET.fromstring('<data>'+res+'</data>')
-            for child in root:
-                print child.tag, child.attrib
+            pathbase = 'vos://datalab.noao!vospace/'+getUserName(self)+'/'
+            lenpathbase = len(pathbase)
+            # Loop over nodes
+            for node in root:
+                # Gather up all the necessary information for this node
+                vals = {'uri':'', 'type':'', 'length':'', 'MD5':'',
+                        'target':'', 'date':'', 'ispublic':'', 'caps':''}      # initialize blank dict
+                vals['uri'] = node.get('uri')
+                vals['type'] = node.get('{http://www.w3.org/2001/XMLSchema-instance}type')
+                # Loop over properties/accepts/provides/capabilities/nodes
+                for p in node:
+                    if (p.tag.endswith('target') is True):
+                        vals['target'] = p.text
+                    # Loop over "children"
+                    for ch in p:
+                        if (p.tag.endswith('properties') is True) and (len(p) > 0):
+                            churi = ch.get('uri')
+                            n = churi.split('#')[1]
+                            vals[n] = ch.text                          
+                        if (p.tag.endswith('capabilities') is True) and (len(p) > 0):
+                            churi = ch.get('uri')
+                            cap = churi.split('#')[1]
+                            if vals['caps'] == '':
+                                vals['caps'] = cap
+                            else:
+                                vals['caps'] = vals['caps']+','+cap
+                # Parse the information a bit more
+                name = vals['uri'][lenpathbase:]
+                if vals['type'] == 'vos:ContainerNode':    # append "/" for directories
+                    name += '/'
+                if vals['type'] == 'vos:LinkNode':         # use source -> target for links
+                    target = vals['target'][lenpathbase:]
+                    name += ' -> '+target
+                # Now print out the information          
+                print ("%s  %s  %s  %s" % (storeClient.sizeof_fmt(vals['length']), vals['date'], name, vals['caps']))
+                
+        # want permissions, size, timestamp, filename with trailing "/" for directory
+        #  need something separate for link, maybe name -> target
+        # "length" is size?
+        # add another column at end for a comma-delimited list of capabilites
+        # file, directory, link seems to be specified in the node tag:
+        #  xsi:type="vos:LinkNode"       link
+        #  xsi:type="vos:ContainerNode"  directory
+        #  xsi:type="vos:DataNode"       file
+
+                        
+        # directories should have trailing "/" no matter what
+
         else:
             return storeClient.ls (token, name=name, format=format)
 

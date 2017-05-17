@@ -397,27 +397,27 @@ class Dlinterface:
 
         # Check the Auth Manager
         if areLoginsWorking() is True:
-            print ("Autherization - ALIVE")
+            print ("Authentication - ALIVE")
         else:
-            print ("Autherization -  DEAD")
+            print ("Authentication -  DEAD")
 
         # Check that SYNC queries are working
         if areSyncQueriesWorking() is True:
-            print ("SYNC queries -  ALIVE")
+            print ("SYNC queries -   ALIVE")
         else:
-            print ("SYNC queries -   DEAD")
+            print ("SYNC queries -    DEAD")
 
         # Check that ASYNC queries and TAP are working
         if isTapWorking() is True:
-            print ("ASYNC queries - ALIVE")
+            print ("ASYNC queries -  ALIVE")
         else:
-            print ("ASYNC queries -  DEAD")
+            print ("ASYNC queries -   DEAD")
 
         # Check the Storage Manager
         if isListWorking() is True:
-            print ("Storage -       ALIVE")
+            print ("Storage -        ALIVE")
         else:
-            print ("Storage -        DEAD")
+            print ("Storage -         DEAD")
 
         
 ################################################
@@ -1250,7 +1250,7 @@ class Dlinterface:
 ################################################
         
         
-    def ls(self, name='vos://', format='csv', verbose=True):
+    def ls(self, name='vos://', format='csv', verbose=False):
         '''
         List files in VOSpace.
 
@@ -1296,7 +1296,7 @@ class Dlinterface:
         res = storeClient.ls (token, name=name, format='raw')
         root = ET.fromstring('<data>'+res+'</data>')
         pathbase = 'vos://datalab.noao!vospace/'+getUserName(self)+'/'
-        # Check if this is a directory lising
+        # Check if this is a directory listing
         if (len(root) == 1) and (root[0].attrib['{http://www.w3.org/2001/XMLSchema-instance}type'] == 'vos:ContainerNode'):
             pathbase = root[0].attrib['uri']+'/'
             for k in root[0]:

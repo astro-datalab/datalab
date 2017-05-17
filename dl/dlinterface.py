@@ -1308,7 +1308,7 @@ class Dlinterface:
                 VOSPACE_NS = 'http://www.ivoa.net/xml/VOSpace/v2.0'
                 capabilities = xnode.find('{%s}capabilities' % VOSPACE_NS)
                 caps = []
-                if capabilities not None:
+                if capabilities is not None:
                     for capability in capabilities:
                         caps.append(capability.get['uri'])
                 # Parse the information a bit more

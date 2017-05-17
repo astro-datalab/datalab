@@ -1308,7 +1308,7 @@ class Dlinterface:
                 flist.append("%s " % name)
 
         if verbose is False:
-            print flist.join(' ')
+            print ' '.join(flist)
                 
         # want permissions, size, timestamp, filename with trailing "/" for directory
         #  need something separate for link, maybe name -> target

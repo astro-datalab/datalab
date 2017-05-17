@@ -1324,8 +1324,8 @@ class Dlinterface:
                 print name
                 print ','.join(caps)
                 # Now print out the information          
-                print ("%10s  6s  %s  %s  %s" % (node.get_info()['permissions'], size,
-                                                 node.props['date'], name, ','.join(caps)))
+                #print ("%10s  6s  %s  %s  %s" % (node.get_info()['permissions'], size,
+                #                                 node.props['date'], name, ','.join(caps)))
             # Non-verbose output
             else:
                 name = (node.name if node.isdir() is False else node.name+'/')

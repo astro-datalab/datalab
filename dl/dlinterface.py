@@ -262,7 +262,7 @@ def getNodeInfo(self, xnode, lenpathbase, verbose=True):
     vals['uri'] = xnode.get('uri')
     vals['type'] = xnode.get('{http://www.w3.org/2001/XMLSchema-instance}type')
     abspathbase = 'vos://datalab.noao!vospace/'+getUserName(self)+'/'
-    lenabspathbase = len(pathbase)
+    lenabspathbase = len(abspathbase)
     vals['name'] = vals['uri'][lenpathbase:]
     # Gather more information for verbose output
     if verbose is True:

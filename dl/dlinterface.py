@@ -947,7 +947,14 @@ class Dlinterface:
         try:
             res = queryClient.query (token, adql=adql, sql=sql, 
                                      fmt=qcfmt, out=out, async=async)
-
+        except Exception as e:
+            if not async and e.message is not None:
+                err = e.message
+                if err.find("Time-out"):
+                    print ("Error: Sync query timeout, try an async query")
+            else:
+                print (e.message)
+        else:
             # Add this query to the query history
             jobid = None
             status = ''
@@ -976,14 +983,7 @@ class Dlinterface:
                 # Convert to the desired format
                 return reformatQueryOutput(self,res,fmt,verbose=verbose)
                     
-        except Exception as e:
-            if not async and e.message is not None:
-                err = e.message
-                if err.find("Time-out"):
-                    print ("Error: Sync query timeout, try an async query")
-            else:
-                print (e.message)
-
+                
     def queryhistory(self, async=None):
         '''
         Report the history of queries made so far.

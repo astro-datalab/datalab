@@ -1444,74 +1444,18 @@ class Dlinterface:
             flist = []
         # Loop over nodes
         for node in root:
+            # Gather up all the necessary information for this node
             vals = getNodeInfo(self, node, verbose=verbose)
-            ## Gather up all the necessary information for this node
-            #vals = {'uri':'', 'type':'', 'length':'', 'MD5':'',
-            #        'target':'', 'date':'', 'ispublic':'', 'caps':''}      # initialize blank dict
-            #vals['uri'] = node.get('uri')
-            #vals['type'] = node.get('{http://www.w3.org/2001/XMLSchema-instance}type')
-            ## Gather more information for verbose output
-            #if verbose is True:
-            #    # Loop over properties/accepts/provides/capabilities/nodes
-            #    for p in node:
-            #        if (p.tag.endswith('target') is True):
-            #            vals['target'] = p.text
-            #        # Loop over "children"
-            #        for ch in p:
-            #            if (p.tag.endswith('properties') is True) and (len(p) > 0):
-            #                churi = ch.get('uri')
-            #                n = churi.split('#')[1]
-            #                vals[n] = ch.text                          
-            #            if (p.tag.endswith('capabilities') is True) and (len(p) > 0):
-            #                churi = ch.get('uri')
-            #                cap = churi.split('#')[1]
-            #                if vals['caps'] == '':
-            #                    vals['caps'] = cap
-            #                else:
-            #                    vals['caps'] = vals['caps']+','+cap
-            #    # Parse the information a bit more
-            #    name = vals['uri'][lenpathbase:]
-            #    if vals['type'] == 'vos:ContainerNode':    # append "/" for directories
-            #        name += '/'
-            #    if vals['type'] == 'vos:LinkNode':         # use source -> target for links
-            #        target = vals['target'][lenpathbase:]
-            #        name += ' -> '+target
-            #    size = vals['length']
-            #    if (type(size) is int) or (type(size) is str and size.isdigit() is True):
-            #        size = storeClient.sizeof_fmt(int(size))
             if verbose is True:
                 # Now print out the information          
                 print ("%10s  %6s  %s  %s  %s" % (vals['permissions'], vals['size'],
                                                   vals['time'], vals['verbosename'], vals['caps']))
-                #print ("%6s  %s  %s  %s" % (size, vals['date'], name, vals['caps']))
-            # Non-verbose output
             else:
-                # Parse the information a bit more
-                #name = vals['uri'][lenpathbase:]
-                #if vals['type'] == 'vos:ContainerNode':    # append "/" for directories
-                #    name += '/'
                 flist.append("%s " % vals['name'])
-
         if verbose is False:
             print ' '.join(flist)
-                
-        # want permissions, size, timestamp, filename with trailing "/" for directory
-        #  need something separate for link, maybe name -> target
-        # "length" is size?
-        # add another column at end for a comma-delimited list of capabilites
-        # file, directory, link seems to be specified in the node tag:
-        #  xsi:type="vos:LinkNode"       link
-        #  xsi:type="vos:ContainerNode"  directory
-        #  xsi:type="vos:DataNode"       file
 
-                        
-        # directories should have trailing "/" no matter what
-
-        #else:
-        #    return storeClient.ls (token, name=name, format=format)
-
-
-    def get(self, source=None, destination=None, verbose=True):
+def get(self, source=None, destination=None, verbose=True):
         '''
         Get one or more files from Data Lab.
 

@@ -909,7 +909,7 @@ class Dlinterface:
             print ("Rerunning QID = %d" % queryid)
             v = self.qhistory[queryid]
             # qid, type, async, query, time, jobid, username, format, status/nrows
-            type = v[1]
+            qtype = v[1]
             async = v[2]
             query = v[3]
             fmt = v[7]

@@ -898,7 +898,23 @@ class Dlinterface:
         # Check if we are logged in
         if not checkLogin(self):
             return
-        
+
+        # Use QID to rerun a previous query
+        if (type(query) is int) and (query.isdigit() is True):
+            queryid = query
+            keys = sorted(self.qhistory.keys())
+            if ((queryid in keys) is False):           # no QID 
+                print ("QID = %s not found" % str(queryid))
+                return
+            print ("Rerunning QID = %d" % queryid)
+            v = self.qhistory[queryid]
+            # qid, type, async, query, time, jobid, username, format, status/nrows
+            type = v[1]
+            async = v[2]
+            query = v[3]
+            fmt = v[7]
+            # I don't keep track of "out" or "profile" at the moment
+            
         # Check type
         if (type != 'sql') and (type != 'adql'):
             print "Only 'sql' and 'adql' queries are currently supported."
@@ -1462,7 +1478,7 @@ class Dlinterface:
                 print ("%10s  %s  %6s  %s  %s  %s" % (vals['permissions'], user, vals['size'],
                                                   vals['time'], vals['verbosename'], vals['caps']))
             else:
-                # Add trailing / for directories
+                # Add trailing "/" for directories
                 name = (vals['name']+'/' if vals['type']=='vos:ContainerNode' else vals['name'])
                 flist.append("%s " % name)
         if verbose is False:

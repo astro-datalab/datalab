@@ -288,7 +288,7 @@ def getNodeInfo(self, xnode, lenpathbase, verbose=True):
         if vals['type'] == 'vos:ContainerNode':
             vals['verbosename'] += '/'
         if vals['type'] == 'vos:LinkNode':
-            target = node.target
+            target = vals['target'][lenpathbase:]
             vals['verbosename'] += ' -> '+target
         size = vals['length']
         if (type(size) is int) or (type(size) is str and size.isdigit() is True):

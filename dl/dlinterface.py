@@ -1049,10 +1049,11 @@ class Dlinterface:
                     stat = queryClient.status(token, jobId=jobid)
                     v[8] = stat
                 if (async is True and v[2] == True) or (async is not True):
+                    qry = ' '.join(v[3]
                     print ("%-3d  %-19s  %-4s  %-5s  %-11s  %-10s  %-18s  '%-s'" %
                            (v[0], time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(v[4])),
                             v[1], 'ASYNC' if v[2] else 'SYNC', v[7], 
-                            str(v[8]), v[5] if v[2] else "--", v[3]))
+                            str(v[8]), v[5] if v[2] else "--", ' '.join(v[3].split())))
             print ("-------------------------------------------------------------------------------------------------------------------")
                     # Maybe leave off the jobid if we are using QID instead??!!
 

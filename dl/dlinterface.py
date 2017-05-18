@@ -950,7 +950,7 @@ class Dlinterface:
         except Exception as e:
             if not async and e.message is not None:
                 err = e.message
-                if err.find("Time-out"):
+                if err.find("Time-out") >= 0:
                     print ("Error: Sync query timeout, try an async query")
             else:
                 print (e.message)

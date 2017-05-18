@@ -303,7 +303,7 @@ def getNodeInfo(self, xnode, verbose=True):
         #if read_group != '':
         if vals['groupread'] != '':
             perm[4] = 'r'
-        vals['permissions'] = string.join(perm, '')
+        vals['permissions'] = ''.join(perm)
     # Return the dictionary of values
     return vals
         

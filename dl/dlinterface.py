@@ -806,7 +806,7 @@ class Dlinterface:
 ################################################
 
 
-    def query(self, query=None, type='sql', fmt='csv', out=None, async=False, profile='default', verbose=True):
+    def query(self, query=None, qtype='sql', fmt='csv', out=None, async=False, profile='default', verbose=True):
         '''
         Send a query to a remote query service.
 
@@ -821,7 +821,7 @@ class Dlinterface:
 
                 'select ra,dec from gaia_dr1.gaia_source limit 3'
 
-        type : str
+        qtype : str
             The query format, SQL or ADQL.  SQL is used by default.
 
         fmt : str
@@ -891,7 +891,7 @@ class Dlinterface:
         '''
         # Not enough information input
         if (query is None):
-            print "Syntax - dl.query(query, type='sql|adql', fmt='csv|string|array|structarray|pandas|table|votable',"
+            print "Syntax - dl.query(query, qtype='sql|adql', fmt='csv|string|array|structarray|pandas|table|votable',"
             print "                  out='', async=False, profile='default')"
             return
 
@@ -916,7 +916,7 @@ class Dlinterface:
             # I don't keep track of "out" or "profile" at the moment
             
         # Check type
-        if (type != 'sql') and (type != 'adql'):
+        if (qtype != 'sql') and (qtype != 'adql'):
             print "Only 'sql' and 'adql' queries are currently supported."
             return
             
@@ -932,7 +932,7 @@ class Dlinterface:
         # What type of query are we doing
         sql = None
         adql = None
-        if type == 'sql':
+        if qtype == 'sql':
             sql = _query
         else:
             adql = _query
@@ -977,10 +977,10 @@ class Dlinterface:
                 status = 'SUBMITTED'
             if self.qhistory is None:
                 qid = 1
-                self.qhistory = {qid : (qid, type, async, _query, time.time(), jobid, getUserName(self), fmt, status)}
+                self.qhistory = {qid : (qid, qtype, async, _query, time.time(), jobid, getUserName(self), fmt, status)}
             else:
                 qid = int(max(self.qhistory.keys())) + 1
-                self.qhistory[qid] = (qid, type, async, _query, time.time(), jobid, getUserName(self), fmt, status) 
+                self.qhistory[qid] = (qid, qtype, async, _query, time.time(), jobid, getUserName(self), fmt, status) 
             
             # Return the results
             

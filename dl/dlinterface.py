@@ -21,7 +21,7 @@ Import via
 
 import os
 from subprocess import Popen, PIPE
-from time import time, localtime, gmtime, strftime, sleep
+from time import time, localtime, gmtime, strftime, mktime, sleep
 try:
     import ConfigParser
     from urllib import quote_plus, urlencode		# Python 2

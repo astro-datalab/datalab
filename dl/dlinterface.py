@@ -296,7 +296,7 @@ def getNodeInfo(self, xnode, verbose=True):
         vals['size'] = size
         # Better date
         modified_time = convert_vospace_time_to_seconds(vals['date'])
-        vals['time'] = time.strftime("%d %b %Y %H:%M:%S", modified_time)
+        vals['time'] = time.strftime("%d %b %Y %H:%M:%S", time.localtime(modified_time))
         # Create the permissions string
         perm = []
         for i in range(10):

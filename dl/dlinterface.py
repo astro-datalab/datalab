@@ -250,7 +250,7 @@ def convert_vospace_time_to_seconds(str_date):
     mtime = time.mktime(time.strptime(str_date[0:right], '%Y-%m-%dT%H:%M:%S'))
     return mtime - time.mktime(time.gmtime()) + time.mktime(time.localtime())
 
-def getNodeInfo(self, xnode, verbose=True):
+def getNodeInfo(self, xnode, lenpathbase, verbose=True):
     ''' Get information on a node.  The input is a "node" element
         of a XML ElementTree.
     '''
@@ -261,8 +261,8 @@ def getNodeInfo(self, xnode, verbose=True):
             'name':'', 'verbosename':'', 'size':'', 'permissions':''}
     vals['uri'] = xnode.get('uri')
     vals['type'] = xnode.get('{http://www.w3.org/2001/XMLSchema-instance}type')
-    pathbase = 'vos://datalab.noao!vospace/'+getUserName(self)+'/'
-    lenpathbase = len(pathbase)
+    #pathbase = 'vos://datalab.noao!vospace/'+getUserName(self)+'/'
+    #lenpathbase = len(pathbase)
     vals['name'] = vals['uri'][lenpathbase:]
     # Gather more information for verbose output
     if verbose is True:
@@ -1446,7 +1446,7 @@ class Dlinterface:
         user = getUserName(self)
         for node in root:
             # Gather up all the necessary information for this node
-            vals = getNodeInfo(self, node, verbose=verbose)
+            vals = getNodeInfo(self, node, lenpathbase, verbose=verbose)
             if verbose is True:
                 # Now print out the information          
                 print ("%10s  %s  %6s  %s  %s  %s" % (vals['permissions'], user, vals['size'],

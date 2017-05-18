@@ -304,8 +304,8 @@ def getNodeInfo(self, xnode, verbose=True):
         if vals['groupread'] != '':
             perm[4] = 'r'
         vals['permissions'] = string.join(perm, '')
-        # Return the dictionary of values
-        return vals
+    # Return the dictionary of values
+    return vals
         
 #class Node:
 #    '''

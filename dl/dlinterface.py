@@ -909,11 +909,7 @@ class Dlinterface:
             print ("Rerunning QID = %d" % queryid)
             v = self.qhistory[queryid]
             # qid, type, async, query, time, jobid, username, format, status/nrows
-            qtype = v[1]
-            async = v[2]
             query = v[3]
-            fmt = v[7]
-            # I don't keep track of "out" or "profile" at the moment
             
         # Check type
         if (qtype != 'sql') and (qtype != 'adql'):

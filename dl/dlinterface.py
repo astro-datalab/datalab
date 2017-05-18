@@ -236,7 +236,19 @@ def reformatQueryOutput(self, res=None, fmt='csv', verbose=True):
     if verbose is True:
         print "Returning %s" % mapping[fmt][1]
     return output
-                    
+
+def convert_vospace_time_to_seconds(str_date):
+    """A convenience method that takes a string from a vospace time field and converts it to seconds since epoch.
+
+    :param str_date: string to parse into a VOSpace time
+    :type str_date: str
+    :return: A datetime object for the provided string date
+    :rtype: datetime
+    """
+    right = str_date.rfind(":") + 3
+    mtime = time.mktime(time.strptime(str_date[0:right], '%Y-%m-%dT%H:%M:%S'))
+    return mtime - time.mktime(time.gmtime()) + time.mktime(time.localtime())
+
 def getNodeInfo(self, xnode, verbose=True):
     ''' Get information on a node.  The input is a "node" element
         of a XML ElementTree.
@@ -281,6 +293,9 @@ def getNodeInfo(self, xnode, verbose=True):
         if (type(size) is int) or (type(size) is str and size.isdigit() is True):
             size = storeClient.sizeof_fmt(int(size))
         vals['size'] = size
+        # Better date
+        modified_time = convert_vospace_time_to_seconds(vals['date'])
+        vals['time'] = time.strftime("%d %b %Y %H:%M:%S", modified_time)
         # Create the permissions string
         perm = []
         for i in range(10):

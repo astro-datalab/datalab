@@ -1462,7 +1462,9 @@ class Dlinterface:
                 print ("%10s  %s  %6s  %s  %s  %s" % (vals['permissions'], user, vals['size'],
                                                   vals['time'], vals['verbosename'], vals['caps']))
             else:
-                flist.append("%s " % vals['name'])
+                # Add trailing / for directories
+                name = (vals['name']+'/' if vals['type']=='vos:ContainerNode' else vals['name'])
+                flist.append("%s " % name)
         if verbose is False:
             print ' '.join(flist)
 

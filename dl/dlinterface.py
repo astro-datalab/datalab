@@ -458,13 +458,7 @@ class Dlinterface:
         self.help()
         return " "
 
-    '''
-       Represent method, just print the help
-    '''
-    def __repr__(self):
-        self.help()
-        return " "
-        
+    
 #### HELP ########
 
     def help(self, command=None):

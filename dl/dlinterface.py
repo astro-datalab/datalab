@@ -43,14 +43,13 @@ import requests
 import getpass
 from cStringIO import StringIO
 import xml.etree.ElementTree as ET
-#from lxml import etree
 
 # use this for SIA service for now
 from pyvo.dal import sia
 
 # Data Lab Client interfaces
 from dl import authClient, storeClient, queryClient
-from vos import vos
+#from vos.vos import Node
 
 # VOSpace imports
 #import vos as vos
@@ -238,15 +237,134 @@ def reformatQueryOutput(self, res=None, fmt='csv', verbose=True):
         print "Returning %s" % mapping[fmt][1]
     return output
                     
+def getNodeInfo(self, xnode, verbose=True):
+    ''' Get information on a node.  The input is a "node" element
+        of a XML ElementTree.
+    '''
+    # Gather up all the necessary information for this node
+    vals = {'uri':'', 'type':'', 'length':'', 'MD5':'',
+            'target':'', 'date':'', 'ispublic':'', 'caps':'',
+            'groupread':None, 'groupwrite':None, 'is_public':None,
+            'name':'', 'verbosename':'', 'size':'', 'permissions':''}
+    vals['uri'] = xnode.get('uri')
+    vals['type'] = xnode.get('{http://www.w3.org/2001/XMLSchema-instance}type')
+    pathbase = 'vos://datalab.noao!vospace/'+getUserName(self)+'/'
+    lenpathbase = len(pathbase)
+    vals['name'] = vals['uri'][lenpathbase:]
+    # Gather more information for verbose output
+    if verbose is True:
+        # Loop over properties/accepts/provides/capabilities/nodes
+        for p in xnode:
+            if (p.tag.endswith('target') is True):
+                vals['target'] = p.text
+            # Loop over "children"
+            for ch in p:
+                if (p.tag.endswith('properties') is True) and (len(p) > 0):
+                    churi = ch.get('uri')
+                    n = churi.split('#')[1]
+                    vals[n] = ch.text                          
+                if (p.tag.endswith('capabilities') is True) and (len(p) > 0):
+                    churi = ch.get('uri')
+                    cap = churi.split('#')[1]
+                    if vals['caps'] == '':
+                        vals['caps'] = cap
+                    else:
+                        vals['caps'] = vals['caps']+','+cap
+        # Parse the information a bit more
+        vals['verbosename'] = vals['name']
+        if vals['type'] == 'vos:ContainerNode':
+            vals['verbosename'] += '/'
+        if vals['type'] == 'vos:LinkNode':
+            target = node.target
+            vals['verbosename'] += ' -> '+target
+        size = vals['length']
+        if (type(size) is int) or (type(size) is str and size.isdigit() is True):
+            size = storeClient.sizeof_fmt(int(size))
+        vals['size'] = size
+        # Create the permissions string
+        perm = []
+        for i in range(10):
+            perm.append('-')
+        perm[1] = 'r'
+        perm[2] = 'w'
+        if vals['type'] == "vos:ContainerNode":
+            perm[0] = 'd'
+        if vals['type'] == "vos:LinkNode":
+            perm[0] = 'l'
+        #if self.props.get('ispublic', "false") == "true":
+        if vals['ispublic'] == "true":
+            perm[-3] = 'r'
+            perm[-2] = '-'
+        #write_group = self.props.get('groupwrite', '') # MJG
+        #if write_group != '':
+        if vals['groupwrite'] != '':
+            perm[5] = 'w'
+        #read_group = self.props.get('groupread', '')
+        #if read_group != '':
+        if vals['groupread'] != '':
+            perm[4] = 'r'
+        vals['permissions'] = string.join(perm, '')
+        # Return the dictionary of values
+        return vals
         
-# attribute of Dlinterface to store the submitted jobs with dict or ordereddict
-#    keep the jobid, query, async, fmt, username, time
-#    maybe make it a query "history" that contains all the settings and when it was submitted
-#    maybe clear the history when someone logs out or switches a user
-# Add -l like option to "ls" to give more information, if you use "raw" format then you get
-#    lots of stuff back that needs to be parsed.  Maybe return an array or structured array
-#    with all the info on the files, name, size date, file/directory, etc.
-
+#class Node:
+#    '''
+#       A class to hold node information.
+#    '''
+#    def __init__(self, xnode):
+#        self.uri = None
+#        self.type = None
+#        self.length = None
+#        self.MD5 = None
+#        self.target = ''
+#        self.date = ''
+#        self.groupread = None
+#        self.groupwrite = None
+#        self.is_public = None
+#        self.islocked = None
+#        self.caps = ''
+#        self.name = ''
+#        self.verbosename = ''
+#        self.size = ''
+#        self.permissions = ''
+#       
+#    def isdir(self):
+#        '''  Determine if this node is a directory.
+#        '''
+#        return (True if self.type == 'vos:ContainerNode' else False)
+#        
+#    def islink(self):
+#        ''' Determine if this node is a link.
+#        '''
+#        return (True if self.type == 'vos:LinkNode' else False)
+#        
+#    def getPerms(self):
+#        ''' Get the permissions string.
+#        '''
+#        perm = []
+#        for i in range(10):
+#            perm.append('-')
+#        perm[1] = 'r'
+#        perm[2] = 'w'
+#        if self.type == "vos:ContainerNode":
+#            perm[0] = 'd'
+#        if self.type == "vos:LinkNode":
+#            perm[0] = 'l'
+#        #if self.props.get('ispublic', "false") == "true":
+#        if self.ispublic == "true":
+#            perm[-3] = 'r'
+#            perm[-2] = '-'
+#        #write_group = self.props.get('groupwrite', '') # MJG
+#        #if write_group != '':
+#        if self.groupwrite != '':
+#            perm[5] = 'w'
+#        #read_group = self.props.get('groupread', '')
+#        #if read_group != '':
+#        if self.groupread != '':
+#            perm[4] = 'r'
+#        return string.join(perm, '')
+       
+        
 class DLInteract:
     '''
        Main class for Data Lab interactions
@@ -1296,38 +1414,82 @@ class Dlinterface:
             name = (name if not name.endswith('/*') else name[:-2])
         # Run the LS command
         res = storeClient.ls (token, name=name, format='raw')
-        #root = etree.fromstring('<data>'+res+'</data>')
         root = ET.fromstring('<data>'+res+'</data>')
-        NAMESPACES = {"vos": "http://www.ivoa.net/xml/VOSpace/v2.0"}
+        pathbase = 'vos://datalab.noao!vospace/'+getUserName(self)+'/'
+        # Check if this is a directory listing
+        if (len(root) == 1) and (root[0].attrib['{http://www.w3.org/2001/XMLSchema-instance}type'] == 'vos:ContainerNode'):
+            pathbase = root[0].attrib['uri']+'/'
+            for k in root[0]:
+                if (k.tag.endswith('nodes') is True):
+                    root = k     # make the "nodes" the new root
+                    break
+        lenpathbase = len(pathbase)
         if verbose is False:     # start output string list
             flist = []
-        for xnode in root.findall('vos:node', namespaces=NAMESPACES):
-            node = vos.Node(xnode)
+        # Loop over nodes
+        for node in root:
+            # Gather up all the necessary information for this node
+            vals = {'uri':'', 'type':'', 'length':'', 'MD5':'',
+                    'target':'', 'date':'', 'ispublic':'', 'caps':''}      # initialize blank dict
+            vals['uri'] = node.get('uri')
+            vals['type'] = node.get('{http://www.w3.org/2001/XMLSchema-instance}type')
+            # Gather more information for verbose output
             if verbose is True:
-                # Get capabilities
-                VOSPACE_NS = 'http://www.ivoa.net/xml/VOSpace/v2.0'
-                capabilities = xnode.find('{%s}capabilities' % VOSPACE_NS)
-                caps = []
-                if capabilities is not None:
-                    for capability in capabilities:
-                        caps.append(capability.get['uri'])
+                # Loop over properties/accepts/provides/capabilities/nodes
+                for p in node:
+                    if (p.tag.endswith('target') is True):
+                        vals['target'] = p.text
+                    # Loop over "children"
+                    for ch in p:
+                        if (p.tag.endswith('properties') is True) and (len(p) > 0):
+                            churi = ch.get('uri')
+                            n = churi.split('#')[1]
+                            vals[n] = ch.text                          
+                        if (p.tag.endswith('capabilities') is True) and (len(p) > 0):
+                            churi = ch.get('uri')
+                            cap = churi.split('#')[1]
+                            if vals['caps'] == '':
+                                vals['caps'] = cap
+                            else:
+                                vals['caps'] = vals['caps']+','+cap
                 # Parse the information a bit more
-                size = node.props['length']
+                name = vals['uri'][lenpathbase:]
+                if vals['type'] == 'vos:ContainerNode':    # append "/" for directories
+                    name += '/'
+                if vals['type'] == 'vos:LinkNode':         # use source -> target for links
+                    target = vals['target'][lenpathbase:]
+                    name += ' -> '+target
+                size = vals['length']
                 if (type(size) is int) or (type(size) is str and size.isdigit() is True):
                     size = storeClient.sizeof_fmt(int(size))
-                name = node.name
-                name = (name + '/' if node.isdir() is True else name)
-                name = (name + ' -> '+node.target if node.islink() is True else name)
                 # Now print out the information          
-                print ("%10s  %6s  %s  %s  %s" % (node.get_info()['permissions'], size,
-                                                 node.props['date'], name, ','.join(caps)))
+                print ("%6s  %s  %s  %s" % (size, vals['date'], name, vals['caps']))
             # Non-verbose output
             else:
-                name = (node.name if node.isdir() is False else node.name+'/')
+                # Parse the information a bit more
+                name = vals['uri'][lenpathbase:]
+                if vals['type'] == 'vos:ContainerNode':    # append "/" for directories
+                    name += '/'
                 flist.append("%s " % name)
+
         if verbose is False:
             print ' '.join(flist)
-        
+                
+        # want permissions, size, timestamp, filename with trailing "/" for directory
+        #  need something separate for link, maybe name -> target
+        # "length" is size?
+        # add another column at end for a comma-delimited list of capabilites
+        # file, directory, link seems to be specified in the node tag:
+        #  xsi:type="vos:LinkNode"       link
+        #  xsi:type="vos:ContainerNode"  directory
+        #  xsi:type="vos:DataNode"       file
+
+                        
+        # directories should have trailing "/" no matter what
+
+        #else:
+        #    return storeClient.ls (token, name=name, format=format)
+
 
     def get(self, source=None, destination=None, verbose=True):
         '''

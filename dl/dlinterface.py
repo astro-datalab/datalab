@@ -1415,6 +1415,18 @@ class Dlinterface:
         .. code-block:: python
      
             dl.ls()
+            test2  test1 
+
+        Verbose listing of the files in the ``public/`` directory.
+
+        .. code-block:: python
+     
+            dl.ls('public',verbose=True)
+            lrw-rw----  demo15      0B  17 May 2017 14:04:25  thisisalsoalink -> /public/smash2  
+            lrw-rw----  demo15      0B  17 May 2017 13:58:04  thisisalink -> /smash1  
+            -rw-rw-r--  demo15    3.4K  17 May 2017 09:40:13  smash2  
+            -rw-rw-r--  demo15    3.4K  17 May 2017 07:34:54  smash1  
+            drw-rw----  demo15      0B  17 May 2017 14:05:02  data/  tableingester,downloader,runner
 
         '''
         # Check if we are logged in

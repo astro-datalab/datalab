@@ -496,11 +496,11 @@ class Dlinterface:
             print " "
             print "-- Query and database operations --"
             print "dl.query()          - Query a remote data service in the Data Lab"
-            print "dl.dropdb()         - Drop a user MyDB table"
-            print "dl.listdb()         - List the user MyDB tables"
             print "dl.queryhistory()   - List history of queries made"
             print "dl.queryresults()   - Get the async query results"
             print "dl.querystatus()    - Get an async query job status"
+            print "dl.dropdb()         - Drop a user MyDB table"
+            print "dl.listdb()         - List the user MyDB tables"
             print "dl.siaquery()       - Query a SIA service in the Data Lab"
             #print " "
             #print "-- Capabilities --"
@@ -1205,7 +1205,7 @@ class Dlinterface:
         return reformatQueryOutput(self,res,fmt,verbose=True)
         
         
-    def listmydb(self, table=''):
+    def listdb(self, table=''):
         '''
         List the user's MyDB tables.
 
@@ -1245,7 +1245,7 @@ class Dlinterface:
                 res = ''
             return res
             
-    def dropmydb(self, table=None):
+    def dropdb(self, table=None):
         '''
         Drop a user's MyDB table.
 

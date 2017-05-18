@@ -950,7 +950,11 @@ class Dlinterface:
 
             # Add this query to the query history
             jobid = None
-            status = len(res.split('\n'))-2     # number of rows returned
+            status = ''
+            if (out is None or out == '') and (not async):   # regular sync query
+                status = len(res.split('\n'))-2              # number of rows returned
+            if (out is not None) and (out != '') and (not async):
+                status = res                                 # sync query to file, vos, or mydb
             if async:
                 jobid = res
                 status = 'SUBMITTED'

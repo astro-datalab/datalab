@@ -1399,7 +1399,6 @@ class Dlinterface:
      
             dl.ls()
 
-
         '''
         # Check if we are logged in
         if not checkLogin(self):
@@ -1428,40 +1427,41 @@ class Dlinterface:
             flist = []
         # Loop over nodes
         for node in root:
-            # Gather up all the necessary information for this node
-            vals = {'uri':'', 'type':'', 'length':'', 'MD5':'',
-                    'target':'', 'date':'', 'ispublic':'', 'caps':''}      # initialize blank dict
-            vals['uri'] = node.get('uri')
-            vals['type'] = node.get('{http://www.w3.org/2001/XMLSchema-instance}type')
-            # Gather more information for verbose output
-            if verbose is True:
-                # Loop over properties/accepts/provides/capabilities/nodes
-                for p in node:
-                    if (p.tag.endswith('target') is True):
-                        vals['target'] = p.text
-                    # Loop over "children"
-                    for ch in p:
-                        if (p.tag.endswith('properties') is True) and (len(p) > 0):
-                            churi = ch.get('uri')
-                            n = churi.split('#')[1]
-                            vals[n] = ch.text                          
-                        if (p.tag.endswith('capabilities') is True) and (len(p) > 0):
-                            churi = ch.get('uri')
-                            cap = churi.split('#')[1]
-                            if vals['caps'] == '':
-                                vals['caps'] = cap
-                            else:
-                                vals['caps'] = vals['caps']+','+cap
-                # Parse the information a bit more
-                name = vals['uri'][lenpathbase:]
-                if vals['type'] == 'vos:ContainerNode':    # append "/" for directories
-                    name += '/'
-                if vals['type'] == 'vos:LinkNode':         # use source -> target for links
-                    target = vals['target'][lenpathbase:]
-                    name += ' -> '+target
-                size = vals['length']
-                if (type(size) is int) or (type(size) is str and size.isdigit() is True):
-                    size = storeClient.sizeof_fmt(int(size))
+            vals = getNodeInfo(self, node, verbose=verbose):
+            ## Gather up all the necessary information for this node
+            #vals = {'uri':'', 'type':'', 'length':'', 'MD5':'',
+            #        'target':'', 'date':'', 'ispublic':'', 'caps':''}      # initialize blank dict
+            #vals['uri'] = node.get('uri')
+            #vals['type'] = node.get('{http://www.w3.org/2001/XMLSchema-instance}type')
+            ## Gather more information for verbose output
+            #if verbose is True:
+            #    # Loop over properties/accepts/provides/capabilities/nodes
+            #    for p in node:
+            #        if (p.tag.endswith('target') is True):
+            #            vals['target'] = p.text
+            #        # Loop over "children"
+            #        for ch in p:
+            #            if (p.tag.endswith('properties') is True) and (len(p) > 0):
+            #                churi = ch.get('uri')
+            #                n = churi.split('#')[1]
+            #                vals[n] = ch.text                          
+            #            if (p.tag.endswith('capabilities') is True) and (len(p) > 0):
+            #                churi = ch.get('uri')
+            #                cap = churi.split('#')[1]
+            #                if vals['caps'] == '':
+            #                    vals['caps'] = cap
+            #                else:
+            #                    vals['caps'] = vals['caps']+','+cap
+            #    # Parse the information a bit more
+            #    name = vals['uri'][lenpathbase:]
+            #    if vals['type'] == 'vos:ContainerNode':    # append "/" for directories
+            #        name += '/'
+            #    if vals['type'] == 'vos:LinkNode':         # use source -> target for links
+            #        target = vals['target'][lenpathbase:]
+            #        name += ' -> '+target
+            #    size = vals['length']
+            #    if (type(size) is int) or (type(size) is str and size.isdigit() is True):
+            #        size = storeClient.sizeof_fmt(int(size))
                 # Now print out the information          
                 print ("%6s  %s  %s  %s" % (size, vals['date'], name, vals['caps']))
             # Non-verbose output

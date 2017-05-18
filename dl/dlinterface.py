@@ -1481,7 +1481,9 @@ class Dlinterface:
             #        size = storeClient.sizeof_fmt(int(size))
             if verbose is True:
                 # Now print out the information          
-                print ("%6s  %s  %s  %s" % (size, vals['date'], name, vals['caps']))
+                print ("%10s  %6s  %s  %s  %s" % (vals['permissions'], vals['size'],
+                                                  vals['time'], vals['verbosename'], vals['caps']))
+                #print ("%6s  %s  %s  %s" % (size, vals['date'], name, vals['caps']))
             # Non-verbose output
             else:
                 # Parse the information a bit more

@@ -1443,12 +1443,13 @@ class Dlinterface:
         if verbose is False:     # start output string list
             flist = []
         # Loop over nodes
+        user = getUserName(self)
         for node in root:
             # Gather up all the necessary information for this node
             vals = getNodeInfo(self, node, verbose=verbose)
             if verbose is True:
                 # Now print out the information          
-                print ("%10s  %6s  %s  %s  %s" % (vals['permissions'], vals['size'],
+                print ("%10s  %s  %6s  %s  %s  %s" % (vals['permissions'], user, vals['size'],
                                                   vals['time'], vals['verbosename'], vals['caps']))
             else:
                 flist.append("%s " % vals['name'])

@@ -1595,6 +1595,11 @@ class Dlinterface:
         # Check that we have a good token
         if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
+        # Check if the source files actually exist
+        res = storeClient(token,source,'csv')
+        if res == '':
+            print ("'%s' not found." % source)
+            return
         # Run the MV command
         storeClient.mv (token, fr=source, to=destination,
                         verbose=verbose)

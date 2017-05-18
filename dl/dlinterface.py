@@ -21,7 +21,8 @@ Import via
 
 import os
 from subprocess import Popen, PIPE
-from time import time, localtime, gmtime, strftime, mktime, sleep
+#from time import time, localtime, gmtime, strftime, mktime, sleep
+import time
 try:
     import ConfigParser
     from urllib import quote_plus, urlencode		# Python 2
@@ -396,8 +397,8 @@ class DLInteract:
         self.config = ConfigParser.RawConfigParser(allow_no_value=True)
         if not os.path.exists('%s/dl.conf' % self.home):
             self.config.add_section('datalab')
-            self.config.set('datalab', 'created', strftime(
-                '%Y-%m-%d %H:%M:%S', gmtime()))
+            self.config.set('datalab', 'created', time.strftime(
+                '%Y-%m-%d %H:%M:%S', time.gmtime()))
             self.config.add_section('login')
             self.config.set('login', 'status', 'loggedout')
             self.config.set('login', 'user', '')
@@ -955,10 +956,10 @@ class Dlinterface:
                 status = 'SUBMITTED'
             if self.qhistory is None:
                 qid = 1
-                self.qhistory = {qid : (qid, type, async, _query, time(), jobid, getUserName(self), fmt, status)}
+                self.qhistory = {qid : (qid, type, async, _query, time.time(), jobid, getUserName(self), fmt, status)}
             else:
                 qid = int(max(self.qhistory.keys())) + 1
-                self.qhistory[qid] = (qid, type, async, _query, time(), jobid, getUserName(self), fmt, status) 
+                self.qhistory[qid] = (qid, type, async, _query, time.time(), jobid, getUserName(self), fmt, status) 
             
             # Return the results
             
@@ -1045,7 +1046,8 @@ class Dlinterface:
                     v[8] = stat
                 if (async is True and v[2] == True) or (async is not True):
                     print ("%-3d  %-19s  %-4s  %-5s  %-11s  %-10s  %-18s  '%-s'" %
-                           (v[0], strftime('%Y-%m-%d %H:%M:%S', localtime(v[4])), v[1], 'ASYNC' if v[2] else 'SYNC', v[7], 
+                           (v[0], time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(v[4])),
+                            v[1], 'ASYNC' if v[2] else 'SYNC', v[7], 
                             str(v[8]), v[5] if v[2] else "--", v[3]))
             print ("-------------------------------------------------------------------------------------------------------------------")
                     # Maybe leave off the jobid if we are using QID instead??!!

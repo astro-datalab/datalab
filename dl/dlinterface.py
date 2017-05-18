@@ -1455,7 +1455,7 @@ class Dlinterface:
         if verbose is False:
             print ' '.join(flist)
 
-def get(self, source=None, destination=None, verbose=True):
+    def get(self, source=None, destination=None, verbose=True):
         '''
         Get one or more files from Data Lab.
 

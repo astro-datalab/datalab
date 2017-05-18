@@ -486,7 +486,7 @@ class Dlinterface:
             print "dl.ls()        - List a location in Data Lab"
             print "dl.get()       - Get a file from Data Lab"
             print "dl.put()       - Put a file into Data Lab"
-            print "dl.cp()()      - Copy a file in Data Lab"
+            print "dl.cp()        - Copy a file in Data Lab"
             print "dl.mv()        - Move a file in Data Lab"
             print "dl.rm()        - Delete a file in Data Lab"
             print "dl.mkdir()     - Create a directory in Data Lab"

@@ -261,8 +261,8 @@ def getNodeInfo(self, xnode, lenpathbase, verbose=True):
             'name':'', 'verbosename':'', 'size':'', 'permissions':''}
     vals['uri'] = xnode.get('uri')
     vals['type'] = xnode.get('{http://www.w3.org/2001/XMLSchema-instance}type')
-    #pathbase = 'vos://datalab.noao!vospace/'+getUserName(self)+'/'
-    #lenpathbase = len(pathbase)
+    abspathbase = 'vos://datalab.noao!vospace/'+getUserName(self)+'/'
+    lenabspathbase = len(pathbase)
     vals['name'] = vals['uri'][lenpathbase:]
     # Gather more information for verbose output
     if verbose is True:
@@ -288,7 +288,7 @@ def getNodeInfo(self, xnode, lenpathbase, verbose=True):
         if vals['type'] == 'vos:ContainerNode':
             vals['verbosename'] += '/'
         if vals['type'] == 'vos:LinkNode':
-            target = vals['target'][lenpathbase:]
+            target = vals['target'][lenabspathbase:]
             vals['verbosename'] += ' -> '+target
         size = vals['length']
         if (type(size) is int) or (type(size) is str and size.isdigit() is True):

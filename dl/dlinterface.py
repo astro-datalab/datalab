@@ -900,8 +900,8 @@ class Dlinterface:
             return
 
         # Use QID to rerun a previous query
-        if (type(query) is int) and (query.isdigit() is True):
-            queryid = query
+        if (type(query) is int) or (type(query) is str and query.isdigit() is True):
+            queryid = int(query)
             keys = sorted(self.qhistory.keys())
             if ((queryid in keys) is False):           # no QID 
                 print ("QID = %s not found" % str(queryid))

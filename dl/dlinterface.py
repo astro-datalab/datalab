@@ -910,6 +910,7 @@ class Dlinterface:
             v = self.qhistory[queryid]
             # qid, type, async, query, time, jobid, username, format, status/nrows
             query = v[3]
+            print ("Query = '%s'" % query)
             
         # Check type
         if (qtype != 'sql') and (qtype != 'adql'):

@@ -1468,10 +1468,10 @@ class Dlinterface:
             # Non-verbose output
             else:
                 # Parse the information a bit more
-                name = vals['uri'][lenpathbase:]
-                if vals['type'] == 'vos:ContainerNode':    # append "/" for directories
-                    name += '/'
-                flist.append("%s " % name)
+                #name = vals['uri'][lenpathbase:]
+                #if vals['type'] == 'vos:ContainerNode':    # append "/" for directories
+                #    name += '/'
+                flist.append("%s " % vals['name'])
 
         if verbose is False:
             print ' '.join(flist)

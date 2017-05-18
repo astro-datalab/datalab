@@ -47,7 +47,7 @@ class queryClientError(Exception):
         self.message = message
 
 def isAlive(svc_url=DEF_SERVICE_URL):
-    """ Check whether the AuthManager service at the given URL is
+    """ Check whether the QueryManager service at the given URL is
         alive and responding.  This is a simple call to the root 
         service URL or ping() method.
     """
@@ -190,6 +190,9 @@ def query(token, adql=None, sql=None, fmt='csv', out=None, async=False, **kw):
         if out[:7] == 'file://':
             out = out[7:]
         if ':' not in out or out[:out.index(':')] not in ['vos', 'mydb']:
+            if os.path.isdir(out):
+                print ("Cannot create file '%s', it is a directory." % out)
+                return
             file = open(out, 'wb', 0)
             file.write(r.content)
             file.close()

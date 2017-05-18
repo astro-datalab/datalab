@@ -1427,7 +1427,7 @@ class Dlinterface:
             flist = []
         # Loop over nodes
         for node in root:
-            vals = getNodeInfo(self, node, verbose=verbose):
+            vals = getNodeInfo(self, node, verbose=verbose)
             ## Gather up all the necessary information for this node
             #vals = {'uri':'', 'type':'', 'length':'', 'MD5':'',
             #        'target':'', 'date':'', 'ispublic':'', 'caps':''}      # initialize blank dict

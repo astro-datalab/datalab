@@ -1462,6 +1462,7 @@ class Dlinterface:
             #    size = vals['length']
             #    if (type(size) is int) or (type(size) is str and size.isdigit() is True):
             #        size = storeClient.sizeof_fmt(int(size))
+            if verbose is True:
                 # Now print out the information          
                 print ("%6s  %s  %s  %s" % (size, vals['date'], name, vals['caps']))
             # Non-verbose output

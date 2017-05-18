@@ -289,7 +289,7 @@ def getNodeInfo(self, xnode, lenpathbase, verbose=True):
             vals['verbosename'] += '/'
         if vals['type'] == 'vos:LinkNode':
             target = vals['target'][lenabspathbase:]
-            vals['verbosename'] += ' -> '+target
+            vals['verbosename'] += ' -> /'+target   # absolute path
         size = vals['length']
         if (type(size) is int) or (type(size) is str and size.isdigit() is True):
             size = storeClient.sizeof_fmt(int(size))

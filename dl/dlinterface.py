@@ -44,6 +44,7 @@ import requests
 import getpass
 from cStringIO import StringIO
 import xml.etree.ElementTree as ET
+import numpy as np
 
 # use this for SIA service for now
 from pyvo.dal import sia
@@ -193,7 +194,6 @@ def addFormatMapping(self):
     '''
     from functools import partial
     from collections import OrderedDict
-    import numpy as np
     from pandas import read_csv
     from astropy.table import Table
     from astropy.io.votable import parse_single_table

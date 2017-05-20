@@ -69,7 +69,8 @@ SM_URL = "http://dlsvcs.datalab.noao.edu/storage"   # Storage Manager
 QM_URL = "http://dlsvcs.datalab.noao.edu/query"     # Query Manager
 
 # SIA service
-SIA_DEF_ACCESS_URL = "http://datalab.noao.edu/sia/smash"
+#SIA_DEF_ACCESS_URL = "http://datalab.noao.edu/sia/smash"
+SIA_DEF_ACCESS_URL = "http://datalab.noao.edu/sia"
 SIA_DEF_SIZE = 0.0085  # degrees
 
 def getUserName (self):

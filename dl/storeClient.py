@@ -59,7 +59,7 @@ def get(token, fr, to, verbose=True):
     """
         Retrieve a file from the store manager service
     """
-    debug = False
+    debug = True
     headers = {'X-DL-AuthToken': token}
 
     # Patch the names with the URI prefix if needed.
@@ -352,7 +352,7 @@ def rm(token, name, verbose=False):
 
     # Patch the names with the URI prefix if needed.
     nm = (name if name.startswith("vos://") else ("vos://" + name))
-    if nm == "vos://" or nm == "vos://tmp" or "nm == "vos://public":
+    if nm == "vos://" or nm == "vos://tmp" or nm == "vos://public":
         return "Error: operation not permitted"
 
     # If the 'name' string has no metacharacters we're copying a single file,
@@ -383,7 +383,7 @@ def rmdir(token, name):
 
     # Patch the names with the URI prefix if needed.
     nm = (name if name.startswith("vos://") else ("vos://" + name))
-    if nm == "vos://" or nm == "vos://tmp" or "nm == "vos://public":
+    if nm == "vos://" or nm == "vos://tmp" or nm == "vos://public":
         return "Error: operation not permitted"
 
     try:

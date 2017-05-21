@@ -352,6 +352,8 @@ def rm(token, name, verbose=False):
 
     # Patch the names with the URI prefix if needed.
     nm = (name if name.startswith("vos://") else ("vos://" + name))
+    if nm == "vos://" or nm == "vos://tmp" or "nm == "vos://public":
+        return "Error: operation not permitted"
 
     # If the 'name' string has no metacharacters we're copying a single file,
     # otherwise expand the file list on the and process the matches
@@ -378,6 +380,12 @@ def rmdir(token, name):
     """
         Delete a directory from the store manager service
     """
+
+    # Patch the names with the URI prefix if needed.
+    nm = (name if name.startswith("vos://") else ("vos://" + name))
+    if nm == "vos://" or nm == "vos://tmp" or "nm == "vos://public":
+        return "Error: operation not permitted"
+
     try:
         saveAs (token, "deleted", name+"/.deleted")
         r = getFromURL("/rmdir?dir=%s" % name, token)

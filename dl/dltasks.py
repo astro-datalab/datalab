@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Matthew Graham <graham@noao.edu>, Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20170509'  # yyyymmdd
+__version__ = '20170520'  # yyyymmdd
 
 
 """
@@ -625,8 +625,10 @@ class Query2 (Task):
         except Exception as e:
             if not self.async.value and e.message is not None:
                 err = e.message
-                if err.find("Time-out"):
+                if err.find("Time-out") > 0:
                     print ("Error: Sync query timeout, try an async query")
+                else:
+                    print (e.message)
             else:
                 print (e.message)
 
@@ -657,6 +659,20 @@ class QueryResults(Task):
     def run(self):
         token = getUserToken(self)
         print (queryClient.results (token, jobId=self.jobId.value))
+
+
+class QueryStatus(Task):
+    '''
+        Get the async query job status.
+    '''
+    def __init__(self, datalab):
+        Task.__init__(self, datalab, 'qstatus', 'Get an async query job status')
+        self.addOption("jobId", Option("jobId", "",
+                        "Query Job ID", required=True))
+
+    def run(self):
+        token = getUserToken(self)
+        print (queryClient.status (token, jobId=self.jobId.value))
 
 
 class ListMyDB(Task):
@@ -705,11 +721,14 @@ class QueryProfiles(Task):
         self.addOption("profile", 
             Option("profile", "", "Profile to list", required=False,
                 default=None))
+        self.addOption("format", 
+            Option("format", "", "Output format (csv|text)",
+                required=False, default='text'))
 
     def run(self):
         token = getUserToken(self)
-        print (queryClient.list_profiles (token, profile=self.profile.value))
-
+        print (str(queryClient.list_profiles (token, 
+                profile=self.profile.value, format=self.format.value)))
 
 
 

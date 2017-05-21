@@ -1182,10 +1182,14 @@ class StorageProfiles(Task):
         self.addOption("profile", 
             Option("profile", "", "Profile to list", required=False,
                 default=None))
+        self.addOption("format", 
+            Option("format", "", "Output format (csv|text)",
+                required=False, default='text'))
 
     def run(self):
         token = getUserToken(self)
-        print (storeClient.list_profiles (token, profile=self.profile.value))
+        print (str(storeClient.list_profiles (token, 
+                profile=self.profile.value, format=self.format.value)))
 
 
 ################################################

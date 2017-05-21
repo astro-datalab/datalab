@@ -510,6 +510,7 @@ def expandFileList(token, pattern, format, full=False):
 # Get from a URL
 def getFromURL(path, token):
     try:
+        print ("%s%s" % (DEF_SERVICE_URL, path))
         resp = requests.get("%s%s" % (DEF_SERVICE_URL, path),
                             headers={"X-DL-AuthToken": token})
     except Exception as e:
@@ -547,7 +548,7 @@ def set_svc_url(svc_url):
 
 # PROFILES -- Get the profiles supported by the storage manager service
 #
-def list_profiles(token, profile=None):
+def list_profiles(token, profile=None, format='text'):
     """Retrieve the profiles supported by the storage manager service
 
     Parameters
@@ -573,15 +574,18 @@ def list_profiles(token, profile=None):
         profiles = storeClient.list_profiles(token)
     """
 
-    #headers = {'Content-Type': 'text/ascii',
-    #           'X-DL-AuthToken': token}  # application/x-sql
-    dburl = 'profiles'
-    if profile != None:
-        dburl += "/%s" % profile
+    headers = {'Content-Type': 'text/ascii',
+               'X-DL-AuthToken': token}  # application/x-sql
+    dburl = '/profiles?'
+    if profile != None and profile != 'None' and profile != '':
+        dburl += "profile=%s&" % profile
+    dburl += "format=%s" % format
+
     r = getFromURL(dburl, token)
     profiles = r.content
     if '{' in profiles:
-        profiles = json.load(StringIO(profiles))
+        #profiles = json.load(StringIO(profiles))
+        profiles = json.loads(profiles)
     return profiles
 
 

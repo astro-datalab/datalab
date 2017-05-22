@@ -70,6 +70,7 @@ if __name__ == "__main__":
     # Supported tasks
     tasks = {'login': dl.Login,
              'logout': dl.Logout,
+             'schema': dl.Schema,
              'whoami': dl.WhoAmI,
              'status': dl.Status,
              'mount': dl.Mountvofs,

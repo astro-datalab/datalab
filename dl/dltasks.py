@@ -60,7 +60,8 @@ TEST_TOKEN = "dltest.99998.99998.test_access"
 
 
 # Data Lab Client interfaces
-from dl import authClient, storeClient, queryClient
+#from dl import authClient, storeClient, queryClient
+import authClient, storeClient, queryClient
 
 
 # Uncomment to print HTTP and response headers
@@ -492,6 +493,33 @@ class WhoAmI(Task):
 
     def run(self):
         print (getUserName(self))
+
+
+
+################################################
+#  Schema Discovery Tasks
+################################################
+
+class Schema(Task):
+    '''
+        Print information about data servicce schema
+    '''
+    def __init__(self, datalab):
+        Task.__init__(self, datalab, 'schema', 'Print data service schema info')
+        self.addOption("val", 
+            Option("val", "", "Value to list ([[<schema>][.<table>][.<col>]])",
+                required=False, default=None))
+        self.addOption("format", 
+            Option("format", "", "Output format (csv|text|json)",
+                required=False, default=None))
+        self.addOption("profile", 
+            Option("profile", "", "Service profile", required=False,
+                default="default"))
+
+    def run(self):
+        print (queryClient.schema (value=self.val.value,
+                                  format=self.format.value,
+                                  profile=self.profile.value))
 
 
 

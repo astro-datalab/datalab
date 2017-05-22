@@ -513,6 +513,38 @@ def list(token, table=''):
     return r.content
 
 
+# SCHEMA -- Return information about a data service schema value.
+#
+def schema(value, format, profile):
+    """ 
+        Return information about a data service schema value.
+
+        Parameters
+        ----------
+        value : str
+        format : str
+        profile : str
+            The name of the profile to use. The list of available ones can be
+            retrieved from the service (see function :func:`queryClient.list_profiles()`)
+
+    Returns
+    -------
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        # set the profile
+        queryClient.schema("usno.a2.raj2000","text","default")
+    """
+
+    url = '%s/schema?value=%s&format=%s&profile=%s' % \
+            (DEF_SERVICE_URL, (value), str(format), str(profile))
+    r = requests.get(url)
+    return r.content
+
+
 # REMOVE -- Drop the specified table from the user's MyDB
 #
 def drop(token, table=''):

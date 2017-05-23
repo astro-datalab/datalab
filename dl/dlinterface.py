@@ -1708,17 +1708,17 @@ class Dlinterface:
         storeClient.rm (token, name=name, verbose=verbose)
 
         
-    def ln(self, link=None, target=None):
+    def ln(self, target=None, link=None):
         '''
         Link a file in Data Lab VOSpace.
 
         Parameters
         ----------
-        link : str
-             The name of the link, e.g. ``file1link``.
-
         target : str
              The name of the file in VOSpace to link to, e.g. ``file1.txt``.
+
+        link : str
+             The name of the link, e.g. ``file1link``.
 
         Example
         -------
@@ -1730,7 +1730,7 @@ class Dlinterface:
             dl.ls()
             file1.txt
      
-            dl.ln('iamlink','file1.txt')
+            dl.ln('file1.txt','iamlink')
 
             dl.ls()
             file1.txt, iamlink
@@ -1738,7 +1738,7 @@ class Dlinterface:
         '''
         # Not enough information input
         if (link is None) or (target is None):
-            print "Syntax - dl.ln(link, target)"
+            print "Syntax - dl.ln(target, link)"
             return
         # Check if we are logged in
         if not checkLogin(self):
@@ -1951,8 +1951,6 @@ class Dlinterface:
 #  SIA Tasks
 ################################################
 
-
-# why not use queryClient SIAQUERY????
 
     def siaquery(self, ra=None, dec=None, dist=None, file=None, out=None, verbose=False):
         '''

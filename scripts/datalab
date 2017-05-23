@@ -70,6 +70,7 @@ if __name__ == "__main__":
     # Supported tasks
     tasks = {'login': dl.Login,
              'logout': dl.Logout,
+             'schema': dl.Schema,
              'whoami': dl.WhoAmI,
              'status': dl.Status,
              'mount': dl.Mountvofs,
@@ -93,7 +94,9 @@ if __name__ == "__main__":
              'broadcast': dl.Broadcast,
              'exec': dl.LaunchJob,
              'launch': dl.Launch,
-             'siaquery': dl.SiaQuery
+             'siaquery': dl.SiaQuery,
+             'list_query_profiles': dl.QueryProfiles,
+             'list_storage_profiles': dl.StorageProfiles
              }
 
     # List tasks

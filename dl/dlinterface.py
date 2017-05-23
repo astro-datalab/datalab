@@ -1333,7 +1333,7 @@ class Dlinterface:
 
 
     def schema(self, val=None, fmt='text', profile='default'):
-    '''
+        '''
         Print information about data service schema.
 
         Parameters
@@ -1393,9 +1393,9 @@ class Dlinterface:
               galaxies   View of object table to select for galaxies
                 xmatch   Crossmatch of object against GAIA DR1 and WISE
 
-    '''
+        '''
 
-    print (queryClient.schema (value=val, format=fmt, profile=profile))
+        print (queryClient.schema (value=val, format=fmt, profile=profile))
         
 
 ################################################

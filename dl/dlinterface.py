@@ -1332,6 +1332,72 @@ class Dlinterface:
         print (queryClient.list_profiles (token, profile=profile))
 
 
+    def schema(self, val=None, fmt='text', profile='default'):
+    '''
+        Print information about data service schema.
+
+        Parameters
+        ----------
+        val : str
+            Value to list ([[<schema>][.<table>][.<col>]]).
+
+        fmt: str
+            Output format (csv|text|json).
+
+        profile : str
+            Service profile.
+
+        Returns
+        -------
+        results : str
+            The schema information is printed to the screen.
+
+        Example
+        -------
+
+        Print out all the DL tables.
+
+        .. code-block:: python
+     
+            datalab schema 
+
+            Schema Name   Description
+           -----------   -----------
+              gaia_dr1   GAIA Data Release 1
+                  ivoa   IVOA ObsCore tables
+              des_sva1   DES SVA1 Data Products
+            tap_schema   TAP Schema Tables
+                  usno   USNO Astrometry Catalogs
+             sdss_dr13   
+               neo_dr1   NEO Survey Data Release 1
+                ls_dr3   The DECam Legacy Survey Data Release 3
+             smash_dr1   SMASH Data Release 1
+
+
+        List all tables in a schema/catalog.
+
+        .. code-block:: python
+     
+            datalab schema val=smash_dr1
+
+            Schema: smash_dr1
+
+            Table Name   Description
+            ----------   -----------
+                  chip   Info on each chip in the frame
+              exposure   Info on each exposure
+                 field   Info on each target field (position, Num exposures, etc)
+                object   Average photometry of each unique object
+                source   All of the individual source measurements
+                 stars   View of object table to select for stars
+              galaxies   View of object table to select for galaxies
+                xmatch   Crossmatch of object against GAIA DR1 and WISE
+
+    '''
+
+    print (queryClient.schema (value=val, format=fmt, profile=profile))
+        
+
 ################################################
 #  Task Execution Tasks
 ################################################

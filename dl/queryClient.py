@@ -53,7 +53,7 @@ def isAlive(svc_url=DEF_SERVICE_URL):
     """
     try:
         request = Request(svc_url)
-        response = urlopen(request).read()
+        response = urlopen(request,timeout=2).read()
     except Exception:
         return False
     else:

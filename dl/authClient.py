@@ -347,7 +347,7 @@ class authClient (object):
         """
         try:
             request = Request(svc_url)
-            response = urlopen(request).read()
+            response = urlopen(request,timeout=2).read()
         except Exception:
             return False
         else:

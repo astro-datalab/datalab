@@ -1332,7 +1332,7 @@ class Dlinterface:
         print (queryClient.list_profiles (token, profile=profile))
 
 
-    def schema(self, val=None, fmt='text', profile='default'):
+    def schema(self, val='', fmt='text', profile='default'):
         '''
         Print information about data service schema.
 

@@ -500,6 +500,8 @@ class Dlinterface:
             print "dl.queryhistory()   - List history of queries made"
             print "dl.queryresults()   - Get the async query results"
             print "dl.querystatus()    - Get an async query job status"
+            print "dl.queryprofiles()  - List the available query profiles"
+            print "dl.schema()         - Get information on database schemas"
             print "dl.dropdb()         - Drop a user MyDB table"
             print "dl.listdb()         - List the user MyDB tables"
             print "dl.siaquery()       - Query a SIA service in the Data Lab"
@@ -960,6 +962,8 @@ class Dlinterface:
                 err = e.message
                 if err.find("Time-out") >= 0:
                     print ("Error: Sync query timeout, try an async query")
+                else:
+                    print (e.message)
             else:
                 print (e.message)
         else:

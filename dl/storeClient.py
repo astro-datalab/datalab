@@ -54,7 +54,7 @@ def isAlive(svc_url=DEF_SERVICE_URL):
         request = Request(svc_url)
         response = urlopen(request,timeout=2)
         output = response.read()
-        status_code = reponse.code
+        status_code = response.code
     except Exception:
         return False
     else:

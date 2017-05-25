@@ -52,11 +52,13 @@ def isAlive(svc_url=DEF_SERVICE_URL):
     """
     try:
         request = Request(svc_url)
-        response = urlopen(request,timeout=2).read()
+        response = urlopen(request,timeout=2)
+        output = response.read()
+        status_code = reponse.code
     except Exception:
         return False
     else:
-        return (True if response is not None else False)
+        return (True if (output is not None and status_code == 200) else False)
         
 
 # Pretty-printer for file sizes.

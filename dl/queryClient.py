@@ -21,11 +21,14 @@ Import via
 
 import requests
 try:
-    from urllib import quote_plus               # Python 2
+    from urllib import urlencode, quote_plus	        # Python 2
+    from urllib2 import urlopen, Request                # Python 2
 except ImportError:
-    from urllib.parse import quote_plus         # Python 3
+    from urllib.parse import urlencode, quote_plus      # Python 3
+    from urllib.request import urlopen, Request         # Python 3
 from io import StringIO				# Python 2/3 compatible
 import json
+import os
 
 
 #####################################
@@ -43,6 +46,20 @@ class queryClientError(Exception):
     def __init__(self, message):
         self.message = message
 
+def isAlive(svc_url=DEF_SERVICE_URL):
+    """ Check whether the QueryManager service at the given URL is
+        alive and responding.  This is a simple call to the root 
+        service URL or ping() method.
+    """
+    try:
+        request = Request(svc_url)
+        response = urlopen(request,timeout=2)
+        output = response.read()
+        status_code = response.code
+    except Exception:
+        return False
+    else:
+        return (True if (output is not None and status_code == 200) else False)
 
 # QUERY -- Send a query to the query manager service
 #
@@ -173,6 +190,9 @@ def query(token, adql=None, sql=None, fmt='csv', out=None, async=False, **kw):
         if out[:7] == 'file://':
             out = out[7:]
         if ':' not in out or out[:out.index(':')] not in ['vos', 'mydb']:
+            if os.path.isdir(out):
+                print ("Cannot create file '%s', it is a directory." % out)
+                return
             file = open(out, 'wb', 0)
             file.write(r.content)
             file.close()

@@ -604,7 +604,7 @@ def list_profiles(token, profile = None, format = 'text'):
     
     headers = {'Content-Type': 'text/ascii', 'X-DL-AuthToken': token} # application/x-sql
     dburl = '/profiles?' 
-    if profile != None and profile != 'None' and profile != ''::
+    if profile != None and profile != 'None' and profile != '':
         dburl += "/%s" % profile
     dburl += "format=%s" % format
     

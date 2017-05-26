@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Matthew Graham <graham@noao.edu>, Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20170524'  # yyyymmdd
+__version__ = '20170526'  # yyyymmdd
 
 
 """
@@ -46,6 +46,21 @@ TIMEOUT_REQUEST =       120             # sync query timeout default (120sec)
 class queryClientError(Exception):
     def __init__(self, message):
         self.message = message
+
+
+def isAlive(svc_url=DEF_SERVICE_URL):
+    """ Check whether the QueryManager service at the given URL is
+        alive and responding.  This is a simple call to the root 
+        service URL or ping() method.
+    """
+    try:
+        r = requests.get(svc_url, timeout=2)
+        output = r.content
+        status_code = r.status_code
+    except Exception:
+        return False
+    else:
+        return (True if (output is not None and status_code == 200) else False)
 
 
 # QUERY -- Send a query to the query manager service
@@ -186,7 +201,6 @@ def query(token, adql=None, sql=None, fmt='csv', out=None, async=False, **kw):
             file.write(r.content)
             file.close()
     else:
-        print ("content: " + r.content)
         return r.content
 
     return "OK"

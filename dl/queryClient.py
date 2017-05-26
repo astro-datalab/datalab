@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Matthew Graham <graham@noao.edu>, Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20170430'  # yyyymmdd
+__version__ = '20170524'  # yyyymmdd
 
 
 """
@@ -34,9 +34,13 @@ import json
 
 
 DEF_SERVICE_URL = "http://dlsvcs.datalab.noao.edu/query"
+DEF_SERVICE_URL = "http://dldev.datalab.noao.edu/query"
 SM_SERVICE_URL = "http://dlsvcs.datalab.noao.edu/storage"
+
 PROFILE = "default"
 DEBUG = False
+
+TIMEOUT_REQUEST =       120             # sync query timeout default (120sec)
 
 
 class queryClientError(Exception):
@@ -144,7 +148,15 @@ def query(token, adql=None, sql=None, fmt='csv', out=None, async=False, **kw):
 
     """
 
+    # Set any requested timeout on the call.
+    if 'timeout' in kw:
+        timeout = int(kw['timeout']) 
+        set_timeout_request (timeout)
+
+    # Set service headers.
     headers = {'Content-Type': 'text/ascii',
+               'X-DL-TimeoutRequest': str(TIMEOUT_REQUEST),
+               'X-DL-ClientVersion': __version__,
                'X-DL-AuthToken': token}  # application/x-sql
 
     if adql is not None and adql != '':
@@ -155,9 +167,6 @@ def query(token, adql=None, sql=None, fmt='csv', out=None, async=False, **kw):
         query = quote_plus(sql)
         dburl = '%s/query?sql=%s&ofmt=%s&out=%s&async=%s' % (
             DEF_SERVICE_URL, query, fmt, out, async)
-    elif 'uri' in kw:
-        dburl = '%s/query?uri=%s&ofmt=%s&out=%s' % (
-            DEF_SERVICE_URL, kw['uri'], fmt, out)
     else:
         raise queryClientError("No query specified")
 
@@ -167,7 +176,7 @@ def query(token, adql=None, sql=None, fmt='csv', out=None, async=False, **kw):
     r = requests.get(dburl, headers=headers)
 
     if r.status_code != 200:
-        raise queryClientError("Error in query: " + r.text)
+        raise queryClientError(r.text)
 
     if (out is not None and out != '') and not async:
         if out[:7] == 'file://':
@@ -177,6 +186,7 @@ def query(token, adql=None, sql=None, fmt='csv', out=None, async=False, **kw):
             file.write(r.content)
             file.close()
     else:
+        print ("content: " + r.content)
         return r.content
 
     return "OK"
@@ -328,6 +338,59 @@ def results(token, jobId=None):
         dburl += "&profile=%s" % PROFILE
     r = requests.get(dburl, headers=headers)
     return r.content
+
+
+# SET_TIMEOUT_REQUEST -- Set the requested sync query timeout value (in seconds).
+#
+def set_timeout_request(nsec):
+    """ Set the requested sync query timeout value (in seconds).
+
+    Parameters
+    ----------
+    nsec : int
+        The number of seconds requested before a sync query timeout occurs.
+        The service may cap this as a server defined maximum.
+
+    Returns
+    -------
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        # set the sync query timeout request to 30 seconds
+        queryClient.set_timeout_request(30)
+
+    """
+    global TIMEOUT_REQUEST
+    TIMEOUT_REQUEST = nsec
+
+
+# GET_TIMEOUT_REQUEST -- Get the current sync query timeout value.
+#
+def get_timeout_request():
+    """ Get the current sync query timeout value.
+
+    Parameters
+    ----------
+        None
+
+    Returns
+    -------
+        Current sync query timeout value.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        # get the current timeout value
+        print (queryClient.get_timeout_request())
+
+    """
+    global TIMEOUT_REQUEST
+    return TIMEOUT_REQUEST
 
 
 # SET_SVC_URL -- Set the service url to use

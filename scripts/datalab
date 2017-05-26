@@ -7,7 +7,8 @@
 from __future__ import print_function
 
 
-from dl import dltasks as dl
+#from dl import dltasks as dl
+import dltasks as dl
 import sys
 import logging
 from optparse import Values

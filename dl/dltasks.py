@@ -610,6 +610,9 @@ class Query2 (Task):
         self.addOption("profile", 
             Option("profile", "", "Service profile to use",
                 required=False, default="default"))
+        self.addOption("timeout", 
+            Option("timeout", "", "Requested query timeout",
+                required=False, default="120"))
 
     def run(self):
         token = getUserToken (self)
@@ -644,7 +647,8 @@ class Query2 (Task):
 
         try:
             res = queryClient.query (token, adql=adql, sql=sql, 
-                fmt=self.fmt.value, out=self.out.value, async=self.async.value)
+                        fmt=self.fmt.value, out=self.out.value, 
+                        async=self.async.value, timeout=self.timeout.value)
 
             if self.async.value:
                 print (res)                         # Return the JobID

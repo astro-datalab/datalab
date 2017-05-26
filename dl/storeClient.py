@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Matthew Graham <graham@noao.edu>, Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20170430'  # yyyymmdd
+__version__ = '20170522'  # yyyymmdd
 
 
 """
@@ -510,7 +510,7 @@ def expandFileList(token, pattern, format, full=False):
 # Get from a URL
 def getFromURL(path, token):
     try:
-        print ("%s%s" % (DEF_SERVICE_URL, path))
+        #print ("%s%s" % (DEF_SERVICE_URL, path))
         resp = requests.get("%s%s" % (DEF_SERVICE_URL, path),
                             headers={"X-DL-AuthToken": token})
     except Exception as e:

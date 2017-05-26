@@ -45,7 +45,7 @@ try:
 except ImportError:
     # Python 2
     import httplib as http_client
-http_client.HTTPConnection.debuglevel = 1
+http_client.HTTPConnection.debuglevel = 0  #1
 
 logger = logging.getLogger('vos')
 logger.setLevel(logging.ERROR)

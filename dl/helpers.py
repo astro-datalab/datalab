@@ -1,7 +1,7 @@
 """Helper classes and methods for datalab client."""
 
 __authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20170505' # yyyymmdd
+__version__ = '20170525' # yyyymmdd
 
 # std lib imports
 from functools import partial

@@ -411,8 +411,8 @@ def rmdir(token, name):
         return "Error: operation not permitted"
 
     try:        
-        saveAs (token, "deleted", name+"/.deleted")
-        r = getFromURL("/rmdir?dir=%s" % name, token)
+        saveAs (token, "deleted", nm+"/.deleted")
+        r = getFromURL("/rmdir?dir=%s" % nm, token)
     except Exception:
         raise storeClientError(r.content)
     else:

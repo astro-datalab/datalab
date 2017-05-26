@@ -1,7 +1,7 @@
 """Helper classes and methods for datalab client."""
 
 __authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20170505' # yyyymmdd
+__version__ = '20170525' # yyyymmdd
 
 # std lib imports
 from functools import partial
@@ -9,6 +9,8 @@ from cStringIO import StringIO
 from collections import OrderedDict
 from Queue import deque
 import getpass
+import warnings
+warnings.simplefilter('always', DeprecationWarning)
 
 # 3rd party Python imports
 import pylab as p
@@ -27,7 +29,7 @@ from dl import authClient, queryClient
 class Querist:
 
     def __init__(self,username='anonymous'):
-        
+
         """Helper class to authenticate user with Data Lab, run queries, and
         convert results to the requested data type.
         
@@ -44,6 +46,8 @@ class Querist:
             The token can be cleared by calling :func:`clearToken()`.
 
         """
+
+        warnings.warn("The 'Querist' helper class is deprecated, and may be removed in future versions of Data Lab. Please use 'dlinterface'.",DeprecationWarning)
 
         # obtain auth token in secure way
         self.token = self._getToken(username)

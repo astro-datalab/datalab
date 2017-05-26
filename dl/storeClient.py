@@ -70,7 +70,7 @@ def sizeof_fmt(num):
 
 
 # GET -- Retrieve a file from the store manager service
-def get(token, name, location):
+def get(token, fr, to):
     """
         Retrieve a file from the store manager service
     """

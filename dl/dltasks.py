@@ -60,8 +60,8 @@ TEST_TOKEN = "dltest.99998.99998.test_access"
 
 
 # Data Lab Client interfaces
-#from dl import authClient, storeClient, queryClient
-import authClient, storeClient, queryClient
+from dl import authClient, storeClient, queryClient
+#import authClient, storeClient, queryClient
 
 
 # Uncomment to print HTTP and response headers

@@ -140,7 +140,7 @@ def isTapWorking ():
         tapworking = False
     else:
         tapworking = (tapworking if response is not None else False)
-    # Check if the Tomcat service is resonding
+    # Check if the Tomcat service is responding
     try:
         request = Request("http://gp01.datalab.noao.edu:8080/")
         response = urlopen(request, timeout=1).read()
@@ -484,16 +484,18 @@ class Dlinterface:
             print "dl.servicestatus()  - Report on the status of the DL services"
             print " "
             print "-- File system operations --"
-            print "dl.ls()        - List a location in Data Lab"
-            print "dl.get()       - Get a file from Data Lab"
-            print "dl.put()       - Put a file into Data Lab"
-            print "dl.cp()        - Copy a file in Data Lab"
-            print "dl.mv()        - Move a file in Data Lab"
-            print "dl.rm()        - Delete a file in Data Lab"
-            print "dl.mkdir()     - Create a directory in Data Lab"
-            print "dl.rmdir()     - Delete a directory in Data Lab"
-            print "dl.ln()        - Link a file in Data Lab"
-            print "dl.tag()       - Tag a file in Data Lab"
+            print "dl.ls()        - List a location in Data Lab VOSpace"
+            print "dl.get()       - Get a file from Data Lab VOSpace"
+            print "dl.put()       - Put a file into Data Lab VOSpace"
+            print "dl.cp()        - Copy a file in Data Lab VOSpace"
+            print "dl.mv()        - Move a file in Data Lab VOSpace"
+            print "dl.rm()        - Delete a file in Data Lab VOSpace"
+            print "dl.mkdir()     - Create a directory in Data Lab VOSpace"
+            print "dl.rmdir()     - Delete a directory in Data Lab VOSpace"
+            print "dl.ln()        - Link a file in Data Lab VOSpace"
+            print "dl.tag()       - Tag a file in Data Lab VOSpace"
+            print "dl.save()      - Save data to a file in Data Lab VOspace"
+            print "dl.copyurl()   - Copy a file from a URL to Data Lab VOSpace"
             print " "
             print "-- Query and database operations --"
             print "dl.query()          - Query a remote data service in the Data Lab"
@@ -1244,6 +1246,7 @@ class Dlinterface:
             res = queryClient.list (token, table=table)
         except Exception as e:
             print ("Error listing MyDB tables.")
+            print (e.message)
         else:
             if res == 'relation "" not known':
                 print "No tables in MyDB"
@@ -1291,6 +1294,7 @@ class Dlinterface:
             queryClient.drop (token, table=table)
         except Exception as e:
             print ("Error dropping table '%s'." % table)
+            print (e.message)
         else:
             print ("Table '%s' was dropped." % table)
             
@@ -1930,6 +1934,83 @@ class Dlinterface:
         # Run the RMDIR command
         storeClient.rmdir (token, name=name)
 
+
+    def copyurl(self, url=None, name=None):
+        ''' 
+        Copy a file to VOSpace using a URL.
+
+        Parameters
+        ----------
+        url : str
+             The URL location of the file.
+
+        name : str
+             The name of the file in VOSpace.  The vos:// prefix is not necessary.
+
+        Example
+        -------
+
+        Copy the file http://www.mywebsite.com/file1.fits to output1.fits in VOSpace.
+
+        .. code-block:: python
+
+            dl.copyurl('http://www.mywebsite.com/file1.fits','output1.fits')
+
+        '''
+        # Not enough information input
+        if (url is None or name is None):
+            print "Syntax - dl.copyurl(url,name)"
+            return
+        # Check if we are logged in
+        if not checkLogin(self):
+            return
+        token = getUserToken(self)
+        # Check that we have a good token
+        if not authClient.isValidToken(token):
+            raise Exception, "Invalid user name and/or password provided. Please try again."
+        # Run the LOAD command
+        name = (name if name.startswith('vos://') else ('vos://'+name))
+        storeClient.load(token, name, url)
+
+        
+    def save(self, data=None, name=None):
+        ''' 
+        Save the string representation of a data object to a file in VOSpace.
+
+        Parameters
+        ----------
+        data : str
+             The data object such as a pandas data frame or numpy structured array.
+
+        name : str
+             The name of the file in VOSpace to create.  The vos:// prefix is not
+             necessary.
+
+        Example
+        -------
+
+        Save the pandas data frame called "df" to a file called "data1.csv" in VOSpace.
+
+        .. code-block:: python
+
+            dl.save(df,'data1.csv')
+
+        '''
+        # Not enough information input
+        if (data is None or name is None):
+            print "Syntax - dl.save(data,name)"
+            return
+        # Check if we are logged in
+        if not checkLogin(self):
+            return
+        token = getUserToken(self)
+        # Check that we have a good token
+        if not authClient.isValidToken(token):
+            raise Exception, "Invalid user name and/or password provided. Please try again."
+        # Run the SAVEAS command
+        storeClient.saveAs (token, data, name)
+
+        
 #    def resolve(self, name=None):
 #        ''' 
 #        Resolve a vos short form identifier     -- FIXME
@@ -1948,6 +2029,8 @@ class Dlinterface:
 #        # Run the command
 #        r = requests.get(SM_URL + "resolve?name=%s" %
 #                         name, headers={'X-DL-AuthToken': token})
+
+
 
 
 

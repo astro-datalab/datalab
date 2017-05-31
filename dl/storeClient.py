@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Matthew Graham <graham@noao.edu>, Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20170526'  # yyyymmdd
+__version__ = '20170530'  # yyyymmdd
 
 
 """
@@ -32,7 +32,7 @@ import json
 #####################################
 
 
-DEF_SERVICE_URL = "http://dlsvcs.datalab.noao.edu/storage"
+DEF_SERVICE_URL = "https://dlsvcs.datalab.noao.edu/storage"
 PROFILE = "default"
 DEBUG = False
 
@@ -329,8 +329,10 @@ def mkdir (token, name):
     """
         Create a directory in the storage manager service
     """
+    nm = (name if name.startswith("vos://") else ("vos://" + name))
+    
     try:
-        r = getFromURL("/mkdir?dir=%s" % name, token)
+        r = getFromURL("/mkdir?dir=%s" % nm, token)
     except Exception:
         raise storeClientError(r.content)
     else:

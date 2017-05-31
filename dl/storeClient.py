@@ -329,8 +329,10 @@ def mkdir (token, name):
     """
         Create a directory in the storage manager service
     """
+    nm = (name if name.startswith("vos://") else ("vos://" + name))
+    
     try:
-        r = getFromURL("/mkdir?dir=%s" % name, token)
+        r = getFromURL("/mkdir?dir=%s" % nm, token)
     except Exception:
         raise storeClientError(r.content)
     else:

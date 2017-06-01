@@ -39,7 +39,7 @@ SM_SERVICE_URL = "https://dlsvcs.datalab.noao.edu/storage"
 PROFILE = "default"
 DEBUG = False
 
-TIMEOUT_REQUEST = 120             # sync query timeout default (120sec)
+TIMEOUT_REQUEST = 120 # sync query timeout default (120sec)
 
 
 class queryClientError(Exception):
@@ -177,6 +177,10 @@ def query(token, adql=None, sql=None, fmt='csv', out=None, async=False, **kw):
         query = quote_plus(adql)
         dburl = '%s/query?adql=%s&ofmt=%s&out=%s&async=%s' % (
             DEF_SERVICE_URL, query, fmt, out, async)
+        if 'q3c_' in query:
+            raise queryClientError("q3c functionality is not part of the ADQL specification")
+        if 'healpix_' in query:
+            raise queryClientError("healpix functionality is not part of the ADQL specification")
     elif sql is not None and sql != '':
         query = quote_plus(sql)
         dburl = '%s/query?sql=%s&ofmt=%s&out=%s&async=%s' % (

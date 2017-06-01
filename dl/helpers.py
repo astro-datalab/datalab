@@ -1,7 +1,7 @@
 """Helper classes and methods for datalab client."""
 
 __authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20170525' # yyyymmdd
+__version__ = '20170531' # yyyymmdd
 
 # std lib imports
 from functools import partial
@@ -25,6 +25,53 @@ from matplotlib.ticker import MaxNLocator
 
 # Data Lab imports
 from dl import authClient, queryClient
+
+
+def convert(inp,outfmt='pandas'):
+
+    """Convert input `inp` to a data structure defined by `outfmt`.
+
+    Parameters
+    ----------
+    inp : str
+        String representation of the result of a query. Usually this
+        is a CSV-formatted string, but can also be, e.g. an
+        XML-formatted votable (as string)
+
+    outfmt : str
+        The desired data structure for converting `inp` to. Default:
+        'pandas', which returns a Pandas dataframe. Other available
+        conversions are:
+
+          string - no conversion
+          array - Numpy array
+          structarray - Numpy structured array (also called record array)
+          table - Astropy Table
+          votable - Astropy VOtable
+    
+        For outfmt='votable', the input string must be an
+        XML-formatted string. For all other values, as CSV-formatted
+        string.
+    """
+    
+    # map outfmt container types to a tuple:
+    # (:func:`queryClient.query()` fmt-value, descriptive title,
+    # processing function for the result string)
+    mapping = OrderedDict([
+        ('string'      , ('csv',     'CSV formatted table as a string', lambda x: x.getvalue())),
+        ('array'       , ('csv',     'Numpy array',                     partial(N.loadtxt,unpack=False,skiprows=1,delimiter=','))),
+        ('structarray' , ('csv',     'Numpy structured / record array', partial(N.genfromtxt,dtype=float,delimiter=',',names=True))),
+        ('pandas'      , ('csv',     'Pandas dataframe',                read_csv)),
+        ('table'       , ('csv',     'Astropy Table',                   partial(Table.read,format='csv'))),
+        ('votable'     , ('votable', 'Astropy VOtable',                 parse_single_table))
+    ])
+
+    s = StringIO(inp)
+    output = mapping[outfmt][2](s)
+    print "Returning %s" % mapping[outfmt][1]
+
+    return output
+
 
 class Querist:
 

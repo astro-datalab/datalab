@@ -5,18 +5,19 @@
 
 #from __future__ import print_function
 
-__authors__ = 'David Nidever <dnidever@noao.edu>, Robert Nikutta <rnikutta@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20170509'  # yyyymmdd
+__authors__ = 'David Nidever <dnidever@noao.edu>, Matthew Graham <graham@noao.edu>, Mike Fitzpatrick <fitz@noao.edu>, \
+                 Robert Nikutta <rnikutta@noao.edu>, Data Lab <datalab@noao.edu>'
+__version__ = '20170531'  # yyyymmdd
 
 
 """
-    Task routines for the 'datalab' command-line client.
+    Python interactive interface to the Data Lab services.
 
 Import via
 
 .. code-block:: python
 
-    from dl import datalab
+    from dl.dlinterface import Dlinterface
 """
 
 import os
@@ -45,19 +46,15 @@ import getpass
 from cStringIO import StringIO
 import xml.etree.ElementTree as ET
 import numpy as np
+import tempfile
+from functools import partial
 
 # use this for SIA service for now
 from pyvo.dal import sia
 
 # Data Lab Client interfaces
 from dl import authClient, storeClient, queryClient
-#from vos.vos import Node
 
-# VOSpace imports
-#import vos as vos
-#from vos.fuse import FUSE
-#from vos.__version__ import version
-#from vos.vofs import VOFS
 DAEMON_TIMEOUT = 60                             # Mount timeout
 CAPS_DIR = "../caps"                            # Capability directory
 
@@ -193,7 +190,6 @@ def isListWorking():
 def addFormatMapping(self):
     ''' Add the format mapping information to the DL object
     '''
-    from functools import partial
     from collections import OrderedDict
     from pandas import read_csv
     from astropy.table import Table
@@ -204,7 +200,7 @@ def addFormatMapping(self):
     # processing function for the result string)
     mapping = OrderedDict([
             ('csv'         , ('csv',     'CSV formatted table as a string', lambda x: x.getvalue())),
-            ('string'      , ('csv',     'CSV formatted table as a string', lambda x: x.getvalue())),
+            ('ascii'       , ('ascii',   'Tab-delimited table as a string', lambda x: x.getvalue())),
             ('array'       , ('csv',     'Numpy array',                     partial(np.loadtxt,unpack=False,skiprows=1,delimiter=','))),
             ('structarray' , ('csv',     'Numpy structured / record array', partial(np.genfromtxt,dtype=float,delimiter=',',names=True))),
             ('pandas'      , ('csv',     'Pandas dataframe',                read_csv)),
@@ -249,7 +245,8 @@ def convert_vospace_time_to_seconds(str_date):
     """
     right = str_date.rfind(":") + 3
     mtime = time.mktime(time.strptime(str_date[0:right], '%Y-%m-%dT%H:%M:%S'))
-    return mtime - time.mktime(time.gmtime()) + time.mktime(time.localtime())
+    #return mtime - time.mktime(time.gmtime()) + time.mktime(time.localtime())  # returns wrong time zome time
+    return mtime
 
 def getNodeInfo(self, xnode, lenpathbase, verbose=True):
     ''' Get information on a node.  The input is a "node" element
@@ -323,7 +320,33 @@ def getNodeInfo(self, xnode, lenpathbase, verbose=True):
         vals['permissions'] = ''.join(perm)
     # Return the dictionary of values
     return vals
-        
+
+def writeAscii(filename, txt):
+    ''' Write data to ASCII file
+    '''
+    fd = open(filename,'wb')
+    fd.write(txt)
+    fd.flush()
+    fd.close()
+
+def readAscii(filename):
+    '''  Read in an ASCII file and return the data
+    '''
+    if type(filename) is str:
+        fd = open(filename, 'r')
+    else:
+        fd = filename
+    data = fd.read()
+    fd.close()
+    return data
+
+def convertTableToFormat(t,format):
+    '''  Convert Astropy table to a different format using StringIO and write method.
+    '''
+    out = StringIO()
+    t.write(out, format = format)
+    return out.getvalue()
+
 #class Node:
 #    '''
 #       A class to hold node information.
@@ -446,6 +469,7 @@ class Dlinterface:
         self.dl = dlinteract
         self.loginstatus = "loggedout"
         self.loginuser = ""
+        #self.logintoken = ""
         self.verbose = verbose
         self.fmtmapping = None
         self.qhistory = None
@@ -493,8 +517,8 @@ class Dlinterface:
             print "dl.mkdir()     - Create a directory in Data Lab VOSpace"
             print "dl.rmdir()     - Delete a directory in Data Lab VOSpace"
             print "dl.ln()        - Link a file in Data Lab VOSpace"
-            print "dl.tag()       - Tag a file in Data Lab VOSpace"
-            print "dl.save()      - Save data to a file in Data Lab VOspace"
+            print "dl.load()      - Load data from a local or VOSpace"
+            print "dl.save()      - Save data to a local or VOSpace file"
             print "dl.copyurl()   - Copy a file from a URL to Data Lab VOSpace"
             print " "
             print "-- Query and database operations --"
@@ -504,17 +528,10 @@ class Dlinterface:
             print "dl.querystatus()    - Get an async query job status"
             print "dl.queryprofiles()  - List the available query profiles"
             print "dl.schema()         - Get information on database schemas"
-            print "dl.dropdb()         - Drop a user MyDB table"
+            print "dl.droptable()      - Drop a user MyDB table"
+            print "dl.exporttable()    - Copy a user MyDB table to a VOSpace CSV file"
             print "dl.listdb()         - List the user MyDB tables"
             print "dl.siaquery()       - Query a SIA service in the Data Lab"
-            #print " "
-            #print "-- Capabilities --"
-            #print "dl.listcapability() - List the capabilities supported by this Virtual Storage"
-            #print "dl.addcapability()  - Activate a capability on a Virtual Storage container"
-            #print "dl.exec()           - Launch a remote task in the Data Lab"
-            #print "dl.launch()         - Launch a plugin"
-            #print "dl.broadcast()      - Broadcast a SAMP message"
-            #print "dl.mount()          - mount the default Virtual Storage"
 
          # Help on a specific command
         else:
@@ -647,25 +664,6 @@ class Dlinterface:
                     #self.user = user
                     #self.token = token
                     self.loginstatus = "loggedin"
-
-        ## Default parameters if the VOSpace mount is requested.
-        #if mount != "":
-        #    print ("Initializing virtual storage mount")
-        #    self.mount(vospace='vos:', mount=mount, cache_dir=None, cache_limit= 50 * 2 ** (10 + 10 + 10),
-        #               cache_nodes=False, max_flux_threads=10, secure_get=False, allow_other=False,
-        #               foreground=False, nothreads=True)
-        #    #mount = Mountvofs(self.dl)
-        #    #mount.setOption('vospace', 'vos:')
-        #    #mount.setOption('mount', self.mount.value)
-        #    #mount.setOption('cache_dir', None)
-        #    #mount.setOption('cache_limit', 50 * 2 ** (10 + 10 + 10))
-        #    #mount.setOption('cache_nodes', False)
-        #    #mount.setOption('max_flush_threads', 10)
-        #    #mount.setOption('secure_get', False)
-        #    #mount.setOption('allow_other', False)
-        #    #mount.setOption('foreground', False)
-        #    #mount.setOption('nothreads', True)
-        #    #mount.run()
         return
 
     def logout(self, unmount=None, verbose=True):
@@ -695,12 +693,6 @@ class Dlinterface:
             if res != "OK":
                 print ("Error: %s" % res)
                 return
-#            if self.unmount != "":
-#                print ("Unmounting remote space")
-#                cmd = "umount %s" % self.unmount
-#                pipe = Popen(cmd, shell=True, stdout=PIPE)
-#                output = pipe.stdout.read()
-#                self.mount = ""
             self.dl.save("login", "status", "loggedout")
             self.dl.save("login", "user", "")
             self.dl.save("login", "authtoken", "")
@@ -739,13 +731,6 @@ class Dlinterface:
         else:
             print ("User %s is logged into the Data Lab" % \
                     self.dl.get("login", "user"))
-        #if self.mount != "":
-        #    if status != "loggedout":
-        #        print ("The user's Virtual Storage is mounted at %s" % self.mount)
-        #    else:
-        #        print ("The last user's Virtual Storage is still mounted at %s" % \
-        #            self.mount)
-            
 
     def whoami(self):
         '''
@@ -763,49 +748,6 @@ class Dlinterface:
         print (getUserName(self))
 
 
-################################################
-#  Storage Manager Capability Tasks
-################################################
-
-# NEED THE FUSE LAYER FOR THESE
-#
-#    def addcapability(self):
-#        ''' 
-#        Add a capability to a VOSpace container
-#        '''
-#        # Check if we are logged in
-#        if not checkLogin(self):
-#            return
-#        
-#        if self.listcap.value:
-#            print ("The available capabilities are: ")
-#            for file in glob.glob(self.capsdir):
-#                print (file[:file.index("_cap.conf")])
-#        else:
-#            mountpoint = self.dl.get('vospace', 'mount')
-#            if mountpoint is None:
-#                print ("No mounted Virtual Storage can be found")
-#            else:
-#                if not os.path.exists("%s/%s_cap.conf" % \
-#                    (self.capsdir, self.cap.value)):
-#                        print ("The capability '%s' is not known" % \
-#                            self.cap.value)
-#                else:
-#                    shutil.copy("%s/%s_cap.conf" % (self.capsdir, 
-#                        self.cap.value), "%s/%s" % (mountpoint, self.dir.value))
-#
-#    def listcapability(self):
-#        ''' 
-#        Add a capability to a VOSpace container
-#        '''
-#        # Check if we are logged in
-#        if not checkLogin(self):
-#            return
-#
-#        print ("The available capabilities are: ")
-#        for file in glob.glob("%s/*_cap.conf" % self.capsdir):
-#            print ("  %s" % file[file.rindex("/") + 1:file.index("_cap.conf")])
-        
 ################################################
 #  Query Manager Tasks
 ################################################
@@ -830,14 +772,19 @@ class Dlinterface:
             The query format, SQL or ADQL.  SQL is used by default.
 
         fmt : str
-            Format of the result to be returned by the query. Permitted values are:
+            Format of the result to be returned by the query. Permitted values are.
+              For file output and direct output to python:
               * 'csv'     the returned result is a comma-separated string that looks like a csv file (newlines at the end of every row)
-              * 'string'  same as csv
+              * 'ascii'   same as csv but tab-delimited
+              * 'votable' result is a string XML-formatted as a VO table
+              Only for direct output to python:
               * 'array'   Numpy array
               * 'structarray'  Numpy structured / record array
               * 'pandas'  a Pandas data frame
               * 'table'   in Astropy Table format
-              * 'votable' result is a string XML-formatted as a VO table
+              Only for file output:
+              * 'fits'    FITS binary table.  Only if the results are saved to a filei with out=.
+              * 'hdf5'    HDF5 file.  Only if the results are saved to a filei with out=.
 
         out : str or None
             The output name if the results are to be saved to mydb (mydb://tablename), to VOSpace (vos://filename),
@@ -896,14 +843,32 @@ class Dlinterface:
         '''
         # Not enough information input
         if (query is None):
-            print "Syntax - dl.query(query, qtype='sql|adql', fmt='csv|string|array|structarray|pandas|table|votable',"
+            print "Syntax - dl.query(query, qtype='sql|adql', fmt='csv|ascii|array|structarray|pandas|table|votable|fits|hdf5',"
             print "                  out='', async=False, profile='default')"
             return
 
         # Check if we are logged in
         if not checkLogin(self):
             return
+        token = getUserToken (self)
+        
+        # Check if the source file actually exist
+        if out != None and not out.startswith('mydb://'):
+            res = storeClient.ls(token,out,'csv')
+            if res == '':
+                print ("'%s' already exists." % out)
+                return
 
+        # Can only use FITS or HDF for file output
+        if (out == None or out != '') and fmt in ['fits','hdf5']:
+            print ("Can only use format '%s' for file output." % fmt)
+            return
+
+        # Cannot use pandas, array, structarray for file output
+        if out != None and out != '' and fmt in ['pandas','array','structarray','table']:
+            print ("Cannot use format '%s' for file output." % fmt)
+            return
+        
         # Use QID to rerun a previous query
         if (type(query) is int) or (type(query) is str and query.isdigit() is True):
             queryid = int(query)
@@ -918,11 +883,10 @@ class Dlinterface:
             print ("Query = '%s'" % query)
             
         # Check type
-        if (qtype != 'sql') and (qtype != 'adql'):
+        if qtype not in ['sql','adql']:
             print "Only 'sql' and 'adql' queries are currently supported."
             return
             
-        token = getUserToken (self)
         _query = query         # local working copy
         
         # Check if the query is in a file
@@ -948,7 +912,7 @@ class Dlinterface:
         try:
             qcfmt = mapping[fmt][0]
         except:
-            print ("Format %s not supported." % fmt)
+            print ("Format '%s' not supported." % fmt)
             return
         
         # Execute the query.
@@ -1037,6 +1001,7 @@ class Dlinterface:
         '''
         if self.qhistory is None:
             print "No queries made so far"
+            return
         else:
             keys = sorted(self.qhistory.keys())
             # Only async request, make sure we have some
@@ -1251,9 +1216,11 @@ class Dlinterface:
             if res == 'relation "" not known':
                 print "No tables in MyDB"
                 res = ''
+            else:
+                res = ' '.join(res.splitlines())    # convert to space separated list
             return res
             
-    def dropdb(self, table=None):
+    def droptable(self, table=None):
         '''
         Drop a user's MyDB table.
 
@@ -1274,15 +1241,15 @@ class Dlinterface:
 
         .. code-block:: python
      
-            print dl.listmydb()
+            print dl.listdb()
             table
             table2
 
-            dl.dropmydb('table')
+            dl.droptable('table')
             table
             table2
 
-            print dl.listmydb()
+            print dl.listdb()
             table2
 
         '''
@@ -1297,7 +1264,71 @@ class Dlinterface:
             print (e.message)
         else:
             print ("Table '%s' was dropped." % table)
-            
+
+    def exporttable(self, table=None, name=None, fmt=None):
+        '''
+        Copy a user's MyDB table to a file in VOSpace.
+
+        Parameters
+        ----------
+        table : str
+             The name of a specific table in mydb to drop.
+
+        name : str
+             The file name to save the table to.
+
+        fmt : str
+             The output file format.  The available formats are 'csv', 'fits' and 'hdf5'.
+             If this is not specified then the file extension is used to identify the
+             format type.
+
+        Example
+        -------
+
+        Export the MyDB table called ``table`` to file ``test.csv``.
+
+        .. code-block:: python
+     
+            dl.exporttable('table','test.csv')
+
+        '''
+        # Not enough information input
+        if (table is None or name is None):
+            print "Syntax - dl.exporttable(table,name,fmt)"
+            return
+        # Check if we are logged in
+        if not checkLogin(self):
+            return
+        token = getUserToken(self)
+        if not name.startswith('vos://'): name = ("vos://" + name)
+        # Check if the file exists already
+        res = storeClient.ls(token,name,'csv')
+        if res != '':
+            print ("'%s' already exists." % name)
+            return
+        # Figure out the format type
+        if fmt is None:
+            fbase, fext = os.path.splitext(name)
+            fmtmap = { '.fits':'fits', '.hdf5':'hdf5', '.csv':'csv' }
+            try:
+                fmt = fmtmap[fext]
+            except:
+                print ("Format '%s' not supported. Using 'csv' instead." % fmt)
+                fmt = 'csv'
+        # Make sure the fmt is supported
+        if fmt not in ['fits','hdf5','csv']:
+            print ("Format '%s' not supported." % fmt)
+            return
+        # Make the MyDB query and output to VOSpace
+        try:
+            res = queryClient.query (token, sql='select * from mydb://'+table,out=name,fmt=fmt)
+        except Exception as e:
+            print ("Error exorting table '%s'." % table)
+            print (e.message)
+        else:
+            print ("Table '%s' was copied to '%s'." % (table, name))
+
+        
     def queryprofiles(self, profile=None):
         '''
         List the available Query Manager profiles to use with a :func:`dl.query`.
@@ -1406,68 +1437,6 @@ class Dlinterface:
         print (queryClient.schema (value=val, format=fmt, profile=profile))
         
 
-################################################
-#  Task Execution Tasks
-################################################
-
-# launchjob
-
-################################################
-#  FUSE Mounting Tasks
-################################################
-
-#    def mount(self, vospace='', mount='', cache_dir=None, readonly=False,
-#              cache_limit=(50 * 2 ** (10 + 10 + 10)), cache_nodes=False, max_flux_threads=10,
-#              secure_get=False, allow_other=False, foreground=False, nothreads=True):
-#        '''
-#        Mount a VOSpace via FUSE
-#        '''
-#        #readonly = False
-#        token = self.token
-#        user = self.user
-#        root = vospace + "/" + user
-#        absmount = os.path.abspath(mount)
-#        self.mount = absmount
-#        if cache_dir is None:
-#            cache_dir = os.path.normpath(os.path.join(
-#                os.getenv('HOME', '.'), root.replace(":", "_")))
-#        if not os.access(absmount, os.F_OK):
-#            os.makedirs(absmount)
-#        #opt = parseSelf(self)
-#        conn = vos.Connection(vospace_token=token)
-#        if platform == "darwin":
-#            fuse = FUSE(VOFS(root, cache_dir, opt,
-#                             conn=conn, cache_limit=cache_limit,
-#                             cache_nodes=cache_nodes,
-#                             cache_max_flush_threads=max_flush_threads,
-#                             secure_get=secure_get),
-#                        absmount,
-#                        fsname=root,
-#                        volname=root,
-#                        nothreads=nothreads,
-#                        defer_permissions=True,
-#                        daemon_timeout=DAEMON_TIMEOUT,
-#                        readonly=readonly,
-#                        allow_other=allow_other,
-#                        noapplexattr=True,
-#                        noappledouble=True,
-#                        foreground=foreground)
-#        else:
-#            fuse = FUSE(VOFS(root, cache_dir, opt,
-#                             conn=conn, cache_limit=cache_limit,
-#                             cache_nodes=cache_nodes,
-#                             cache_max_flush_threads=max_flush_threads,
-#                             secure_get=secure_get),
-#                        absmount,
-#                        fsname=root,
-#                        nothreads=nothreads,
-#                        readonly=readonly,
-#                        allow_other=allow_other,
-#                        foreground=foreground)
-#        if not fuse:
-#            self.mount = ''
-
-        
 ################################################
 #  Storage Manager Tasks
 ################################################
@@ -1630,8 +1599,11 @@ class Dlinterface:
         if not authClient.isValidToken(token):
             raise Exception, "Invalid user name and/or password provided. Please try again."
         # Run the PUT command
-        storeClient.put (token, source, destination,
-                            verbose=verbose)
+        res = storeClient.put (token, source, destination,
+                               verbose=verbose)
+        if res == '[<Response [200]>]':   # Return None if nothing to give
+            res = None
+        return res
         
     def mv(self, source=None, destination=None, verbose=True):
         '''
@@ -1827,43 +1799,6 @@ class Dlinterface:
         # Run the LN command
         storeClient.ln (token, fr=lnk, target=trg)
 
-        
-    def tag(self, name=None, tag=None):
-        '''
-        Tag or annotate a file or directory in Data Lab VOSpace.
-
-        Parameters
-        ----------
-        name : str
-             The name of the file or directory in VOSpace to tag, e.g. ``file1.txt``.
-
-        tag : str
-             The name of the tag, e.g. ``research``.
-
-        Example
-        -------
-
-        Tag the directory ``data1/`` with the tag ``results``.
-
-        .. code-block:: python
-
-            dl.tag('data1','results')
-
-        '''
-        # Not enough information input
-        if (name is None) or (tag is None):
-            print "Syntax - dl.tag(name, tag)"
-            return
-        # Check if we are logged in
-        if not checkLogin(self):
-            return
-        token = getUserToken(self)
-        # Check that we have a good token
-        if not authClient.isValidToken(token):
-            raise Exception, "Invalid user name and/or password provided. Please try again."
-        # Run the TAG command
-        storeClient.tag (token, name=name, tag=tag)
-
     def mkdir(self, name=None):
         ''' 
         Create a directory in Data Lab VOSpace.
@@ -1972,8 +1907,156 @@ class Dlinterface:
         name = (name if name.startswith('vos://') else ('vos://'+name))
         storeClient.load(token, name, url)
 
+             
+    def load(self, name=None, inpfmt=None, fmt='pandas'):
+        ''' 
+        Save the string representation of a data object to a file in VOSpace.
+
+        Parameters
+        ----------
+        name : str
+             The name of the file in load into memory.  The vos:// prefix is necessary
+             otherwise it is assumed a local file that should be read.  Currently only
+             FITS binary tables and CSV file formats are supported.
         
-    def save(self, data=None, name=None):
+        inpfmt : str
+             Tne input format type.  The currently supported types are FITS binary tables,
+             HDF5, CSV, and ASCII files ('string').  If this is not specified then the
+             file extension of ``name`` is used to attempt to figure out the format.
+
+        fmt : str
+             The data type format to output.  Permitted values are:
+              * 'csv'     the returned result is a comma-separated string that looks like a
+                             csv file (newlines at the end of every row)
+              * 'ascii'   same as csv but tab-delimited
+              * 'string'  just a straight read of ASCII into a string
+              * 'array'   Numpy array
+              * 'structarray'  Numpy structured / record array
+              * 'pandas'  a Pandas data frame
+              * 'table'   in Astropy Table format
+              * 'votable' result is a string XML-formatted as a VO table
+              'pandas' is the default format.
+
+        Example
+        -------
+
+        Load the file "output.fits" into a pandas data frame.
+
+        .. code-block:: python
+
+            df = dl.load('output.fits',fmt='pandas')
+
+        '''
+        # Not enough information input
+        if (name is None):
+            print "Syntax - dl.load(name,inpfmt=inpfmt,fmt=fmt)"
+            return
+        
+        # Only fits, csv and string input format currently supported
+        if inpfmt != None and inpfmt != '' and inpfmt not in ['fits','hdf5','csv','string']:
+            print ("Format '%s' not currently supported for input file." % inpfmt)
+            return
+                
+        # Use file extension to figure out input format
+        if inpfmt is None:
+            fbase, fext = os.path.splitext(name)
+            inpfmtmap = { '.fits':'fits', '.hdf5':'hdf5', '.csv':'csv', '.txt':'string' }
+            try:
+                inpfmt = inpfmtmap[fext]
+            except:
+                print ("Cannot use file extension to determine 'inpfmt'")
+                return
+        
+        # Check token if reading from VOSpace
+        if name.startswith("vos://"):
+            # Check if we are logged in
+            if not checkLogin(self):
+                return
+            token = getUserToken(self)
+            # Check that we have a good token
+            if not authClient.isValidToken(token):
+                raise Exception, "Invalid user name and/or password provided. Please try again."
+
+        # Check that the file exists
+        if name.startswith("vos://"):
+            res = storeClient.ls(token,name,'csv')
+            if res == '':
+                print ("'%s' not found" % name)
+                return
+        else:
+            if os.path.exists(name) is False:
+                print ("'%s' not found" % name)
+                return  
+            
+        # Load the neccessary packages
+        # astropy Table
+        try:
+            dum = Table.__doc__
+        except:
+            from astropy.table import Table
+        # astropy votable
+        try:
+            dum = from_table.__doc__
+        except:
+            from astropy.io.votable import from_table
+
+        # what if we "get" it directly into a StrinIO???
+            
+        # Reading and conversion mapping
+        # for reading, x=filename; for conversion, x=data object
+        writemap = { 'fits-csv':         (lambda x: Table.read(x,format='fits'),      partial(convertTableToFormat,format='ascii.csv')),
+                     'fits-ascii':       (lambda x: Table.read(x,format='fits'),      partial(convertTableToFormat,format='ascii.tab')),
+                     'fits-array':       (lambda x: Table.read(x,format='fits'),      lambda x: x.as_array()),
+                     'fits-structarray': (lambda x: Table.read(x,format='fits'),      lambda x: x.as_array()),
+                     'fits-pandas':      (lambda x: Table.read(x,format='fits'),      lambda x: x.to_pandas()),
+                     'fits-table':       (lambda x: Table.read(x,format='fits'),      lambda x: x),
+                     'fits-votable':     (lambda x: Table.read(x,format='fits'),      lambda x: from_table(x).resources[0].tables[0]),
+                     'hdf5-csv':         (lambda x: Table.read(x,format='hdf5'),      partial(convertTableToFormat,format='ascii.csv')),
+                     'hdf5-ascii':       (lambda x: Table.read(x,format='hdf5'),      partial(convertTableToFormat,format='ascii.tab')),
+                     'hdf5-array':       (lambda x: Table.read(x,format='hdf5'),      lambda x: x.as_array()),
+                     'hdf5-structarray': (lambda x: Table.read(x,format='hdf5'),      lambda x: x.as_array()),
+                     'hdf5-pandas':      (lambda x: Table.read(x,format='hdf5'),      lambda x: x.to_pandas()),
+                     'hdf5-table':       (lambda x: Table.read(x,format='hdf5'),      lambda x: x),
+                     'hdf5-votable':     (lambda x: Table.read(x,format='hdf5'),      lambda x: from_table(x).resources[0].tables[0]),
+                     'csv-csv':          (lambda x: readAscii(x),                     lambda x: x),
+                     'csv-ascii':        (lambda x: Table.read(x,format='csv'),       partial(convertTableToFormat,format='ascii.tab')),
+                     'csv-array':        (partial(np.loadtxt,skiprows=1,delimiter=','), lambda x: x),
+                     'csv-structarray':  (lambda x: Table.read(x,format='csv'),       lambda x: x.as_array()),
+                     'csv-pandas':       (lambda x: Table.read(x,format='ascii.csv'), lambda x: x.to_pandas()),
+                     'csv-table':        (lambda x: Table.read(x,format='ascii.csv'), lambda x: x),
+                     'csv-votable':      (lambda x: Table.read(x,format='ascii.csv'), lambda x: from_table(x).resources[0].tables[0]),
+                     'string-string':    (lambda x: readAscii(x),                     lambda x: x) }
+        # Should add HDF5, use Table.read(x,format='hdf5',path='data'), h5py must be installed
+        
+        # Check that we can do the operation
+        mapcode = inpfmt+'-'+fmt
+        if mapcode not in writemap.keys():
+            print ("Output format '%s' not supported for input type '%s'" % (fmt, inpfmt) )
+            return
+
+        # Open the file
+        if name.startswith('vos://'):
+            fh = StringIO( storeClient.get(token,name,'',verbose=False) )
+        else:
+            fh = open(name,'r')
+
+        # Step 1) Read the file
+        try:
+            rdata = writemap[mapcode][0](fh)
+        except Exception as e:
+            print ("Error reading file")
+            print (e.message)
+            return
+            
+        # Step 2) Convert to output format
+        try:
+            return writemap[mapcode][1](rdata)
+        except Exception as e:
+            print ("Error converting data")
+            print (e.message)
+            return
+        
+    def save(self, data=None, name=None, fmt=None, clobber=False):
         ''' 
         Save the string representation of a data object to a file in VOSpace.
 
@@ -1985,6 +2068,23 @@ class Dlinterface:
         name : str
              The name of the file in VOSpace to create.  The vos:// prefix is not
              necessary.
+        
+        fmt : str
+             The format to use for the output file.  If this is not specified then the
+             file extension of ``name`` is used to attempt to figure out the format.
+             The currently supported input and output formats are:
+
+             Data type         Format
+             csv               csv
+             ascii             ascii
+             array             csv/fits
+             structarray       csv/fits
+             pandas            csv/fits/hdf5
+             table             csv/fits/hdf5
+             votable           csv/fits/hdf5
+        
+        clobber : bool
+             Whether to overwrite an existing file.  The default is False.
 
         Example
         -------
@@ -1998,107 +2098,140 @@ class Dlinterface:
         '''
         # Not enough information input
         if (data is None or name is None):
-            print "Syntax - dl.save(data,name)"
+            print "Syntax - dl.save(data,name,fmt=fmt)"
             return
-        # Check if we are logged in
-        if not checkLogin(self):
+
+        # If fmt is None then try to guess format from the output filename extension
+        if fmt is None:
+            fbase, fext = os.path.splitext(name)
+            fmtmap = { '.fits':'fits', '.hdf5':'hdf5', '.csv':'csv', '.xml':'xml' }
+            try:
+                fmt = fmtmap[fext]
+            except:
+                print ("Cannot use file extension to determine 'fmt'")
+                return
+            
+        # Input data object types
+        # -'csv', type='str', ',' delimited
+        # -'ascii', type='str', '\t' delimited
+        # -'array' numpy array, type='numpy.ndarray', data.dtype = dtype('float64'), data.shape=(1000,39), len(data.shape)=2, data.dtype.names=None
+        # -'structarray' numpy structured array, type='numpy.ndarray', data.dtype = all columns, data.shape=(1000,), len(data.shape)=1
+        # -'pandas' data frame, type='pandas.core.frame.DataFrame'
+        # -'table' astropy table, type='astropy.table.table.Table'
+        # -'votable', astropy VOtable, type='astropy.io.votable.tree.Table'
+        inptypemap = {'str':'csv', 'numpy.ndarray':'numpy','pandas.core.frame.DataFrame':'pandas',
+                      'astropy.table.table.Table':'table', 'astropy.io.votable.tree.Table':'votable'}
+        datatype = str(type(data)).split("'")[1]   # "<type 'numpy.ndarray'>"
+        try:
+            inptype = inptypemap[datatype]
+        except:
+            print ("Data object type %s not supported." % datatype)
+        # Discern 'csv' vs. 'ascii'
+        if (inptype == 'csv'):
+            if len(data[0:5000].split('\t')) > len(data[0:5000].split(',')): inptype='ascii'
+        # Discern 'array' vs. 'structarray'
+        if (inptype == 'numpy'):
+            inptype = 'array'     # default
+            if len(data.shape) == 1: inptype='structarray'
+
+        # Import the modules if necessary
+        # astropy fits
+        try:
+            dum = fits.__doc__
+        except:
+            from astropy.io import fits
+        # astropy Table
+        try:
+            dum = Table.__doc__
+        except:
+            from astropy.table import Table
+        # astropy votable
+        try:
+            dum = writeo.__doc__
+        except:
+            from astropy.io.votable import from_table, writeto
+            
+        # Check token if writing to VOSpace
+        if name.startswith("vos://"):
+            # Check if we are logged in
+            if not checkLogin(self):
+                return
+            token = getUserToken(self)
+            # Check that we have a good token
+            if not authClient.isValidToken(token):
+                raise Exception, "Invalid user name and/or password provided. Please try again."
+
+        # Check if the file exists already
+        if name.startswith("vos://"):
+            res = storeClient.ls(token,name,'csv')
+            if res != '':
+                if clobber is False:
+                    print ("'%s' already exists." % name)
+                    return
+                else:
+                    storeClient.rm(token,name)   # clobber it
+        else:
+            if os.path.exists(name) is True:
+                if clobber is False:
+                    print ("'%s' already exists." % name)
+                    return
+                else:
+                    os.remove(name)    # clobber it
+            
+        # What local file are we writing to
+        # 1) local file, use name
+        # 2) vos:// file, use temporary filename
+        outname = name
+        if name.startswith("vos://"):
+            tfd = tempfile.NamedTemporaryFile()
+            outname = tfd.name
+            tfd.close()
+            
+        # Output formats supported
+        # -'csv', (1) csv
+        # -'ascii', (1) csv
+        # -'array', (1) csv, (2) FITS array
+        # -'structarray', (1) csv, (2) FITS binary table
+        # -'pandas', (1) csv, (2) FITS binary table, (3) HDF5
+        # -'table', (1) csv, (2) FITS binary table, (3) HDF5
+        # -'votable', (1) csv (2) FITS binary table, (3) HDF5,  XML not working right now
+            
+        # These are functions to output the various types of files
+        # x=data, y=filename
+        writemap = { 'csv-csv':          lambda x,y: writeAscii(y, x),
+                     'ascii-csv':        lambda x,y: writeAscii(y, x),    # use tab-delimited
+                     'ascii-ascii':      lambda x,y: writeAscii(y, x),
+                     'array-csv':        lambda x,y: np.savetxt(y,x,delimiter=','),
+                     'array-fits':       lambda x,y: fits.writeto(y,x,overwrite=True),
+                     'structarray-csv':  lambda x,y: np.savetxt(y,x,delimiter=',',header=','.join(x.dtype.names)),
+                     'structarray-fits': lambda x,y: fits.writeto(y,x,overwrite=True),
+                     'pandas-csv':       lambda x,y: x.to_csv(y,sep=',',header=True),
+                     'pandas-fits':      lambda x,y: Table.from_pandas(x).write(y,format='fits'),
+                     'pandas-hdf5':      lambda x,y: Table.from_pandas(x).write(y,format='hdf5',path='table'),
+                     'table-csv':        lambda x,y: x.write(y,format='ascii.csv'),
+                     'table-fits':       lambda x,y: x.write(y,format='fits'),
+                     'table-hdf5':       lambda x,y: x.write(y,format='hdf5',path='table'),
+                     'votable-csv':      lambda x,y: x.to_table().write(y,format='ascii.csv'),
+                     'votable-fits':     lambda x,y: x.to_table().write(y,format='fits'),
+                     'votable-hdf5':     lambda x,y: x.to_table().write(y,format='hdf5',path='table') }
+
+        # Check that we can deal with the requested input and output formats
+        if inptype+'-'+fmt not in writemap.keys():
+            print ("Output format '%s' for data type '%s' not currently supported." % (fmt, inptype))
             return
-        token = getUserToken(self)
-        # Check that we have a good token
-        if not authClient.isValidToken(token):
-            raise Exception, "Invalid user name and/or password provided. Please try again."
-        # Run the SAVEAS command
-        storeClient.saveAs (token, data, name)
+            
+        # Write the file
+        try:
+            writemap[inptype+'-'+fmt](data,outname)
+        except Exception as e:
+            print ("There was a problem writing the file")
+            print (e.message)
 
-        
-#    def resolve(self, name=None):
-#        ''' 
-#        Resolve a vos short form identifier     -- FIXME
-#        '''
-#        # Not enough information input
-#        if (name is None):
-#            print "Syntax - dl.resolve(name)"
-#            return
-#        # Check if we are logged in
-#        if not checkLogin(self):
-#            return
-#        token = getUserToken(self)
-#        # Check that we have a good token
-#        if not authClient.isValidToken(token):
-#            raise Exception, "Invalid user name and/or password provided. Please try again."
-#        # Run the command
-#        r = requests.get(SM_URL + "resolve?name=%s" %
-#                         name, headers={'X-DL-AuthToken': token})
-
-
-
-
-
-################################################
-#  SAMP Tasks
-################################################
-
-    def broadcast(self, type=None, pars=None):
-        ''' 
-        Broadcast a SAMP message
-        '''
-        # Not enough information input
-        if (type is None) or (pars is None):
-            print "Syntax - dl.broadcast(type, pars)"
-            return
-        # Check if we are logged in
-        if not checkLogin(self):
-            return
-        client = self.getSampClient()
-        mtype = type
-        params = {}
-        for param in pars.split(","):
-            key, value = param.split("=")
-            params[key] = value
-        self.broadcast(client, mtype, params)
-
-    def launch(self, dir=None):
-        '''
-        Launch a plugin in Data Lab
-        '''
-        # Not enough information input
-        if (dir is None):
-            print "Syntax - dl.launch(dir)"
-            return
-        # Check if we are logged in
-        if not checkLogin(self):
-            return
-        token = getUserToken(self)
-        r = requests.get(SM_URL + "/rmdir?dir=%s" %
-                         dir, headers={'X-DL-AuthToken': token})
-
-
-
-#    def receiver():
-#        '''
-#        SAMP listener
-#        '''
-#        def __init__(self, client):
-#            self.client = client
-#            self.received = False
-#
-#        def receive_notifications(self, private_key, sender_id, mtype, 
-#                                params, extra):
-#            self.params = params
-#            self.received = True
-#            print ('Notification:', private_key, sender_id, mtype, params, extra)
-#
-#        def receiver_call(self, private_key, sender_id, msg_id, mtype, 
-#                                params, extra):
-#            self.params = params
-#            self.received = True
-#            print ('Call:', private_key, sender_id, msg_id, mtype, params, extra)
-#            self.client.reply(
-#                msg_id, {'samp.status': 'samp.ok', 'samp.result': {}})
-#
-#        def point_select(self, private_key, send_id, mtype, params, extra):
-#            self.params = params
-#            self.received = True
+        # Put to VOSpace if necessary
+        if name.startswith('vos://'):
+            storeClient.put (token, outname, name, verbose=False)
+            os.remove(outname)   # remove temporary file
+ 
 
 ################################################
 #  SIA Tasks

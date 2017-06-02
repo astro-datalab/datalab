@@ -22,7 +22,6 @@ Import via
 
 import os
 from subprocess import Popen, PIPE
-#from time import time, localtime, gmtime, strftime, mktime, sleep
 import time
 try:
     import ConfigParser
@@ -33,13 +32,6 @@ except ImportError:
     from urllib.parse import quote_plus, urlencode      # Python 3
     from urllib.request import urlopen, Request         # Python 3
 import requests
-    
-#try:
-#    import ConfigParser                         # Python 2
-#    from urllib import quote_plus               # Python 2
-#except ImportError:
-#    import configParse as ConfigParser          # Python 2
-#    from urllib.parse import quote_plus         # Python 3
     
 # std lib imports
 import getpass

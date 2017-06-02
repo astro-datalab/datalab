@@ -40,6 +40,8 @@ import xml.etree.ElementTree as ET
 import numpy as np
 import tempfile
 from functools import partial
+import warnings
+from astropy.utils.exceptions import AstropyWarning
 
 # use this for SIA service for now
 from pyvo.dal import sia
@@ -2235,7 +2237,7 @@ class Dlinterface:
 ################################################
 
 
-    def siaquery(self, ra=None, dec=None, dist=None, file=None, out=None, verbose=False):
+    def siaquery(self, ra=None, dec=None, dist=None, verbose=False):
         '''
         Perform a SIA query with a set of coordinates or from an uploaded file.
 
@@ -2252,6 +2254,11 @@ class Dlinterface:
 
         verbose : bool
              Use verbose output.  The default is False.
+
+        Returns
+        -------
+        images : votable
+            The list of images in votable format.
 
         Example
         -------
@@ -2281,15 +2288,17 @@ class Dlinterface:
 
         svc = sia.SIAService (SIA_DEF_ACCESS_URL)
         if dist is None:
-            _dist = SIA_DEF_SIZE
-        else:
-            _dist = dist
+            dist = SIA_DEF_SIZE
 
-        images = svc.search((ra,dec), (_dist/np.cos(dec*np.pi/180), _dist), verbosity=2)
-        print "The image list contains",images.nrecs,"entries"
-        vot = images.votable
+        # Run the search query
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', AstropyWarning)   # Turn off some annoying astropy warnings
+            images = svc.search((ra,dec), (dist/np.cos(dec*np.pi/180), dist), verbosity=2)
+        nrows = images.votable.nrows
+        print "The image list contains",nrows,"entries"
+        vot = (images.votable if nrows > 0 else None)
         # Print the results if verbose set
-        if verbose is True:
+        if verbose is True and nrows > 0:
             print vot
     
         return vot

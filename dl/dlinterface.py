@@ -847,7 +847,7 @@ class Dlinterface:
         # Check if the source file actually exist
         if out != None and not out.startswith('mydb://'):
             res = storeClient.ls(token,out,'csv')
-            if res == '':
+            if res != '':
                 print ("'%s' already exists." % out)
                 return
 
@@ -2245,13 +2245,6 @@ class Dlinterface:
         dist : float
              The search distance (radius) in degrees.  The default is 0.0085 deg.
 
-        file : str
-             The name of a file with coordinates and search radii to use for the search.
-
-        out : str
-             The output method.  The options are to VOSpace or mydb.  The default is to
-             return the results to the command line.
-
         verbose : bool
              Use verbose output.  The default is False.
 
@@ -2279,27 +2272,6 @@ class Dlinterface:
         parts = token.strip().split(".")
         uid = parts[1]
         
-        ## If local input file, upload it
-        #_input = input
-        #shortname = '%s_%s' % (uid, input[input.rfind('/') + 1:])
-        #if input[:input.find(':')] not in ['vos', 'mydb']:
-        #    #      target = 'vos://nvo.caltech!vospace/siawork/%s' % shortname
-        #    # Need to set this from config
-        #    target = 'vos://datalab.noao.edu!vospace/siawork/%s' % shortname
-        #    r = requests.get(SM_URL + "/put?name=%s" %
-        #                     target, headers={'X-DL-AuthToken': token})
-        #    file = open(input).read()
-        #    resp = requests.put(r.content, data=file, headers={
-        #                        'Content-type': 'application/octet-stream',
-        #                        'X-DL-AuthToken': token})
-        #
-        ## Query the Data Lab query service
-        #headers = {'Content-Type': 'text/ascii', 
-        #           'X-DL-AuthToken': token}
-        #dburl = '%s/sia?in=%s&radius=%s&out=%s' % (
-        #    QM_URL, shortname, search, out)
-        #r = requests.get(dburl, headers=headers)
-
         # Use pyvo.dal.sia for now
 
         svc = sia.SIAService (SIA_DEF_ACCESS_URL)
@@ -2314,13 +2286,5 @@ class Dlinterface:
         # Print the results if verbose set
         if verbose is True:
             print vot
-        
-        ## Output value
-        #if out != '':
-        #    if out[:out.index(':')] not in ['vos']:
-        #        file = open(out, 'wb')
-        #        file.write(r.content)
-        #        file.close()
-        #else:
-        #    print (r.content)
+    
         return vot

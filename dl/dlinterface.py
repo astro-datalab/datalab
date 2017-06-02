@@ -1293,6 +1293,11 @@ class Dlinterface:
             return
         token = getUserToken(self)
         if not name.startswith('vos://'): name = ("vos://" + name)
+        # Check if the table exists
+        res = queryClient.list (token, table='')
+        if table not in res.splitlines():
+            print ("Table '%s' not found." % table)
+            return
         # Check if the file exists already
         res = storeClient.ls(token,name,'csv')
         if res != '':
@@ -2090,7 +2095,7 @@ class Dlinterface:
         '''
         # Not enough information input
         if (data is None or name is None):
-            print "Syntax - dl.save(data,name,fmt=fmt)"
+            print "Syntax - dl.save(data,name,fmt=fmt,clobber=clobber)"
             return
 
         # If fmt is None then try to guess format from the output filename extension

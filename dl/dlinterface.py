@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# DLDO.PY -- Task routines for the 'datalab' notebook interface
+# DLINTERFACE.PY -- Python interactive interface to the Data Lab services.
 #
 
 #from __future__ import print_function

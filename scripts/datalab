@@ -1,4 +1,4 @@
-#!/usr/local/anaconda/bin/python
+#!/usr/bin/env python
 
 """ 
     A Data Lab command-line client
@@ -74,9 +74,6 @@ if __name__ == "__main__":
              'schema': dl.Schema,
              'whoami': dl.WhoAmI,
              'status': dl.Status,
-             'mount': dl.Mountvofs,
-             'addcapability': dl.AddCapability,
-             'listcapability': dl.ListCapability,
              'query': dl.Query2,
              'qstatus': dl.QueryStatus,
              'qresults': dl.QueryResults,
@@ -92,9 +89,6 @@ if __name__ == "__main__":
              'tag': dl.Tag,
              'mkdir': dl.MkDir,
              'rmdir': dl.RmDir,
-             'broadcast': dl.Broadcast,
-             'exec': dl.LaunchJob,
-             'launch': dl.Launch,
              'siaquery': dl.SiaQuery,
              'list_query_profiles': dl.QueryProfiles,
              'list_storage_profiles': dl.StorageProfiles

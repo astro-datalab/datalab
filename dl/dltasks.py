@@ -325,7 +325,7 @@ class Login(Task):
                         required=True))
         self.addOption("password", 
                 Option("password", "", "Password for account in Data Lab",
-                        required=False))
+                        required=True))
         self.addOption("mount", 
                 Option("mount", "", "Mountpoint of remote Virtual Storage"))
         if self.dl is not None:

@@ -777,8 +777,8 @@ class Dlinterface:
               * 'pandas'  a Pandas data frame
               * 'table'   in Astropy Table format
               Only for file output:
-              * 'fits'    FITS binary table.  Only if the results are saved to a filei with out=.
-              * 'hdf5'    HDF5 file.  Only if the results are saved to a filei with out=.
+              * 'fits'    FITS binary table.  Only if the results are saved to a file with out=.
+              * 'hdf5'    HDF5 file.  Only if the results are saved to a file  with out=.
 
         out : str or None
             The output name if the results are to be saved to mydb (mydb://tablename), to VOSpace (vos://filename),

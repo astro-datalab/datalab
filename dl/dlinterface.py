@@ -777,8 +777,8 @@ class Dlinterface:
               * 'pandas'  a Pandas data frame
               * 'table'   in Astropy Table format
               Only for file output:
-              * 'fits'    FITS binary table.  Only if the results are saved to a filei with out=.
-              * 'hdf5'    HDF5 file.  Only if the results are saved to a filei with out=.
+              * 'fits'    FITS binary table.  Only if the results are saved to a file with out=.
+              * 'hdf5'    HDF5 file.  Only if the results are saved to a file  with out=.
 
         out : str or None
             The output name if the results are to be saved to mydb (mydb://tablename), to VOSpace (vos://filename),
@@ -847,19 +847,19 @@ class Dlinterface:
         token = getUserToken (self)
         
         # Check if the source file actually exist
-        if out != None and not out.startswith('mydb://'):
+        if out is not None and not out.startswith('mydb://'):
             res = storeClient.ls(token,out,'csv')
             if res != '':
                 print ("'%s' already exists." % out)
                 return
 
         # Can only use FITS or HDF for file output
-        if (out == None or out != '') and fmt in ['fits','hdf5']:
+        if (out is None or out == '') and fmt in ['fits','hdf5']:
             print ("Can only use format '%s' for file output." % fmt)
             return
 
         # Cannot use pandas, array, structarray for file output
-        if out != None and out != '' and fmt in ['pandas','array','structarray','table']:
+        if (out is not None and out != '') and fmt in ['pandas','array','structarray','table']:
             print ("Cannot use format '%s' for file output." % fmt)
             return
         
@@ -898,17 +898,20 @@ class Dlinterface:
             adql = _query
 
         # Add the mapping information if not already loaded
-        if self.fmtmapping is None:
+        if (out is None or out == '') and (self.fmtmapping is None):
             addFormatMapping(self)
         mapping = self.fmtmapping
         
         # The queryClient "fmt" will depend on the requested output format
-        try:
-            qcfmt = mapping[fmt][0]
-        except:
-            print ("Format '%s' not supported." % fmt)
-            return
-        
+        if (out is None or out == ''):
+            try:
+                qcfmt = mapping[fmt][0]
+            except:
+                print ("Format '%s' not supported." % fmt)
+                return
+        else:
+            qcfmt = 'csv'
+            
         # Execute the query.
         if profile != "default":
             if profile != "" and profile is not None:

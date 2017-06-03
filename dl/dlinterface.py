@@ -511,7 +511,7 @@ class Dlinterface:
             print "dl.mkdir()     - Create a directory in Data Lab VOSpace"
             print "dl.rmdir()     - Delete a directory in Data Lab VOSpace"
             print "dl.ln()        - Link a file in Data Lab VOSpace"
-            print "dl.load()      - Load data from a local or VOSpace"
+            print "dl.load()      - Load data from a local or VOSpace file"
             print "dl.save()      - Save data to a local or VOSpace file"
             print "dl.copyurl()   - Copy a file from a URL to Data Lab VOSpace"
             print " "

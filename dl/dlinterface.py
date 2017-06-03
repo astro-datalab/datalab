@@ -1910,7 +1910,7 @@ class Dlinterface:
         storeClient.load(token, name, url)
 
              
-    def load(self, name=None, inpfmt=None, fmt='pandas'):
+    def load(self, name=None, inpfmt=None, fmt='pandas', ext=None):
         ''' 
         Save the string representation of a data object to a file in VOSpace.
 
@@ -1937,7 +1937,12 @@ class Dlinterface:
               * 'pandas'  a Pandas data frame
               * 'table'   in Astropy Table format
               * 'votable' result is a string XML-formatted as a VO table
-              'pandas' is the default format.
+              The output type for a FITS image is a numpy array.  For other data 'pandas' is
+              the default format.
+
+        ext : int
+             The FITS extension to load for images.  The default is 1 for a FITS binary
+             table and 0 for a FITS image.
 
         Example
         -------
@@ -1948,10 +1953,16 @@ class Dlinterface:
 
             df = dl.load('output.fits',fmt='pandas')
 
+        Load a FITS image "im1.fits".
+
+        .. code-block:: python
+
+            im,head = dl.load('im1.fits')
+
         '''
         # Not enough information input
         if (name is None):
-            print "Syntax - dl.load(name,inpfmt=inpfmt,fmt=fmt)"
+            print "Syntax - dl.load(name,inpfmt=inpfmt,fmt=fmt,ext=ext)"
             return
         
         # Only fits, csv and string input format currently supported
@@ -1991,6 +2002,11 @@ class Dlinterface:
                 return  
             
         # Load the neccessary packages
+        # astropy fits
+        try:
+            dum = fits.__doc__
+        except:
+            from astropy.io import fits
         # astropy Table
         try:
             dum = Table.__doc__
@@ -2002,7 +2018,6 @@ class Dlinterface:
         except:
             from astropy.io.votable import from_table
 
-        # what if we "get" it directly into a StrinIO???
             
         # Reading and conversion mapping
         # for reading, x=filename; for conversion, x=data object
@@ -2040,8 +2055,32 @@ class Dlinterface:
         if name.startswith('vos://'):
             fh = StringIO( storeClient.get(token,name,'',verbose=False) )
         else:
-            fh = open(name,'r')
+            fh = open(name,'rb')
 
+        # If this is a FITS file, check if its a binary table or image
+        if inpfmt == 'fits':
+            fitstable = False
+            hd = fits.getheader(fh)
+            fh.seek(0)    # reset to beginning of file
+            if hd['EXTEND'] is True:
+                try:
+                    tryext = (1 if ext is None else ext)
+                    hd1 = fits.getheader(fh,tryext)
+                    if hd1['XTENSION'] == 'BINTABLE': fitstable=True
+                except:
+                    pass
+                fh.seek(0)    # reset to beginning of file
+                
+        # Load a Fits image file
+        if inpfmt == 'fits' and fitstable is False:
+            try:
+                if ext is None: ext=0
+                return fits.getdata(fh,ext,header=True)
+            except Exception as e:
+                print ("There was an error loading the FITS image '%s'" % name)
+                print (e.message)
+                return
+                
         # Step 1) Read the file
         try:
             rdata = writemap[mapcode][0](fh)
@@ -2261,7 +2300,7 @@ class Dlinterface:
         Returns
         -------
         images : votable
-            The list of images in votable format.
+            The list of images in Astropy table format.
 
         Example
         -------
@@ -2270,7 +2309,14 @@ class Dlinterface:
 
         .. code-block:: python
 
-            tab = dl.siaquery(0.0,0.0)
+            itab = dl.siaquery(0.5,10.0,0.1)
+            The image list contains 6 entries
+
+        Download the first image using :func:`copyurl()`.
+
+        .. code-block:: python
+
+             dl.copyurl(itab['access_url'][0],'im1.fits')
 
 
         '''
@@ -2299,9 +2345,9 @@ class Dlinterface:
             images = svc.search((ra,dec), (dist/np.cos(dec*np.pi/180), dist), verbosity=2)
         nrows = images.votable.nrows
         print "The image list contains",nrows,"entries"
-        vot = (images.votable if nrows > 0 else None)
+        res = (images.votable.to_table() if nrows > 0 else None)
         # Print the results if verbose set
         if verbose is True and nrows > 0:
-            print vot
+            print res
     
-        return vot
+        return res

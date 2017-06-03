@@ -854,7 +854,7 @@ class Dlinterface:
                 return
 
         # Can only use FITS or HDF for file output
-        if (out == None or out != '') and fmt in ['fits','hdf5']:
+        if (out == None or out == '') and fmt in ['fits','hdf5']:
             print ("Can only use format '%s' for file output." % fmt)
             return
 

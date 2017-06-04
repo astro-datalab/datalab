@@ -1,7 +1,7 @@
 """Helper classes and methods for datalab client."""
 
 __authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20170531' # yyyymmdd
+__version__ = '20170601' # yyyymmdd
 
 # std lib imports
 from functools import partial
@@ -13,7 +13,7 @@ import warnings
 warnings.simplefilter('always', DeprecationWarning)
 
 # 3rd party Python imports
-import pylab as p
+import pylab as plt
 import numpy as N
 from pandas import read_csv
 from astropy.table import Table
@@ -52,6 +52,16 @@ def convert(inp,outfmt='pandas'):
         For outfmt='votable', the input string must be an
         XML-formatted string. For all other values, as CSV-formatted
         string.
+
+    Example
+    -------
+    Convert a CSV-formatted string to a Pandas dataframe
+
+    .. code-block:: python
+
+       df = helpers.convert(inpst,outfmt='pandas')
+       print df.head()  # df is as Pandas dataframe, with all its methods
+
     """
     
     # map outfmt container types to a tuple:
@@ -59,8 +69,8 @@ def convert(inp,outfmt='pandas'):
     # processing function for the result string)
     mapping = OrderedDict([
         ('string'      , ('csv',     'CSV formatted table as a string', lambda x: x.getvalue())),
-        ('array'       , ('csv',     'Numpy array',                     partial(N.loadtxt,unpack=False,skiprows=1,delimiter=','))),
-        ('structarray' , ('csv',     'Numpy structured / record array', partial(N.genfromtxt,dtype=float,delimiter=',',names=True))),
+        ('array'       , ('csv',     'Numpy array',                     partial(np.loadtxt,unpack=False,skiprows=1,delimiter=','))),
+        ('structarray' , ('csv',     'Numpy structured / record array', partial(np.genfromtxt,dtype=float,delimiter=',',names=True))),
         ('pandas'      , ('csv',     'Pandas dataframe',                read_csv)),
         ('table'       , ('csv',     'Astropy Table',                   partial(Table.read,format='csv'))),
         ('votable'     , ('votable', 'Astropy VOtable',                 parse_single_table))
@@ -104,8 +114,8 @@ class Querist:
         # processing function for the result string)
         self.mapping = OrderedDict([
             ('string'      , ('csv',     'CSV formatted table as a string', lambda x: x.getvalue())),
-            ('array'       , ('csv',     'Numpy array',                     partial(N.loadtxt,unpack=False,skiprows=1,delimiter=','))),
-            ('structarray' , ('csv',     'Numpy structured / record array', partial(N.genfromtxt,dtype=float,delimiter=',',names=True))),
+            ('array'       , ('csv',     'Numpy array',                     partial(np.loadtxt,unpack=False,skiprows=1,delimiter=','))),
+            ('structarray' , ('csv',     'Numpy structured / record array', partial(np.genfromtxt,dtype=float,delimiter=',',names=True))),
             ('pandas'      , ('csv',     'Pandas dataframe',                read_csv)),
             ('table'       , ('csv',     'Astropy Table',                   partial(Table.read,format='csv'))),
             ('votable'     , ('votable', 'Astropy VOtable',                 parse_single_table))
@@ -471,7 +481,7 @@ def findClusters(x,y,method='MiniBatchKMeans',**kwargs):  # x,y can be for insta
         print e.message
         raise
 
-    X = N.matrix(zip(x,y))
+    X = np.matrix(zip(x,y))
     
     clusters = METHOD.fit(X)
 
@@ -498,10 +508,23 @@ def constructOutlines(x,y,clusterlabels):  # compute convex hull, one per cluste
         :class:`shapely.geometry.polygon.Polygon`. Check docstring of
         :func:`plotSkymapScatter` on how to access the vertices.
 
+    Example
+    -------
+    Given `x` & `y` coordinates as 1d sequences, and `clusterlabels` a
+    1d sequence of cluster membership labels:
+
+    .. code-block:: python
+
+       outlines = constructOutlines(x,y,clusterlabels)
+       for ol in outlines:
+           x_ = np.array(ol.boundary.coords[:])[:,0]
+           y_ = np.array(ol.boundary.coords[:])[:,1]
+           plt.plot(x_,y_,ls='-',color='r',lw=2)
+
     """
 
     outlines = []
-    for label in N.unique(clusterlabels):
+    for label in np.unique(clusterlabels):
         co = (clusterlabels == label)
         points = geo.MultiPoint(zip(x[co],y[co]))
         hull = points.convex_hull
@@ -572,33 +595,33 @@ def plotSkymapScatter(x,y,c=None,clusterlabels=None,s=3,plot='both',xlabel='RA',
 
     """
     
-    p.figure(figsize=(14,7))
-    ax = p.subplot(111, projection=projection)
+    plt.figure(figsize=(14,7))
+    ax = plt.subplot(111, projection=projection)
 
     if clusterlabels is not None:
 
         if plot in ('scatter','both'):
-            for label in N.unique(clusterlabels):
+            for label in np.unique(clusterlabels):
                 sel = (clusterlabels == label)
-                im = p.scatter(x[sel], y[sel], marker='o', s=s, edgecolors='none', alpha=1, label=label, **kwargs)
+                im = plt.scatter(x[sel], y[sel], marker='o', s=s, edgecolors='none', alpha=1, label=label, **kwargs)
 
-            p.legend(loc='upper right',title='clusters',markerscale=5)
+            plt.legend(loc='upper right',title='clusters',markerscale=5)
 
         if plot in ('outlines','both'):
             outlines = constructOutlines(x,y,clusterlabels)
             for ol in outlines:
-                x_ = N.array(ol.boundary.coords[:])[:,0]
-                y_ = N.array(ol.boundary.coords[:])[:,1]
-                p.plot(x_,y_,ls='-',color='r',lw=2)
+                x_ = np.array(ol.boundary.coords[:])[:,0]
+                y_ = np.array(ol.boundary.coords[:])[:,1]
+                plt.plot(x_,y_,ls='-',color='r',lw=2)
         
     else:
-        im = p.scatter(x, y, marker='o', s=s, c=c, edgecolors='none', alpha=1, **kwargs)
+        im = plt.scatter(x, y, marker='o', s=s, c=c, edgecolors='none', alpha=1, **kwargs)
 
         if c is not None:
-            cb = p.colorbar(im)
+            cb = plt.colorbar(im)
             cb.set_label(clabel)
 
-    p.title(title,y=1.08)
-    p.grid(True)
-    p.xlabel(xlabel)
-    p.ylabel(ylabel)
+    plt.title(title,y=1.08)
+    plt.grid(True)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)

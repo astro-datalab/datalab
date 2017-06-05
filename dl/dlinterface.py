@@ -27,15 +27,16 @@ try:
     import ConfigParser
     from urllib import quote_plus, urlencode		# Python 2
     from urllib2 import urlopen, Request                # Python 2
+    from cStringIO import StringIO
 except ImportError:
-    import configParse as ConfigParser                  # Python 2
+    import configparser as ConfigParser                  # Python 2
     from urllib.parse import quote_plus, urlencode      # Python 3
     from urllib.request import urlopen, Request         # Python 3
+    from io import StringIO
 import requests
     
 # std lib imports
 import getpass
-from cStringIO import StringIO
 import xml.etree.ElementTree as ET
 import numpy as np
 import tempfile
@@ -89,7 +90,7 @@ def checkLogin (self):
     '''  Check if the user is already logged in.  If not, give a warning message
     '''
     if self.loginstatus != 'loggedin' and self.loginuser != 'anonymous':
-        print "You are not currently logged in.  Please use dl.login() to do so."
+        print ("You are not currently logged in.  Please use dl.login() to do so.")
         return False
     else:
         return True
@@ -226,7 +227,7 @@ def reformatQueryOutput(self, res=None, fmt='csv', verbose=True):
     s = StringIO(res)
     output = mapping[fmt][2](s)
     if verbose is True:
-        print "Returning %s" % mapping[fmt][1]
+        print ("Returning %s" % mapping[fmt][1])
     return output
 
 def convert_vospace_time_to_seconds(str_date):
@@ -468,7 +469,7 @@ class Dlinterface:
         self.fmtmapping = None
         self.qhistory = None
         if verbose is True:
-            print "Welcome to the Data Lab python interface.  Type dl.help() for help."
+            print ("Welcome to the Data Lab python interface.  Type dl.help() for help.")
 
     '''
        Print method, just print the help
@@ -487,45 +488,45 @@ class Dlinterface:
 
         # Print out general help information
         if command is None:
-            print "The Data Lab python interface."
-            print " "
-            print "The available commands are:"
-            print " "
-            print "dl.help()      - Helpful information"
-            print "Use dl.help(<command>) for specific help on a command."
-            print " "
-            print "-- Login and authentication --"
-            print "dl.login()          - Login to the Data Lab"
-            print "dl.logout()         - Logout of the Data Lab"
-            print "dl.status()         - Report on the user status"
-            print "dl.whoami()         - Print the current active user"
-            print "dl.servicestatus()  - Report on the status of the DL services"
-            print " "
-            print "-- File system operations --"
-            print "dl.ls()        - List a location in Data Lab VOSpace"
-            print "dl.get()       - Get a file from Data Lab VOSpace"
-            print "dl.put()       - Put a file into Data Lab VOSpace"
-            print "dl.cp()        - Copy a file in Data Lab VOSpace"
-            print "dl.mv()        - Move a file in Data Lab VOSpace"
-            print "dl.rm()        - Delete a file in Data Lab VOSpace"
-            print "dl.mkdir()     - Create a directory in Data Lab VOSpace"
-            print "dl.rmdir()     - Delete a directory in Data Lab VOSpace"
-            print "dl.ln()        - Link a file in Data Lab VOSpace"
-            print "dl.load()      - Load data from a local or VOSpace file"
-            print "dl.save()      - Save data to a local or VOSpace file"
-            print "dl.copyurl()   - Copy a file from a URL to Data Lab VOSpace"
-            print " "
-            print "-- Query and database operations --"
-            print "dl.query()          - Query a remote data service in the Data Lab"
-            print "dl.queryhistory()   - List history of queries made"
-            print "dl.queryresults()   - Get the async query results"
-            print "dl.querystatus()    - Get an async query job status"
-            print "dl.queryprofiles()  - List the available query profiles"
-            print "dl.schema()         - Get information on database schemas"
-            print "dl.droptable()      - Drop a user MyDB table"
-            print "dl.exporttable()    - Copy a user MyDB table to a VOSpace CSV file"
-            print "dl.listdb()         - List the user MyDB tables"
-            print "dl.siaquery()       - Query a SIA service in the Data Lab"
+            print ("The Data Lab python interface.")
+            print (" ")
+            print ("The available commands are:")
+            print (" ")
+            print ("dl.help()      - Helpful information")
+            print ("Use dl.help(<command>) for specific help on a command.")
+            print (" ")
+            print ("-- Login and authentication --")
+            print ("dl.login()          - Login to the Data Lab")
+            print ("dl.logout()         - Logout of the Data Lab")
+            print ("dl.status()         - Report on the user status")
+            print ("dl.whoami()         - Print the current active user")
+            print ("dl.servicestatus()  - Report on the status of the DL services")
+            print (" ")
+            print ("-- File system operations --")
+            print ("dl.ls()        - List a location in Data Lab VOSpace")
+            print ("dl.get()       - Get a file from Data Lab VOSpace")
+            print ("dl.put()       - Put a file into Data Lab VOSpace")
+            print ("dl.cp()        - Copy a file in Data Lab VOSpace")
+            print ("dl.mv()        - Move a file in Data Lab VOSpace")
+            print ("dl.rm()        - Delete a file in Data Lab VOSpace")
+            print ("dl.mkdir()     - Create a directory in Data Lab VOSpace")
+            print ("dl.rmdir()     - Delete a directory in Data Lab VOSpace")
+            print ("dl.ln()        - Link a file in Data Lab VOSpace")
+            print ("dl.load()      - Load data from a local or VOSpace file")
+            print ("dl.save()      - Save data to a local or VOSpace file")
+            print ("dl.copyurl()   - Copy a file from a URL to Data Lab VOSpace")
+            print (" ")
+            print ("-- Query and database operations --")
+            print ("dl.query()          - Query a remote data service in the Data Lab")
+            print ("dl.queryhistory()   - List history of queries made")
+            print ("dl.queryresults()   - Get the async query results")
+            print ("dl.querystatus()    - Get an async query job status")
+            print ("dl.queryprofiles()  - List the available query profiles")
+            print ("dl.schema()         - Get information on database schemas")
+            print ("dl.droptable()      - Drop a user MyDB table")
+            print ("dl.exporttable()    - Copy a user MyDB table to a VOSpace CSV file")
+            print ("dl.listdb()         - List the user MyDB tables")
+            print ("dl.siaquery()       - Query a SIA service in the Data Lab")
 
          # Help on a specific command
         else:
@@ -644,7 +645,7 @@ class Dlinterface:
                 token = authClient.login(user,getpass.getpass(prompt='Enter password: '))
        
                 if not authClient.isValidToken(token):
-                    print "Invalid user name and/or password provided. Please try again."
+                    print ("Invalid user name and/or password provided. Please try again.")
                     return
                 else:
                     self.loginuser = user
@@ -837,8 +838,8 @@ class Dlinterface:
         '''
         # Not enough information input
         if (query is None):
-            print "Syntax - dl.query(query, qtype='sql|adql', fmt='csv|ascii|array|structarray|pandas|table|votable|fits|hdf5',"
-            print "                  out='', async=False, profile='default')"
+            print ("Syntax - dl.query(query, qtype='sql|adql', fmt='csv|ascii|array|structarray|pandas|table|votable|fits|hdf5',")
+            print ("                  out='', async=False, profile='default')")
             return
 
         # Check if we are logged in
@@ -878,7 +879,7 @@ class Dlinterface:
             
         # Check type
         if qtype not in ['sql','adql']:
-            print "Only 'sql' and 'adql' queries are currently supported."
+            print ("Only 'sql' and 'adql' queries are currently supported.")
             return
             
         _query = query         # local working copy
@@ -997,7 +998,7 @@ class Dlinterface:
 
         '''
         if self.qhistory is None:
-            print "No queries made so far"
+            print ("No queries made so far")
             return
         else:
             keys = sorted(self.qhistory.keys())
@@ -1008,7 +1009,7 @@ class Dlinterface:
                     v = self.qhistory[k]
                     asyncv.append(v[2])
                 if sum(asyncv) == 0:
-                    print "No ASYNC queries made so far"
+                    print ("No ASYNC queries made so far")
                     return
                 
             # Loop through the query history
@@ -1070,7 +1071,7 @@ class Dlinterface:
         '''
         # Not enough information input
         if (jobid is None):
-            print "Syntax - dl.querystatus(jobId/QID)"
+            print ("Syntax - dl.querystatus(jobId/QID)")
             return
         # Check if we are logged in
         if not checkLogin(self):
@@ -1132,7 +1133,7 @@ class Dlinterface:
         '''
         # Not enough information input
         if (jobid is None):
-            print "Syntax - dl.queryresults(jobId/QID)"
+            print ("Syntax - dl.queryresults(jobId/QID)")
             return
         # Check if we are logged in
         if not checkLogin(self):
@@ -1166,7 +1167,7 @@ class Dlinterface:
         # Check first if the job has been completed
         stat = queryClient.status (token, jobId=_jobid)
         if stat != 'COMPLETED':
-            print "The job has not yet completed"
+            print ("The job has not yet completed")
             return
         # Get the results
         res = (queryClient.results (token, jobId=_jobid))
@@ -1211,7 +1212,7 @@ class Dlinterface:
             print (e.message)
         else:
             if res == 'relation "" not known':
-                print "No tables in MyDB"
+                print ("No tables in MyDB")
                 res = ''
             else:
                 res = ' '.join(res.splitlines())    # convert to space separated list
@@ -1291,7 +1292,7 @@ class Dlinterface:
         '''
         # Not enough information input
         if (table is None or name is None):
-            print "Syntax - dl.exporttable(table,name,fmt)"
+            print ("Syntax - dl.exporttable(table,name,fmt)")
             return
         # Check if we are logged in
         if not checkLogin(self):
@@ -1492,7 +1493,7 @@ class Dlinterface:
         token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(token):
-            raise Exception, "Invalid user name and/or password provided. Please try again."
+            raise Exception ("Invalid user name and/or password provided. Please try again.")
         # Trim trailing / or /*, messes up directory listing
         if name != 'vos://':
             name = (name if not name.endswith('/') else name[:-1])
@@ -1525,7 +1526,7 @@ class Dlinterface:
                 name = (vals['name']+'/' if vals['type']=='vos:ContainerNode' else vals['name'])
                 flist.append("%s " % name)
         if verbose is False:
-            print ' '.join(flist)
+            print (' '.join(flist))
 
     def get(self, source=None, destination=None, verbose=True):
         '''
@@ -1552,7 +1553,7 @@ class Dlinterface:
         '''
         # Not enough information input
         if (source is None) or (destination is None):
-            print "Syntax - dl.get(source, destination)"
+            print ("Syntax - dl.get(source, destination)")
             return
         # Check if we are logged in
         if not checkLogin(self):
@@ -1560,7 +1561,7 @@ class Dlinterface:
         token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(token):
-            raise Exception, "Invalid user name and/or password provided. Please try again."
+            raise Exception ("Invalid user name and/or password provided. Please try again.")
         # Run the GET command
         storeClient.get (token, source, destination,
                             verbose=verbose)
@@ -1591,7 +1592,7 @@ class Dlinterface:
         '''
         # Not enough information input
         if (source is None) or (destination is None):
-            print "Syntax - dl.put(source, destination)"
+            print ("Syntax - dl.put(source, destination)")
             return
         # Check if we are logged in
         if not checkLogin(self):
@@ -1599,7 +1600,7 @@ class Dlinterface:
         token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(token):
-            raise Exception, "Invalid user name and/or password provided. Please try again."
+            raise Exception ("Invalid user name and/or password provided. Please try again.")
         # Run the PUT command
         res = storeClient.put (token, source, destination,
                                verbose=verbose)
@@ -1650,7 +1651,7 @@ class Dlinterface:
         '''
         # Not enough information input
         if (source is None) or (destination is None):
-            print "Syntax - dl.mv(source, destination)"
+            print ("Syntax - dl.mv(source, destination)")
             return
         # Check if we are logged in
         if not checkLogin(self):
@@ -1658,7 +1659,7 @@ class Dlinterface:
         token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(token):
-            raise Exception, "Invalid user name and/or password provided. Please try again."
+            raise Exception ("Invalid user name and/or password provided. Please try again.")
         # Check if the source file actually exist
         res = storeClient.ls(token,source,'csv')
         if res == '':
@@ -1698,7 +1699,7 @@ class Dlinterface:
         '''
         # Not enough information input
         if (source is None) or (destination is None):
-            print "Syntax - dl.cp(source, destination)"
+            print ("Syntax - dl.cp(source, destination)")
             return
         # Check if we are logged in
         if not checkLogin(self):
@@ -1706,7 +1707,7 @@ class Dlinterface:
         token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(token):
-            raise Exception, "Invalid user name and/or password provided. Please try again."
+            raise Exception ("Invalid user name and/or password provided. Please try again.")
         # Check if the source file actually exist
         res = storeClient.ls(token,source,'csv')
         if res == '':
@@ -1743,7 +1744,7 @@ class Dlinterface:
         '''
         # Not enough information input
         if (name is None):
-            print "Syntax - dl.rm(name)"
+            print ("Syntax - dl.rm(name)")
             return
         # Check if we are logged in
         if not checkLogin(self):
@@ -1751,7 +1752,7 @@ class Dlinterface:
         token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(token):
-            raise Exception, "Invalid user name and/or password provided. Please try again."
+            raise Exception ("Invalid user name and/or password provided. Please try again.")
         # Run the RM command
         storeClient.rm (token, name=name, verbose=verbose)
 
@@ -1786,7 +1787,7 @@ class Dlinterface:
         '''
         # Not enough information input
         if (link is None) or (target is None):
-            print "Syntax - dl.ln(target, link)"
+            print ("Syntax - dl.ln(target, link)")
             return
         # Check if we are logged in
         if not checkLogin(self):
@@ -1794,7 +1795,7 @@ class Dlinterface:
         token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(token):
-            raise Exception, "Invalid user name and/or password provided. Please try again."
+            raise Exception ("Invalid user name and/or password provided. Please try again.")
         # They require vos:// prefix to work
         lnk = (link if link.startswith("vos://") else ("vos://" + link))
         trg = (target if target.startswith("vos://") else ("vos://" + target))
@@ -1822,7 +1823,7 @@ class Dlinterface:
         '''
         # Not enough information input
         if (name is None):
-            print "Syntax - dl.mkdir(name)"
+            print ("Syntax - dl.mkdir(name)")
             return
         # Check if we are logged in
         if not checkLogin(self):
@@ -1830,7 +1831,7 @@ class Dlinterface:
         token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(token):
-            raise Exception, "Invalid user name and/or password provided. Please try again."
+            raise Exception ("Invalid user name and/or password provided. Please try again.")
         # Run the MKDIR command
         #  currently this must have vos:// prefix
         if name[0:6] != 'vos://':
@@ -1859,7 +1860,7 @@ class Dlinterface:
         '''
         # Not enough information input
         if (name is None):
-            print "Syntax - dl.rmdir(name)"
+            print ("Syntax - dl.rmdir(name)")
             return
         # Check if we are logged in
         if not checkLogin(self):
@@ -1867,7 +1868,7 @@ class Dlinterface:
         token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(token):
-            raise Exception, "Invalid user name and/or password provided. Please try again."
+            raise Exception ("Invalid user name and/or password provided. Please try again.")
         # Run the RMDIR command
         storeClient.rmdir (token, name=name)
 
@@ -1896,7 +1897,7 @@ class Dlinterface:
         '''
         # Not enough information input
         if (url is None or name is None):
-            print "Syntax - dl.copyurl(url,name)"
+            print ("Syntax - dl.copyurl(url,name)")
             return
         # Check if we are logged in
         if not checkLogin(self):
@@ -1904,7 +1905,7 @@ class Dlinterface:
         token = getUserToken(self)
         # Check that we have a good token
         if not authClient.isValidToken(token):
-            raise Exception, "Invalid user name and/or password provided. Please try again."
+            raise Exception ("Invalid user name and/or password provided. Please try again.")
         # Run the LOAD command
         name = (name if name.startswith('vos://') else ('vos://'+name))
         storeClient.load(token, name, url)
@@ -1962,7 +1963,7 @@ class Dlinterface:
         '''
         # Not enough information input
         if (name is None):
-            print "Syntax - dl.load(name,inpfmt=inpfmt,fmt=fmt,ext=ext)"
+            print ("Syntax - dl.load(name,inpfmt=inpfmt,fmt=fmt,ext=ext)")
             return
         
         # Only fits, csv and string input format currently supported
@@ -1988,7 +1989,7 @@ class Dlinterface:
             token = getUserToken(self)
             # Check that we have a good token
             if not authClient.isValidToken(token):
-                raise Exception, "Invalid user name and/or password provided. Please try again."
+                raise Exception ("Invalid user name and/or password provided. Please try again.")
 
         # Check that the file exists
         if name.startswith("vos://"):
@@ -2139,7 +2140,7 @@ class Dlinterface:
         '''
         # Not enough information input
         if (data is None or name is None):
-            print "Syntax - dl.save(data,name,fmt=fmt,clobber=clobber)"
+            print ("Syntax - dl.save(data,name,fmt=fmt,clobber=clobber)")
             return
 
         # If fmt is None then try to guess format from the output filename extension
@@ -2200,7 +2201,7 @@ class Dlinterface:
             token = getUserToken(self)
             # Check that we have a good token
             if not authClient.isValidToken(token):
-                raise Exception, "Invalid user name and/or password provided. Please try again."
+                raise Exception ("Invalid user name and/or password provided. Please try again.")
 
         # Check if the file exists already
         if name.startswith("vos://"):
@@ -2323,7 +2324,7 @@ class Dlinterface:
 
         # Not enough information input
         if ((ra is None) or (dec is None)) :
-            print "Syntax - dl.siaquery(ra, dec, dist, file=None, out=None, verbose=False)"
+            print ("Syntax - dl.siaquery(ra, dec, dist, file=None, out=None, verbose=False)")
             return
         # Check if we are logged in
         if not checkLogin(self):
@@ -2344,10 +2345,10 @@ class Dlinterface:
             warnings.simplefilter('ignore', AstropyWarning)   # Turn off some annoying astropy warnings
             images = svc.search((ra,dec), (dist/np.cos(dec*np.pi/180), dist), verbosity=2)
         nrows = images.votable.nrows
-        print "The image list contains",nrows,"entries"
+        print ("The image list contains",nrows,"entries")
         res = (images.votable.to_table() if nrows > 0 else None)
         # Print the results if verbose set
         if verbose is True and nrows > 0:
-            print res
+            print (res)
     
         return res

@@ -3,11 +3,17 @@
 __authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
 __version__ = '20170601' # yyyymmdd
 
+try:
+    from cStringIO import StringIO   # python 2
+    from Queue import deque
+except ImportError:
+    from io import StringIO          # python 3
+    from queue import deque
+    
 # std lib imports
 from functools import partial
-from cStringIO import StringIO
+
 from collections import OrderedDict
-from Queue import deque
 import getpass
 import warnings
 warnings.simplefilter('always', DeprecationWarning)
@@ -78,7 +84,7 @@ def convert(inp,outfmt='pandas'):
 
     s = StringIO(inp)
     output = mapping[outfmt][2](s)
-    print "Returning %s" % mapping[outfmt][1]
+    print ("Returning %s" % mapping[outfmt][1])
 
     return output
 
@@ -144,13 +150,13 @@ class Querist:
         if username == 'anonymous':
             token = authClient.login('anonymous','')
         else:
-#            print "Enter password:"
+#            print ("Enter password:")
             token = authClient.login(username,getpass.getpass(prompt='Enter password:'))
 
         if not authClient.isValidToken(token):
-            raise Exception, "Invalid user name and/or password provided. Please try again."
+            raise Exception ("Invalid user name and/or password provided. Please try again.")
         else:
-            print "Authentication successful."
+            print ("Authentication successful.")
             return token
 
         
@@ -218,7 +224,7 @@ class Querist:
             try:
                 response = queryClient.query(self.token,sql=query,fmt=self.mapping[outfmt][0],async=async)  # submit the query, using your authentication token
             except Exception as e:
-                print e.message
+                print (e.message)
                 raise
 
         output = self._processOutput(response,outfmt,async,preview)
@@ -230,7 +236,7 @@ class Querist:
 
         """Clears the async job queue, i.e. they become unretrievable."""
         
-        print "Clearing the queue of async queries."
+        print ("Clearing the queue of async queries.")
         self.openjobs.clear()
 
         
@@ -272,15 +278,15 @@ class Querist:
             if async is False:
                 s = StringIO(response)
                 output = self.mapping[outfmt][2](s)
-                print "Returning %s" % self.mapping[outfmt][1]
+                print ("Returning %s" % self.mapping[outfmt][1])
                 self._printPreview(response,preview)
                 return output
 
             # ... and async is True, means the response is an async query jobID; put in in the FIFO queue
             elif async is True:
                 self.openjobs.append((response,outfmt,preview))
-                print "Asynchronous query submitted as jobid=%s" % response
-                print "Get results a bit later with: result = Q()"
+                print ("Asynchronous query submitted as jobid=%s" % response)
+                print ("Get results a bit later with: result = Q()")
                 return None
     
 
@@ -306,26 +312,26 @@ class Querist:
 
         try:
             jobid, outfmt, preview = self.openjobs.popleft()
-            print "jobid, outfmt, preview", jobid, outfmt, preview
+            print ("jobid, outfmt, preview", jobid, outfmt, preview)
             
         except IndexError:
-            print "There are no pending async jobs."
+            print ("There are no pending async jobs.")
             return None, None, None
 
         except Exception as e:
-            print e.message
+            print (e.message)
             raise
 
         else:
             status = queryClient.status(self.token,jobid)
             
             if status in ('QUEUED','EXECUTING'):
-                print "Async query job %s is currently %s. Please check a bit later with: result=Q()" % (jobid,status)
+                print ("Async query job %s is currently %s. Please check a bit later with: result=Q()" % (jobid,status))
                 self.openjobs.appendleft((jobid,outfmt,preview))  # putting back in queue (from left, i.e. old position)
                 return None, None, None
 
             elif status == 'COMPLETED':
-                print "Async query job %s is COMPLETED. Attempting to retrieve results." % jobid
+                print ("Async query job %s is COMPLETED. Attempting to retrieve results." % jobid)
                 response = queryClient.results(self.token,jobid)
                 return response, outfmt, preview
 
@@ -355,8 +361,8 @@ class Querist:
         
         if response is not None:
             if preview > 0: # TODO: take a (large enough) heading sub-string of response, and count lines on that)
-                print "RESULT PREVIEW (%d rows)" % preview
-                print response[:response.replace('\n', '|', preview).find('\n')] # print the response preview
+                print ("RESULT PREVIEW (%d rows)" % preview)
+                print (response[:response.replace('\n', '|', preview).find('\n')]) # print the response preview
 
                 
     def printMapping(self):
@@ -376,10 +382,10 @@ class Querist:
         length = max([len(s) for s in self.mapping.keys()]) + 1 # max length of any outfmt string, plus one
         fmt = "%%%ds   %%s" % length
         title = fmt % ("'outfmt' arg","Returned output")  # mini table header
-        print title
-        print '-'*len(title)
+        print (title)
+        print ('-'*len(title))
         for k,v in self.mapping.items():
-            print fmt % (k,v[1])
+            print (fmt % (k,v[1]))
 
     output_formats = property(printMapping)
         
@@ -478,7 +484,7 @@ def findClusters(x,y,method='MiniBatchKMeans',**kwargs):  # x,y can be for insta
     try:
         METHOD = getattr(C,method)(**kwargs)
     except Exception as e:
-        print e.message
+        print (e.message)
         raise
 
     X = np.matrix(zip(x,y))

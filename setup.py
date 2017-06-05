@@ -25,11 +25,11 @@ except:
 
 
 setup(name="datalab-client",
-      version="1.0.0",
+      version="1.0.4",
       url="https://github.noao.edu/noao-datalab/datalab-client",
       description="Tools for interacting with NOAO Data Lab.",
-      author="M.J. Graham",
-      author_email="graham@noao.edu",
+      author="M.J. Graham, M.J. Fitzpatrick, D.L. Nidever, R. Nikutta",
+      author_email="graham@noao.edu, fitz@noao.edu, dnidever@noao.edu, nikutta@noao.edu",
       long_description="Tools for interacting with the NOAO Data Lab services",
       packages=find_packages(exclude=['test.*']),
       package_data ={
@@ -47,5 +47,5 @@ setup(name="datalab-client",
         'Programming Language :: Python',
         ], 
       install_requires=['requests>=2.7', 'argparse', 'lxml', 'httplib2'],
-      requires=['requests (>=2.7)', 'argparse', 'lxml', 'httplib2']
+      requires=['requests (>=2.7)', 'argparse', 'lxml', 'httplib2', 'numpy', 'astropy', 'pyvo', 'shapely']
       )

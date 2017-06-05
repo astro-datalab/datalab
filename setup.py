@@ -24,13 +24,13 @@ except:
     has_setuptools = False
 
 
-setup(name="datalab",
-      version="2.0.3",
-      url="https://github.noao.edu/datalab/datalab",
+setup(name="datalab-client",
+      version="1.0.0",
+      url="https://github.noao.edu/noao-datalab/datalab-client",
       description="Tools for interacting with NOAO Data Lab.",
       author="M.J. Graham",
       author_email="graham@noao.edu",
-      long_description="A command line tool for interacting with the NOAO Data Lab including VOSpace FUSE layer",
+      long_description="Tools for interacting with the NOAO Data Lab services",
       packages=find_packages(exclude=['test.*']),
       package_data ={
         'datalab': ['caps/*']

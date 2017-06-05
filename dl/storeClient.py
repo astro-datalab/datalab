@@ -550,7 +550,7 @@ def expandFileList(token, pattern, format, full=False):
 def getFromURL(path, token):
     try:
         resp = requests.get("%s%s" % (DEF_SERVICE_URL, path), headers = {"X-DL-AuthToken": token})
-    except Exception, e:
+    except Exception as e:
         raise storeClientError(e.message)
     return resp
 

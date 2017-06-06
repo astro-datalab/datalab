@@ -175,7 +175,7 @@ class DataLab:
     def _write(self):
         ''' Write out the configuration file to disk.
         '''
-        with open('%s/dl.conf' % self.home, 'wb') as configfile:
+        with open('%s/dl.conf' % self.home, 'w') as configfile:
             self.config.write(configfile)
 
 
@@ -656,14 +656,14 @@ class Query2 (Task):
             elif self.out.value== '' or self.out.value is None:
                 print (res)                         # Return the results
         except Exception as e:
-            if not self.async.value and e.message is not None:
-                err = e.message
+            if not self.async.value and str(e) is not None:
+                err = str(e)
                 if err.find("Time-out") > 0:
                     print ("Error: Sync query timeout, try an async query")
                 else:
-                    print (e.message)
+                    print (str(e))
             else:
-                print (e.message)
+                print (str(e))
 
 
 class QueryStatus(Task):

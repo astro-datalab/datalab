@@ -218,8 +218,8 @@ def put(token, fr, to, verbose=True):
                 print ("%s" % nm)
 
         except Exception as e:
-            #raise storeClientError(e.message)
-            resp.append (e.message)
+            #raise storeClientError(str(e))
+            resp.append (str(e))
         else:
             resp.append ("OK")
 
@@ -435,7 +435,7 @@ def saveAs(token, data, name):
             tfd.flush()
             tfd.close()
     except Exception as e:
-        raise storeClientError(e.message)
+        raise storeClientError(str(e))
 
     # Patch the names with the URI prefix if needed.
     nm = (name if name.startswith("vos://") else ("vos://" + name))
@@ -551,7 +551,8 @@ def getFromURL(path, token):
     try:
         resp = requests.get("%s%s" % (DEF_SERVICE_URL, path), headers = {"X-DL-AuthToken": token})
     except Exception as e:
-        raise storeClientError(e.message)
+        raise storeClientError(str(e))
+        #raise storeClientError(str(e))
     return resp
 
 

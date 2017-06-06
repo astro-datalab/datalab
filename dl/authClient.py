@@ -82,7 +82,7 @@ def login(user, password=None, debug=False, verbose=False):
         try:
             response = client.login(user, password, debug)
         except Exception as e:
-            response = e.message
+            response = str(e)
     return response
 
 
@@ -90,7 +90,7 @@ def isAlive(svc_url=DEF_SERVICE_URL):
     try:
         response = client.isAlive(svc_url)
     except Exception as e:
-        response = e.message
+        repsponse = str(e)
     return response
 
 
@@ -106,7 +106,7 @@ def isValidToken(token):
         try:
             response = client.isValidToken(token)
         except Exception as e:
-            print (e.message)
+            print (str(e))
             return False
 
     return response
@@ -119,7 +119,7 @@ def isValidUser(user):
         try:
             response = client.isValidUser(user)
         except Exception as e:
-            response = e.message
+            response = str(e)
     return response
 
 
@@ -130,7 +130,7 @@ def isValidPassword(user, password):
         try:
             response = client.isValidPassword(user, password)
         except Exception as e:
-            response = e.message
+            response = str(e)
     return response
 
 
@@ -138,7 +138,7 @@ def hasAccess(user, resource):
     try:
         response = client.hasAccess(user, resource)
     except Exception as e:
-        response = e.message
+        response = str(e)
     return response
 
 
@@ -146,7 +146,7 @@ def isUserLoggedIn(user):
     try:
         response = client.isUserLoggedIn(user)
     except Exception as e:
-        response = e.message
+        response = str(e)
     return response
 
 
@@ -154,7 +154,7 @@ def isTokenLoggedIn(token):
     try:
         response = client.isTokenLoggedIn(token)
     except Exception as e:
-        response = e.message
+        response = str(e)
     return response
 
 
@@ -162,7 +162,7 @@ def logout(token):
     try:
         response = client.logout(token)
     except Exception as e:
-        response = e.message
+        response = str(e)
     return response
 
 
@@ -170,7 +170,7 @@ def passwordReset(token, username, password):
     try:
         response = client.passwordReset(token, username, password)
     except Exception as e:
-        response = e.message
+        response = str(e)
     return response
 
 
@@ -460,7 +460,7 @@ class authClient (object):
                 elif not self.isValidPassword(username, password):
                     raise dlAuthError("Invalid password")
                 else:
-                    raise dlAuthError(e.message)
+                    raise dlAuthError(str(e))
             else:
                 raise dlAuthError("Invalid username")
 
@@ -510,7 +510,7 @@ class authClient (object):
                 raise Exception(r.text)
 
         except Exception as e:
-            raise dlAuthError(e.message)
+            raise dlAuthError(str(e))
         else:
             self.auth_token = None
             tok_file = self.home + '/id_token.' + self.username
@@ -557,7 +557,7 @@ class authClient (object):
                 raise Exception(r.text)
 
         except Exception as e:
-            raise dlAuthError(e.message)
+            raise dlAuthError(str(e))
         else:
             # Update the saved user token.
             if response is not None:
@@ -709,7 +709,7 @@ class authClient (object):
                 raise Exception(r.text)
 
         except Exception as e:
-            return e.message
+            return str(e)
         else:
             return response
 

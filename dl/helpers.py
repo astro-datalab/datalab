@@ -223,7 +223,7 @@ class Querist:
             try:
                 response = queryClient.query(self.token,sql=query,fmt=self.mapping[outfmt][0],async=async)  # submit the query, using your authentication token
             except Exception as e:
-                print (e.message)
+                print (str(e))
                 raise
 
         output = self._processOutput(response,outfmt,async,preview)
@@ -318,7 +318,7 @@ class Querist:
             return None, None, None
 
         except Exception as e:
-            print (e.message)
+            print (str(e))
             raise
 
         else:
@@ -483,7 +483,7 @@ def findClusters(x,y,method='MiniBatchKMeans',**kwargs):  # x,y can be for insta
     try:
         METHOD = getattr(C,method)(**kwargs)
     except Exception as e:
-        print (e.message)
+        print (str(e))
         raise
 
     X = np.matrix(zip(x,y))

@@ -922,14 +922,14 @@ class Dlinterface:
             res = queryClient.query (token, adql=adql, sql=sql, 
                                      fmt=qcfmt, out=out, async=async)
         except Exception as e:
-            if not async and e.message is not None:
-                err = e.message
+            if not async and str(e) is not None:
+                err = str(e)
                 if err.find("Time-out") >= 0:
                     print ("Error: Sync query timeout, try an async query")
                 else:
-                    print (e.message)
+                    print (str(e))
             else:
-                print (e.message)
+                print (str(e))
         else:
             # Add this query to the query history
             jobid = None
@@ -1209,7 +1209,7 @@ class Dlinterface:
             res = queryClient.list (token, table=table)
         except Exception as e:
             print ("Error listing MyDB tables.")
-            print (e.message)
+            print (str(e))
         else:
             if res == 'relation "" not known':
                 print ("No tables in MyDB")
@@ -1259,7 +1259,7 @@ class Dlinterface:
             queryClient.drop (token, table=table)
         except Exception as e:
             print ("Error dropping table '%s'." % table)
-            print (e.message)
+            print (str(e))
         else:
             print ("Table '%s' was dropped." % table)
 
@@ -1327,7 +1327,7 @@ class Dlinterface:
             res = queryClient.query (token, sql='select * from mydb://'+table,out=name,fmt=fmt)
         except Exception as e:
             print ("Error exorting table '%s'." % table)
-            print (e.message)
+            print (str(e))
         else:
             print ("Table '%s' was copied to '%s'." % (table, name))
 
@@ -2079,7 +2079,7 @@ class Dlinterface:
                 return fits.getdata(fh,ext,header=True)
             except Exception as e:
                 print ("There was an error loading the FITS image '%s'" % name)
-                print (e.message)
+                print (str(e))
                 return
                 
         # Step 1) Read the file
@@ -2087,7 +2087,7 @@ class Dlinterface:
             rdata = writemap[mapcode][0](fh)
         except Exception as e:
             print ("Error reading file")
-            print (e.message)
+            print (str(e))
             return
             
         # Step 2) Convert to output format
@@ -2095,7 +2095,7 @@ class Dlinterface:
             return writemap[mapcode][1](rdata)
         except Exception as e:
             print ("Error converting data")
-            print (e.message)
+            print (str(e))
             return
         
     def save(self, data=None, name=None, fmt=None, clobber=False):
@@ -2267,7 +2267,7 @@ class Dlinterface:
             writemap[inptype+'-'+fmt](data,outname)
         except Exception as e:
             print ("There was a problem writing the file")
-            print (e.message)
+            print (str(e))
 
         # Put to VOSpace if necessary
         if name.startswith('vos://'):

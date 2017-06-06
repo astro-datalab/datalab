@@ -13,6 +13,11 @@ import sys
 import logging
 from optparse import Values
 
+# raw_input() was renamed input() in python3
+try:
+    _raw_input = raw_input
+except NameError:
+    raw_input = input
 
 def parseSelf(obj):
     opt = Values()

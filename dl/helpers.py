@@ -1,7 +1,7 @@
 """Helper classes and methods for datalab client."""
 
 __authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20170601' # yyyymmdd
+__version__ = '20170606' # yyyymmdd
 
 try:
     from cStringIO import StringIO   # python 2
@@ -20,13 +20,12 @@ warnings.simplefilter('always', DeprecationWarning)
 
 # 3rd party Python imports
 import pylab as plt
-import numpy as N
+import numpy as np
 from pandas import read_csv
 from astropy.table import Table
 from astropy.io.votable import parse_single_table
 from astropy.coordinates import SkyCoord
 import astropy.units as u
-import shapely.geometry as geo
 from matplotlib.ticker import MaxNLocator
 
 # Data Lab imports
@@ -496,47 +495,37 @@ def findClusters(x,y,method='MiniBatchKMeans',**kwargs):  # x,y can be for insta
 
 def constructOutlines(x,y,clusterlabels):  # compute convex hull, one per cluster label
 
-    """Construct convex hulls (outlines) of points in (x,y) feature space,
-    separately for each class identified by a different 'label'.
+    """Construct the convex hull (outline) of points in (x,y) feature space,
 
     Parameters
     ----------
     x, y : seq (e.g. tuple,list,1-d array)
         Location of points in (x,y) feature space (e,g, RA & Dec).
 
-    clusterlabels : seq (e.g. tuple,list,1-d array)
-        1-d sequence of cluster membership labels, one per (x,y) pair.
-
     Returns
     -------
-    outlines : list
-        List of outlines, each being an instance of
-        :class:`shapely.geometry.polygon.Polygon`. Check docstring of
-        :func:`plotSkymapScatter` on how to access the vertices.
+    hull : instance
+        The convex hull of points (x,y), an instance of
+        :class:`scipy.spatial.qhull.ConvexHull`.
 
     Example
     -------
-    Given `x` & `y` coordinates as 1d sequences, and `clusterlabels` a
-    1d sequence of cluster membership labels:
+    Given `x` & `y` coordinates as 1d sequences:
 
     .. code-block:: python
 
-       outlines = constructOutlines(x,y,clusterlabels)
-       for ol in outlines:
-           x_ = np.array(ol.boundary.coords[:])[:,0]
-           y_ = np.array(ol.boundary.coords[:])[:,1]
-           plt.plot(x_,y_,ls='-',color='r',lw=2)
+       points = np.vstack((x,y)).T  # make 2-d array of correct shape
+       hull = constructOutlines(x,y)
+       plt.plot(points[hull.vertices,0], points[hull.vertices,1], 'r-', lw=2) # plot the hull
+       plt.plot(points[hull.vertices[0],0], points[hull.vertices[0],1], 'r-') # closing last point of the hull
 
     """
 
-    outlines = []
-    for label in np.unique(clusterlabels):
-        co = (clusterlabels == label)
-        points = geo.MultiPoint(zip(x[co],y[co]))
-        hull = points.convex_hull
-        outlines.append(hull)
-
-    return outlines
+    from scipy.spatial import ConvexHull
+    points = np.vstack((x,y)).T
+    hull = ConvexHull(points)
+        
+    return hull
 
 
 def plotSkymapScatter(x,y,c=None,clusterlabels=None,s=3,plot='both',xlabel='RA',ylabel='Dec',clabel='',title='',projection='aitoff',**kwargs):
@@ -600,7 +589,7 @@ def plotSkymapScatter(x,y,c=None,clusterlabels=None,s=3,plot='both',xlabel='RA',
         All kwargs will be passed on to pylab.scatter().
 
     """
-    
+
     plt.figure(figsize=(14,7))
     ax = plt.subplot(111, projection=projection)
 
@@ -614,12 +603,15 @@ def plotSkymapScatter(x,y,c=None,clusterlabels=None,s=3,plot='both',xlabel='RA',
             plt.legend(loc='upper right',title='clusters',markerscale=5)
 
         if plot in ('outlines','both'):
-            outlines = constructOutlines(x,y,clusterlabels)
-            for ol in outlines:
-                x_ = np.array(ol.boundary.coords[:])[:,0]
-                y_ = np.array(ol.boundary.coords[:])[:,1]
-                plt.plot(x_,y_,ls='-',color='r',lw=2)
-        
+            for label in np.unique(clusterlabels):
+                sel = (clusterlabels == label)
+                x_ = x[sel]
+                y_ = y[sel]
+                points = np.vstack((x_,y_)).T
+                hull = constructOutlines(x_,y_,clusterlabels)
+                plt.plot(points[hull.vertices,0], points[hull.vertices,1], 'r-', lw=2) # plot the hull
+                plt.plot(points[hull.vertices[0],0], points[hull.vertices[0],1], 'r-') # closing last point of the hull
+
     else:
         im = plt.scatter(x, y, marker='o', s=s, c=c, edgecolors='none', alpha=1, **kwargs)
 

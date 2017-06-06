@@ -32,11 +32,14 @@ import netrc
 try:
     _unicode = unicode
 except NameError:
-    # If Python is built without Unicode support, the unicode type
-    # will not exist. Fake one.
-    class Unicode(object):
-        pass
-    _unicode = unicode
+    try:
+        _unicode = str
+    except NameError:
+        # If Python is built without Unicode support, the unicode type
+        # will not exist. Fake one.
+        class Unicode(object):
+            pass
+        _unicode = unicode
 
 try:
     from contextlib import nested  # Python 2
@@ -55,7 +58,7 @@ except ImportError:
 
 try:
     import ConfigParser                                 # Python 2
-    from urllib.parse import splittag, splitquery, urlencode
+    from urllib import splittag, splitquery, urlencode
     from urlparse import parse_qs, urlparse
     from cStringIO import StringIO
     import httplib as http_client

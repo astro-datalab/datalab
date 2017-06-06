@@ -5,12 +5,11 @@
    stored in a .pem file.
 """
 
-from contextlib import nested
+#from contextlib import nested
 import copy
 import errno
 import fnmatch
 import hashlib
-from cStringIO import StringIO
 import requests
 from requests.exceptions import HTTPError
 import html2text
@@ -22,8 +21,8 @@ import stat
 import string
 import sys
 import time
-import urllib
-import urlparse
+#import urllib
+#import urlparse
 from xml.etree import ElementTree
 from copy import deepcopy
 from NodeCache import NodeCache
@@ -38,13 +37,35 @@ except NameError:
     class Unicode(object):
         pass
     _unicode = unicode
-    
-# MJG
+
 try:
-    import http.client as http_client
+    from contextlib import nested  # Python 2
 except ImportError:
-    # Python 2
+    from contextlib import ExitStack, contextmanager
+
+    @contextmanager
+    def nested(*contexts):
+        """
+        Reimplementation of nested in python 3.
+        """
+        with ExitStack() as stack:
+            for ctx in contexts:
+                stack.enter_context(ctx)
+            yield contexts
+
+try:
+    import ConfigParser                                 # Python 2
+    from urllib.parse import splittag, splitquery, urlencode
+    from urlparse import parse_qs, urlparse
+    from cStringIO import StringIO
     import httplib as http_client
+except ImportError:
+    import configparser as ConfigParser                 # Python 3
+    from urllib.parse import splittag, splitquery, urlencode
+    from urllib.parse import parse_qs, urlparse
+    from io import StringIO
+    import http.client as http_client
+
 http_client.HTTPConnection.debuglevel = 0  #1
 
 logger = logging.getLogger('vos')
@@ -1493,7 +1514,7 @@ class Client(object):
         # Check that path name compiles with the standard
         logger.debug("Got value of args: {0}".format(parts.args))
         if parts.args is not None and parts.args != "":
-            uri = urlparse.parse_qs(urlparse.urlparse(parts.args).query).get('link', None)[0]
+            uri = parse_qs(urlparse(parts.args).query).get('link', None)[0]
             logger.debug("Got uri: {0}".format(uri))
             if uri is not None:
                 return self.fix_uri(uri)

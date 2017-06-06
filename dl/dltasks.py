@@ -35,7 +35,7 @@ try:
     import ConfigParser                         # Python 2
     from urllib import quote_plus               # Python 2
 except ImportError:
-    import configParse as ConfigParser          # Python 2
+    import configparser as ConfigParser          # Python 2
     from urllib.parse import quote_plus         # Python 3
 
 try:
@@ -46,10 +46,10 @@ except ImportError:
 import requests             # need to standarize on one library at some point
 
 # VOSpace imports
-import vos as vos
-from vos.fuse import FUSE
+#import vos as vos
+#from vos.fuse import FUSE
 from vos.__version__ import version
-from vos.vofs import VOFS
+#from vos.vofs import VOFS
 DAEMON_TIMEOUT = 60                             # Mount timeout
 CAPS_DIR = "../caps"                            # Capability directory
 

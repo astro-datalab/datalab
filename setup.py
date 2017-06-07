@@ -25,7 +25,7 @@ except:
 
 
 setup(name="datalab-client",
-      version="1.0.10",
+      version="1.0.12",
       url="https://github.noao.edu/noao-datalab/datalab-client",
       description="Tools for interacting with NOAO Data Lab.",
       author="M.J. Graham, M.J. Fitzpatrick, D.L. Nidever, R. Nikutta",

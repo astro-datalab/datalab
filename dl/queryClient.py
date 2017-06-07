@@ -54,7 +54,7 @@ def isAlive(svc_url=DEF_SERVICE_URL):
     """
     try:
         r = requests.get(svc_url, timeout=2)
-        output = r.content
+        output = r.content.decode('utf-8')
         status_code = r.status_code
     except Exception:
         return False
@@ -204,7 +204,7 @@ def query(token, adql=None, sql=None, fmt='csv', out=None, async=False, **kw):
             file.write(r.content)
             file.close()
     else:
-        return r.content
+        return r.content.decode('utf-8')
 
     return "OK"
 
@@ -241,7 +241,7 @@ def siaquery(token, input=None, out=None, search=0.5):
             file.close()
 
     else:
-        return r.content
+        return r.content.decode('utf-8')
 
 
 # STATUS -- Get the status of an asynchronous query
@@ -301,7 +301,7 @@ def status(token, jobId=None):
                'X-DL-AuthToken': token}  # application/x-sql
     dburl = '%s/status?jobid=%s' % (DEF_SERVICE_URL, jobId)
     r = requests.get(dburl, headers=headers)
-    return r.content
+    return r.content.decode('utf-8')
 
 
 # RESULTS -- Get the results of an asynchronous query
@@ -354,7 +354,7 @@ def results(token, jobId=None):
     if PROFILE != "default":
         dburl += "&profile=%s" % PROFILE
     r = requests.get(dburl, headers=headers)
-    return r.content
+    return r.content.decode('utf-8')
 
 
 # SET_TIMEOUT_REQUEST -- Set the requested sync query timeout value (in seconds).
@@ -502,7 +502,7 @@ def list_profiles(token, profile=None, format='text'):
     dburl += "format=%s" % format
 
     r = requests.get(dburl, headers=headers)
-    profiles = r.content
+    profiles = r.content.decode()
     if '{' in profiles:
         #profiles = json.load(StringIO(profiles))
         profiles = json.loads(profiles)
@@ -589,7 +589,7 @@ def list(token, table=''):
                'X-DL-AuthToken': token}  # application/x-sql
     dburl = '%s/list?table=%s' % (DEF_SERVICE_URL, table)
     r = requests.get(dburl, headers=headers)
-    return r.content
+    return r.content.decode('utf-8')
 
 
 # SCHEMA -- Return information about a data service schema value.
@@ -621,7 +621,7 @@ def schema(value, format, profile):
     url = '%s/schema?value=%s&format=%s&profile=%s' % \
             (DEF_SERVICE_URL, (value), str(format), str(profile))
     r = requests.get(url)
-    return r.content
+    return r.content.decode('utf-8')
 
 
 # REMOVE -- Drop the specified table from the user's MyDB
@@ -650,4 +650,4 @@ def drop(token, table=''):
                'X-DL-AuthToken': token}  # application/x-sql
     dburl = '%s/delete?table=%s' % (DEF_SERVICE_URL, table)
     r = requests.get(dburl, headers=headers)
-    return r.content
+    return r.content.decode('utf-8')

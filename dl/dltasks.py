@@ -241,8 +241,7 @@ class Task:
                 logLevel = logging.WARNING
         else:
             logLevel = logLevel
-        self.addLogger(logLevel, "/tmp/datalab.err")
-
+        self.addLogger(logLevel, "%s/.datalab/datalab.err" % os.path.expanduser('~'))
 
     def setOption(self, name, value):
         ''' Set a Task option.

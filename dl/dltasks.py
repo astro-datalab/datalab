@@ -147,6 +147,7 @@ class DataLab:
             self.config.add_section('login')
             self.config.set('login', 'status', 'loggedout')
             self.config.set('login', 'user', '')
+            self.config.set('login', 'authtoken', '')
             self.config.add_section('vospace')
             self.config.set('vospace', 'mount', '')
             self._write()

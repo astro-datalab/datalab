@@ -49,44 +49,133 @@ def rm(name):
   name = (name if name.startswith('vos://') else ('vos://'+name))
   path = "/rm?file=%s" % name
   resp = requests.get("%s%s" % (SM_URL, path), headers = {"X-DL-AuthToken": TEST_TOKEN})
+
+def mkdir(name):
+  name = (name if name.startswith('vos://') else ('vos://'+name))
+  path = "/mkdir?dir=%s" % name
+  resp = requests.get("%s%s" % (SM_URL, path), headers = {"X-DL-AuthToken": TEST_TOKEN})
+
+def rmdir(name):
+  name = (name if name.startswith('vos://') else ('vos://'+name))
+  path = "/rmdir?dir=%s" % name
+  resp = requests.get("%s%s" % (SM_URL, path), headers = {"X-DL-AuthToken": TEST_TOKEN})
   
 def suite():
   suite = unittest.TestSuite()
   # storeClient
   #  get, put, load, cp, ln, ls, mkdir, mv, rm, rmdir, saveAs, 
+  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestPut))
+  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestGet))
+  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestLoad))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestCopy))
+  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestCopyToDir))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestMove))
+  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestMoveToDir))
+  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestRemove))
+  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestList))
+  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestMkdir))
+  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestRmdir))
   return suite
-
-class TestGet(unittest.TestCase):
-
-    def setUp(self):
-
-    def tearDown(self):
-      
-    def test_copy(self):
 
 class TestPut(unittest.TestCase):
 
     def setUp(self):
-
+        self.file = 'puttest.csv'
+        self.testdata = testdata        
+        fh = open(self.file,'wb')
+        fh.write(testdata)
+        fh.close()
+        # Delete input file if it exists already
+        if fileExists(self.file):
+          rm(self.file)
+        # Put local file to VOSpace
+        put(self.file,self.file)
+            
     def tearDown(self):
+        # Delete temporary local test file
+        os.remove(self.file)
+        # Delete input file in VOSpace
+        rm(self.file)
       
-    def test_copy(self):
+    def test_put(self):
+        # Try putting the file
+        storeClient.put(TEST_TOKEN,self.file,self.file)
+        # Check that the file is there
+        self.assertEqual(True,fileExists(self.file))
+        # Read the data with get
+        outdata = get(self.file)
+        # Make sure they are equal
+        self.assertEqual(self.testdata,outdata)
+
+# puttodir??
+
+
+class TestGet(unittest.TestCase):
+
+    def setUp(self):
+        self.file = 'gettest.csv'
+        self.testdata = testdata        
+        fh = open(self.file,'wb')
+        fh.write(testdata)
+        fh.close()
+        # Delete input file if it exists already
+        if fileExists(self.file):
+          rm(self.file)
+        # Put local file to VOSpace
+        put(self.file,self.file)
+        # Delete local file
+        os.remove(self.file)
+        
+    def tearDown(self):
+        # Delete temporary local test file
+        os.remove(self.file)
+        # Delete input file in VOSpace
+        rm(self.file)
+      
+    def test_get(self):
+        # Get the file
+        storeClient.get(TEST_TOKEN,self.file,self.file)
+        # Check that the file is there
+        os.path.exists(self.file)
+        self.assertEqual(True,os.path.exists(self.file))
+        # Read the data
+        fh = open(self.file,'rb')
+        outdata = fh.read()
+        fh.close()
+        # Make sure they are equal
+        self.assertEqual(self.testdata,outdata)
 
 class TestLoad(unittest.TestCase):
 
     def setUp(self):
-
+        # Download the url from the web
+        self.file = 'loadtest.txt'
+        self.url = 'http://www.google.com'
+        # Get the webpage contents
+        self.testdata = requests.get(self.url)
+        # Delete input file if it exists already
+        if fileExists(self.file):
+          rm(self.file)
+            
     def tearDown(self):
+        # Delete input file in VOSpace
+        rm(self.file)
       
-    def test_copy(self):
+    def test_load(self):
+        # Load the file
+        storeClient.load(TEST_TOKEN,self.url,self.file)
+        # Check that the file is there
+        self.assertEqual(True,fileExists(self.file))
+        # Read the data
+        outdata = get(self.file)
+        # Make sure they are equal
+        self.assertEqual(self.testdata,outdata)
       
 class TestCopy(unittest.TestCase):
 
     def setUp(self):
-        self.file = 'test.csv'
-        self.outfile = 'test2.csv'
+        self.file = 'cptest.csv'
+        self.outfile = 'cptest2.csv'
         self.testdata = testdata        
         fh = open(self.file,'wb')
         fh.write(testdata)
@@ -110,19 +199,61 @@ class TestCopy(unittest.TestCase):
       
     def test_copy(self):
         # Try copying the file
-        storeClient.cp(self.token,self.file,self.outfile)
+        storeClient.cp(TEST_TOKEN,self.file,self.outfile)
         # Check that the file is there
         self.assertEqual(True,fileExists(self.outfile))
-        # Copy back to local with get
+        # Read the data with get
         outdata = get(self.outfile)
         # Make sure they are equal
         self.assertEqual(self.testdata,outdata)
 
+class TestCopyToDir(unittest.TestCase):
+
+    def setUp(self):
+        self.file = 'cptodirtest.csv'
+        self.dir = 'cptodirtest'
+        self.outfile = self.dir+'/'+self.file
+        self.testdata = testdata        
+        fh = open(self.file,'wb')
+        fh.write(testdata)
+        fh.close()
+        # Delete input file if it exists already
+        if fileExists(self.file):
+          rm(self.file)
+        # Delete output file if it exists already
+        if fileExists(self.outfile):
+          rm(self.outfile)
+        # Create directory if it doesn't exist
+        if not fileExists(self.dir):
+          mkdir(self.dir)
+        # Put local file to VOSpace
+        put(self.file,self.file)
+        # Delete temporary local test file
+        os.remove(self.file)
+            
+    def tearDown(self):
+        # Delete input file in VOSpace
+        rm(self.file)
+        # Delete output file in VOSpace
+        rm(self.outfile)
+        # Delete directory
+        rmdir(self.dir)
+        
+    def test_copytodir(self):
+        # Try copying the file
+        storeClient.cp(TEST_TOKEN,self.file,self.outfile)
+        # Check that the file is there
+        self.assertEqual(True,fileExists(self.outfile))
+        # Read the data with get
+        outdata = get(self.outfile)
+        # Make sure they are equal
+        self.assertEqual(self.testdata,outdata)
+        
 class TestMove(unittest.TestCase):
 
     def setUp(self):
-        self.file = 'test.csv'
-        self.outfile = 'test2.csv'
+        self.file = 'mvtest.csv'
+        self.outfile = 'mvtest2.csv'
         self.testdata = testdata        
         fh = open(self.file,'wb')
         fh.write(testdata)
@@ -146,65 +277,193 @@ class TestMove(unittest.TestCase):
       
     def test_move(self):
         # Try copying the file
-        storeClient.mv(self.token,self.file,self.outfile)
+        storeClient.mv(TEST_TOKEN,self.file,self.outfile)
         # Check that the file is there
         self.assertEqual(True,fileExists(self.outfile))
-        # Get the file contents
+        # Load the file with get
         outdata = get(self.outfile)
         # Make sure they are equal
         self.assertEqual(self.testdata,outdata)
+        # Make sure the original file doesn't exist anymore
+        self.assertEqual(False,fileExists(self.file))
+        
+class TestMoveToDir(unittest.TestCase):
+
+    def setUp(self):
+        self.file = 'mvtodirtest.csv'
+        self.dir = 'mvtodirtest'
+        self.outfile = self.dir+'/'+self.file
+        self.testdata = testdata        
+        fh = open(self.file,'wb')
+        fh.write(testdata)
+        fh.close()
+        # Delete input file if it exists already
+        if fileExists(self.file):
+          rm(self.file)
+        # Delete output file if it exists already
+        if fileExists(self.outfile):
+          rm(self.outfile)
+        # Create directory if it doesn't exist
+        if not fileExists(self.dir):
+          mkdir(self.dir)
+        # Put local file to VOSpace
+        put(self.file,self.file)
+        # Delete temporary local test file
+        os.remove(self.file)
+            
+    def tearDown(self):
+        # Delete input file in VOSpace
+        rm(self.file)
+        # Delete output file in VOSpace
+        rm(self.outfile)
+        # Delete directory
+        rmdir(self.dir)
+        
+    def test_movetodir(self):
+        # Try moving the file
+        storeClient.mv(TEST_TOKEN,self.file,self.outfile)
+        # Check that the file is there
+        self.assertEqual(True,fileExists(self.outfile))
+        # Read the data with get
+        outdata = get(self.outfile)
+        # Make sure they are equal
+        self.assertEqual(self.testdata,outdata)
+        # Make sure the original file doesn't exist anymore
+        self.assertEqual(False,fileExists(self.file))
 
 class TestRemove(unittest.TestCase):
 
     def setUp(self):
-
+        self.file = 'rmtest.csv'
+        self.testdata = testdata        
+        fh = open(self.file,'wb')
+        fh.write(testdata)
+        fh.close()
+        # Delete input file if it exists already
+        if fileExists(self.file):
+          rm(self.file)
+        # Put local file to VOSpace
+        put(self.file,self.file)
+        # Delete temporary local test file
+        os.remove(self.file)
+            
     def tearDown(self):
+        # Delete input file in VOSpace
+        rm(self.file)
       
-    def test_copy(self):
+    def test_remove(self):
+        # Try removing the file
+        storeClient.rm(TEST_TOKEN,self.file)
+        # Check that the file is gone
+        self.assertEqual(False,fileExists(self.file))
         
-class TestLink(unittest.TestCase):
-
-    def setUp(self):
-
-    def tearDown(self):
-      
-    def test_copy(self):
+#class TestLink(unittest.TestCase):
+#
+#    def setUp(self):
+#
+#    def tearDown(self):
+#      
+#    def test_copy(self):
+#
 
 class TestList(unittest.TestCase):
 
     def setUp(self):
-
+        self.file1 = 'lstest1.csv'
+        self.file2 = 'lstest2.csv'
+        self.dir1 = 'lstest1'
+        self.dir2 = 'lstest2'
+        self.testdata = testdata        
+        fh = open(self.file1,'wb')
+        fh.write(testdata)
+        fh.close()
+        # Delete input file1 if it exists already
+        if fileExists(self.file1):
+          rm(self.file1)
+        # Delete input file2 if it exists already
+        if fileExists(self.file2):
+          rm(self.file2)
+        # Create dir1 if it does NOT exist already
+        if not fileExists(self.dir1):
+          mkdir(self.dir1)
+        # Delete dir2 if it exists already
+        if fileExists(self.dir2):
+          rmdir(self.dir2)
+        # Put local file to VOSpace
+        put(self.file1,self.file1)
+        # Delete temporary local test file
+        os.remove(self.file1)
+        
     def tearDown(self):
+        # Delete file1 if it exists
+        if fileExists(self.file1):
+          rm(self.file1)
+        # Delete file2 if it exists
+        if fileExists(self.file2):
+          rm(self.file2)
+        # Delete dir1 if it exists
+        if fileExists(self.dir1):
+          rm(self.dir1)
+        if fileExists(self.dir2):
+          rm(self.dir2)
       
-    def test_copy(self):
+    def test_list(self):
+        # Make sure that file1 exists in VOSpace
+        self.assertEqual(True,fileExists(self.file1))
+        # Make sure that file2 does NOT exist in VOSpace
+        self.assertEqual(False,fileExists(self.file2))
+        # Make sure that dir1 exists in VOSpace
+        self.assertEqual(True,fileExists(self.dir1))
+        # Make sure that dir2 does NOT exist in VOSpace
+        self.assertEqual(False,fileExists(self.dir2))
 
 class TestMkdir(unittest.TestCase):
 
     def setUp(self):
-
+        self.dir = 'mkdirtest'
+        # Delete directory if it exists already
+        if fileExists(self.dir):
+          rmdir(self.dir)
+            
     def tearDown(self):
+        # Delete dir
+        rmdir(self.dir)
       
-    def test_copy(self):
+    def test_mkdir(self):
+        # Try making the directory
+        storeClient.mkdir(TEST_TOKEN,self.dir)
+        # Check that the file is gone
+        self.assertEqual(True,fileExists(self.dir))
 
 class TestRmdir(unittest.TestCase):
 
     def setUp(self):
-
+        self.dir = 'rmdirtest'
+        # Create directory if it does NOT already exist
+        if fileExists(self.dir):
+          mkdir(self.dir)
+            
     def tearDown(self):
+        # Delete dir
+        rmdir(self.dir)
       
-    def test_copy(self):
+    def test_rmdir(self):
+        # Try making the directory
+        storeClient.rmdir(TEST_TOKEN,self.dir)
+        # Check that the file is gone
+        self.assertEqual(False,fileExists(self.dir))
 
-class TestSaveas(unittest.TestCase):
-
-    def setUp(self):
-
-    def tearDown(self):
-      
-    def test_copy(self):
+#class TestSaveas(unittest.TestCase):
+#
+#    def setUp(self):
+#
+#    def tearDown(self):
+#      
+#    def test_copy(self):
       
 
 # query with WHERE clause with SORT BY and LIMIT
-        
+       
 if __name__ == '__main__':
   suite = suite()
   unittest.TextTestRunner(verbosity = 2).run(suite)

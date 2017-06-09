@@ -411,7 +411,7 @@ class authClient (object):
 
         if password is None:
             if os.path.exists(tok_file):
-                tok_fd = open(tok_file, "r", 0)
+                tok_fd = open(tok_file, "r")
                 o_tok = tok_fd.read(128)		# read the old token
 
                 # Return a valid token, otherwise remove the file and obtain a
@@ -471,7 +471,7 @@ class authClient (object):
         # Save the token.
         if os.access(self.home, os.W_OK):
             tok_file = '%s/id_token.%s' % (self.home, username)
-            with open(tok_file, 'wb', 0) as tok_fd:
+            with open(tok_file, 'w') as tok_fd:
                 if self.debug:
                     print ("login: writing new token for '%s'" % username)
                     print ("login: self.auth_token = '%s'" % str(self.auth_token))
@@ -565,7 +565,7 @@ class authClient (object):
                 tok_file = self.home + '/id_token.' + self.username
                 if os.path.exists(tok_file):
                     os.remove(tok_file)
-                with open(tok_file, 'wb', 0) as tok_fd:
+                with open(tok_file, 'w') as tok_fd:
                     if self.debug:
                         print ("pwreset: writing new token for '%s'" + username)
                         print ("pwreset: response = '%s'" + response)

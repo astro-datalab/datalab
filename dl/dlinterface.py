@@ -449,7 +449,7 @@ class DLInteract:
     def _write(self):
         ''' Write out the configuration file to disk.
         '''
-        with open('%s/dl.conf' % self.home, 'wb') as configfile:
+        with open('%s/dl.conf' % self.home, 'w') as configfile:
             self.config.write(configfile)
 
 

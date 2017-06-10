@@ -480,7 +480,7 @@ class authClient (object):
 
                 tok_fd.write(self.auth_token)
                 tok_fd.close()
-
+                
         return self.auth_token
 
     def logout(self, token):
@@ -505,7 +505,7 @@ class authClient (object):
 
             r = requests.get(url, params=args, headers=headers)
             response = r.text
-
+            
             if r.status_code != 200:
                 raise Exception(r.text)
 
@@ -513,10 +513,13 @@ class authClient (object):
             raise dlAuthError(str(e))
         else:
             self.auth_token = None
+            if self.username is None or self.username == "":   # datalab client
+                username, uid, gid, hash = token.strip().split('.', 3)
+                self.username = username
             tok_file = self.home + '/id_token.' + self.username
             if os.path.exists(tok_file):
                 os.remove(tok_file)
-
+                
         return response
 
     def passwordReset(self, token, username, password):

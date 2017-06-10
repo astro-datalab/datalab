@@ -444,7 +444,6 @@ class Logout(Task):
         else:
             token = getUserToken(self)
             user, uid, gid, hash = token.strip().split('.', 3)
-
             res = authClient.logout (token)
             if res != "OK":
                 print ("Error: %s" % res)

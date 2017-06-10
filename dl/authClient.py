@@ -205,7 +205,9 @@ class dlAuthError (Exception):
 
     def __init__(self, message):
         self.message = message
-
+    def __str__(self):
+        return self.message
+        
 
 #####################################
 #  Authentication client procedures
@@ -508,7 +510,7 @@ class authClient (object):
             
             if r.status_code != 200:
                 raise Exception(r.text)
-
+            
         except Exception as e:
             raise dlAuthError(str(e))
         else:

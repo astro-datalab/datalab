@@ -45,7 +45,8 @@ TIMEOUT_REQUEST = 120 # sync query timeout default (120sec)
 class queryClientError(Exception):
     def __init__(self, message):
         self.message = message
-
+    def __str__(self, message):
+        return self.message
 
 def isAlive(svc_url=DEF_SERVICE_URL):
     """ Check whether the QueryManager service at the given URL is

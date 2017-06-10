@@ -40,7 +40,8 @@ DEBUG = False
 class storeClientError(Exception):
     def __init__(self, message):
         self.message = message
-
+    def __str__(self):
+        return self.message
 
 def isAlive(svc_url=DEF_SERVICE_URL):
     """ Check whether the StorageManager service at the given URL is

@@ -7,112 +7,160 @@
 from dl import authClient, storeClient, queryClient
 import os
 import unittest
+try:
+    from urllib import urlencode		        # Python 2
+    from urllib2 import urlopen, Request                # Python 2
+except ImportError:
+    from urllib.parse import urlencode		        # Python 3
+    from urllib.request import urlopen, Request         # Python 3
+import requests
 
+# Service URLs
+AM_URL = "http://dlsvcs.datalab.noao.edu/auth"      # Auth Manager
+SM_URL = "http://dlsvcs.datalab.noao.edu/storage"   # Storage Manager
+QM_URL = "http://dlsvcs.datalab.noao.edu/query"     # Query Manager
+# Test token
+TEST_TOKEN = "dltest.99998.99998.test_access"
+
+
+def isValidTokenStructure(token):
+    try:
+        user, uid, gid, hash = token.strip().split('.', 3)
+    except Exception as e:
+        return False
+    else:
+      return True
+
+def isValidTokenCall(token):
+  try:
+    url = AM_URL + "/isValidToken?"
+    args = urlencode({"token": token, "profile": "default"})
+    url = url + args
+    headers = {'X-DL-AuthToken': token}
+    r = requests.get(url, headers=headers)
+    response = r.text
+  except Exception as e:
+    return False
+  return response
+
+def login(username,password):
+  url = AM_URL + "/login?"
+  query_args = {"username": username, "password": password,
+                "profile": "default", "debug": False}
+  try:
+    r = requests.get(url, params=query_args)
+    response = r.text
+  except:
+    response = 'None'
+  return response
+    
+def logout(token):
+  url = AM_URL + "/logout?"
+  args = urlencode({"token": token, "debug": False})
+  url = url + args
+  headers = {'X-DL-AuthToken': token}
+  r = requests.get(url, params=args, headers=headers)
+  response = r.text
+  return response
+  
+def deleteTokenFile(token):
+  home = '%s/.datalab' % os.path.expanduser('~')
+  username, uid, gid, hash = token.strip().split('.', 3)
+  tok_file = home + '/id_token.' + username
+  if os.path.exists(tok_file):
+    os.remove(tok_file)
+            
 def suite():
   suite = unittest.TestSuite()
-  # authClient
-  #  login, logout, isValidUser, isValidToken
-  # storeClient
-  #  get, put, load, cp, ln, ls, mkdir, mv, rm, rmdir, saveAs, 
-  # queryClient
-  #  query, status, results, list_profiles, list, schema, drop
-  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestCopy))
-  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestMove))
+  # authClient: login, logout, isValidUser, isValidToken
+  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestLoginDatalab))
+  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestLogin))
+  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestLogout))
+  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestValidUser))
+  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestValidToken))
   return suite
 
-class TestCopy(unittest.TestCase):
-
-    def setUp(self):
-        self.file = 'test.csv'
-        self.outfile = 'test2.csv'
-        # Create sample test file locally
-        data = 'id,ra,dec\n'\
-                '77.1096574,150.552192729936,-32.7846851370221\n'\
-                '77.572838,150.55443538686,-32.7850014657006\n'
-        fh = open(self.file,'wb')
-        fh.write(data)
-        fh.close()
-        self.data = data
-        # Login to the dltest account
-        token = authClient.login('dltest','datalab')        
-        self.token = token
-        # Delete input file if it exists already
-        if storeClient.ls(self.token,self.file) != '':
-            storeClient.rm(self.token,self.file)
-        # Delete output file if it exists already
-        if storeClient.ls(self.token,self.outfile) != '':
-            storeClient.rm(self.token,self.outfile)
-        # Put local file to VOSpace
-        storeClient.put(self.token,self.file,self.file)
-        # Delete temporary local test file
-        os.remove(self.file)
-        
-    def tearDown(self):
-        # Delete temporary files in VOSpace
-        storeClient.rm(self.token,self.file)
-        storeClient.rm(self.token,self.outfile)
+class TestLoginDatalab(unittest.TestCase):
       
-    def test_copy(self):
-        # Try copying the file
-        storeClient.cp(self.token,self.file,self.outfile)
-        res = storeClient.ls(self.token,self.outfile)
-        self.assertEqual(res,self.outfile)
-        # Copy back to local and read in
-        storeClient.get(self.token,self.file,self.file)
-        f = open(self.file,'r')
-        fdata = f.read()
-        f.close()
-        os.remove(self.file)
-        self.assertEqual(self.data,fdata)
-
-class TestMove(unittest.TestCase):
-
-    def setUp(self):
-        self.file = 'test.csv'
-        self.outfile = 'test2.csv'
-        # Create sample test file locally
-        data = 'id,ra,dec\n'\
-                '77.1096574,150.552192729936,-32.7846851370221\n'\
-                '77.572838,150.55443538686,-32.7850014657006\n'
-        fh = open(self.file,'wb')
-        fh.write(data)
-        fh.close()
-        self.data = data
-        # Login to the dltest account
-        token = authClient.login('dltest','datalab')        
-        self.token = token
-        # Delete input file if it exists already
-        if storeClient.ls(self.token,self.file) != '':
-            storeClient.rm(self.token,self.file)
-        # Delete output file if it exists already
-        if storeClient.ls(self.token,self.outfile) != '':
-            storeClient.rm(self.token,self.outfile)
-        # Put local file to VOSpace
-        storeClient.put(self.token,self.file,self.file)
-        # Delete temporary local test file
-        os.remove(self.file)
+    def test_loginvalid(self):
+        token = authClient.login('datalabtest','DataLabTest1')
+        self.assertTrue(isValidTokenStructure(token))
+        self.assertTrue(isValidTokenCall(token))
+        user, uid, gid, hash = token.strip().split('.', 3)
+        self.assertEqual(user,'datalabtest')
+        self.assertEqual(len(token),56)
+        res = logout(token)
         
-    def tearDown(self):
-        # Delete temporary files in VOSpace
-        storeClient.rm(self.token,self.file)
-        storeClient.rm(self.token,self.outfile)
+class TestLogin(unittest.TestCase):
+  
+    def test_logindltest(self):
+        token = authClient.login('dltest','datalab')
+        self.assertEqual(token,TEST_TOKEN)
       
-    def test_move(self):
-        # Try moving the file
-        storeClient.mv(self.token,self.file,self.outfile)
-        res = storeClient.ls(self.token,self.outfile)
-        self.assertEqual(res,self.outfile)
-        # Copy back to local and read in
-        storeClient.get(self.token,self.outfile,self.outfile)
-        f = open(self.outfile,'r')
-        fdata = f.read()
-        f.close()
-        os.remove(self.outfile)
-        self.assertEqual(self.data,fdata)
+    def test_loginnotvalid1(self):
+        token = authClient.login('temptemptemp','blah')
+        self.assertEqual(token,'')
+      
+    def test_loginnotvalid2(self):
+        token = authClient.login('datalabtest','blah')
+        self.assertEqual(token,'')
 
+class TestLogout(unittest.TestCase):
+  
+    def test_logoutvalid(self):
+        token = login('datalabtest','DataLabTest1')
+        res = authClient.logout(token)
+        self.assertEqual(res,'OK')
 
-# query with WHERE clause with SORT BY and LIMIT
+    def test_logoutinvalid1(self):
+        token = 'datalabtest.1148.1148.abcdefghijklmnopqrstuvwxyz12345678'
+        res = authClient.logout(token)
+        self.assertEqual(res,'')
+
+    def test_logoutinvalid2(self):
+        token = 'datalabtest.1148.1148.abcdefghijklmnopqrstuvwxyz12345678910111213'
+        res = authClient.logout(token)
+        self.assertEqual(res,'')
+
+    def test_logoutinvalid3(self):
+        token = 'abcdefghijklmnopqrstuvwxyz12345678910111213'
+        res = authClient.logout(token)
+        self.assertEqual(res,'')
+
+class TestValidUser(unittest.TestCase):
+
+    def test_validusertrue(self):
+        res = authClient.isValidUser('datalabtest')
+        self.assertTrue(res)
+
+    def test_validuserfalse(self):
+        res = authClient.isValidUser('temptemptemp')
+        self.assertEqual(res,'False')
+
+class TestValidToken(unittest.TestCase):
         
+    def test_validtoken(self):
+        token = login('datalabtest','DataLabTest1')
+        res = authClient.isValidToken(token)
+        self.assertTrue(res)
+        res = logout(token)
+        res2 = deleteTokenFile(token)
+        
+    def test_invalidtoken1(self):
+        token = 'datalabtest.1148.1148.abcdefghijklmnopqrstuvwxyz12345678'
+        res = authClient.isValidToken(token)
+        self.assertEqual(res,'False')
+
+    def test_invalidtoken2(self):
+        token = 'datalabtest.1148.1148.abcdefghijklmnopqrstuvwxyz12345678910111213'
+        res = authClient.isValidToken(token)
+        self.assertEqual(res,'False')
+
+    def test_invalidtoken3(self):
+        token = 'abcdefghijklmnopqrstuvwxyz12345678910111213'
+        res = authClient.isValidToken(token)
+        self.assertFalse(res)
+
 if __name__ == '__main__':
   suite = suite()
   unittest.TextTestRunner(verbosity = 2).run(suite)

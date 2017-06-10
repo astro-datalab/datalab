@@ -66,15 +66,18 @@ def suite():
   #  get, put, load, cp, ln, ls, mkdir, mv, rm, rmdir, saveAs, 
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestPut))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestGet))
-  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestLoad))
+  #suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestLoad))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestCopy))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestCopyToDir))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestMove))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestMoveToDir))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestRemove))
+  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestLink))
+  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestLinkToFileInDir))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestList))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestMkdir))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestRmdir))
+  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestSaveAs))
   return suite
 
 class TestPut(unittest.TestCase):
@@ -82,7 +85,7 @@ class TestPut(unittest.TestCase):
     def setUp(self):
         self.file = 'puttest.csv'
         self.testdata = testdata        
-        fh = open(self.file,'wb')
+        fh = open(self.file,'w')
         fh.write(testdata)
         fh.close()
         # Delete input file if it exists already
@@ -101,11 +104,11 @@ class TestPut(unittest.TestCase):
         # Try putting the file
         storeClient.put(TEST_TOKEN,self.file,self.file)
         # Check that the file is there
-        self.assertEqual(True,fileExists(self.file))
+        self.assertTrue(fileExists(self.file))
         # Read the data with get
         outdata = get(self.file)
         # Make sure they are equal
-        self.assertEqual(self.testdata,outdata)
+        self.assertEqual(outdata.decode('utf-8'),self.testdata)
 
 # puttodir??
 
@@ -115,7 +118,7 @@ class TestGet(unittest.TestCase):
     def setUp(self):
         self.file = 'gettest.csv'
         self.testdata = testdata        
-        fh = open(self.file,'wb')
+        fh = open(self.file,'w')
         fh.write(testdata)
         fh.close()
         # Delete input file if it exists already
@@ -137,13 +140,13 @@ class TestGet(unittest.TestCase):
         storeClient.get(TEST_TOKEN,self.file,self.file)
         # Check that the file is there
         os.path.exists(self.file)
-        self.assertEqual(True,os.path.exists(self.file))
+        self.assertTrue(os.path.exists(self.file))
         # Read the data
-        fh = open(self.file,'rb')
+        fh = open(self.file,'r')
         outdata = fh.read()
         fh.close()
         # Make sure they are equal
-        self.assertEqual(self.testdata,outdata)
+        self.assertEqual(outdata,self.testdata)
 
 class TestLoad(unittest.TestCase):
 
@@ -152,7 +155,7 @@ class TestLoad(unittest.TestCase):
         self.file = 'loadtest.txt'
         self.url = 'http://www.google.com'
         # Get the webpage contents
-        self.testdata = requests.get(self.url)
+        self.testdata = requests.get(self.url).content
         # Delete input file if it exists already
         if fileExists(self.file):
           rm(self.file)
@@ -163,13 +166,13 @@ class TestLoad(unittest.TestCase):
       
     def test_load(self):
         # Load the file
-        storeClient.load(TEST_TOKEN,self.url,self.file)
+        storeClient.load(TEST_TOKEN,'vos://'+self.file,self.url)
         # Check that the file is there
-        self.assertEqual(True,fileExists(self.file))
+        self.assertTrue(fileExists(self.file))
         # Read the data
         outdata = get(self.file)
         # Make sure they are equal
-        self.assertEqual(self.testdata,outdata)
+        self.assertEqual(outdata,self.testdata)
       
 class TestCopy(unittest.TestCase):
 
@@ -177,7 +180,7 @@ class TestCopy(unittest.TestCase):
         self.file = 'cptest.csv'
         self.outfile = 'cptest2.csv'
         self.testdata = testdata        
-        fh = open(self.file,'wb')
+        fh = open(self.file,'w')
         fh.write(testdata)
         fh.close()
         # Delete input file if it exists already
@@ -201,11 +204,11 @@ class TestCopy(unittest.TestCase):
         # Try copying the file
         storeClient.cp(TEST_TOKEN,self.file,self.outfile)
         # Check that the file is there
-        self.assertEqual(True,fileExists(self.outfile))
+        self.assertTrue(fileExists(self.outfile))
         # Read the data with get
         outdata = get(self.outfile)
         # Make sure they are equal
-        self.assertEqual(self.testdata,outdata)
+        self.assertEqual(outdata.decode('utf-8'),self.testdata)
 
 class TestCopyToDir(unittest.TestCase):
 
@@ -214,7 +217,7 @@ class TestCopyToDir(unittest.TestCase):
         self.dir = 'cptodirtest'
         self.outfile = self.dir+'/'+self.file
         self.testdata = testdata        
-        fh = open(self.file,'wb')
+        fh = open(self.file,'w')
         fh.write(testdata)
         fh.close()
         # Delete input file if it exists already
@@ -243,11 +246,11 @@ class TestCopyToDir(unittest.TestCase):
         # Try copying the file
         storeClient.cp(TEST_TOKEN,self.file,self.outfile)
         # Check that the file is there
-        self.assertEqual(True,fileExists(self.outfile))
+        self.assertTrue(fileExists(self.outfile))
         # Read the data with get
         outdata = get(self.outfile)
         # Make sure they are equal
-        self.assertEqual(self.testdata,outdata)
+        self.assertEqual(outdata.decode('utf-8'),self.testdata)
         
 class TestMove(unittest.TestCase):
 
@@ -255,7 +258,7 @@ class TestMove(unittest.TestCase):
         self.file = 'mvtest.csv'
         self.outfile = 'mvtest2.csv'
         self.testdata = testdata        
-        fh = open(self.file,'wb')
+        fh = open(self.file,'w')
         fh.write(testdata)
         fh.close()
         # Delete input file if it exists already
@@ -279,13 +282,13 @@ class TestMove(unittest.TestCase):
         # Try copying the file
         storeClient.mv(TEST_TOKEN,self.file,self.outfile)
         # Check that the file is there
-        self.assertEqual(True,fileExists(self.outfile))
+        self.assertTrue(fileExists(self.outfile))
         # Load the file with get
         outdata = get(self.outfile)
         # Make sure they are equal
-        self.assertEqual(self.testdata,outdata)
+        self.assertEqual(outdata.decode('utf-8'),self.testdata)
         # Make sure the original file doesn't exist anymore
-        self.assertEqual(False,fileExists(self.file))
+        self.assertFalse(fileExists(self.file))
         
 class TestMoveToDir(unittest.TestCase):
 
@@ -294,7 +297,7 @@ class TestMoveToDir(unittest.TestCase):
         self.dir = 'mvtodirtest'
         self.outfile = self.dir+'/'+self.file
         self.testdata = testdata        
-        fh = open(self.file,'wb')
+        fh = open(self.file,'w')
         fh.write(testdata)
         fh.close()
         # Delete input file if it exists already
@@ -323,20 +326,20 @@ class TestMoveToDir(unittest.TestCase):
         # Try moving the file
         storeClient.mv(TEST_TOKEN,self.file,self.outfile)
         # Check that the file is there
-        self.assertEqual(True,fileExists(self.outfile))
+        self.assertTrue(fileExists(self.outfile))
         # Read the data with get
         outdata = get(self.outfile)
         # Make sure they are equal
-        self.assertEqual(self.testdata,outdata)
+        self.assertEqual(outdata.decode('utf-8'),self.testdata)
         # Make sure the original file doesn't exist anymore
-        self.assertEqual(False,fileExists(self.file))
+        self.assertFalse(fileExists(self.file))
 
 class TestRemove(unittest.TestCase):
 
     def setUp(self):
         self.file = 'rmtest.csv'
         self.testdata = testdata        
-        fh = open(self.file,'wb')
+        fh = open(self.file,'w')
         fh.write(testdata)
         fh.close()
         # Delete input file if it exists already
@@ -355,17 +358,94 @@ class TestRemove(unittest.TestCase):
         # Try removing the file
         storeClient.rm(TEST_TOKEN,self.file)
         # Check that the file is gone
-        self.assertEqual(False,fileExists(self.file))
-        
-#class TestLink(unittest.TestCase):
-#
-#    def setUp(self):
-#
-#    def tearDown(self):
-#      
-#    def test_copy(self):
-#
+        self.assertFalse(fileExists(self.file))
 
+class TestLink(unittest.TestCase):
+
+    def setUp(self):
+        self.file = 'lntest.csv'
+        self.link = 'lnlink'
+        self.testdata = testdata        
+        fh = open(self.file,'w')
+        fh.write(testdata)
+        fh.close()
+        # Delete input file if it exists already
+        if fileExists(self.file):
+          rm(self.file)
+        # Delete output file if it exists already
+        if fileExists(self.link):
+          rm(self.outfile)
+        # Put local file to VOSpace
+        put(self.file,self.file)
+        # Delete temporary local test file
+        os.remove(self.file)
+            
+    def tearDown(self):
+        # Delete input file in VOSpace
+        rm(self.file)
+        # Delete output file in VOSpace
+        rm(self.link)
+      
+    def test_link(self):
+        # Try copying the file
+        storeClient.ln(TEST_TOKEN,'vos://'+self.link,'vos://'+self.file)
+        # Check that the file is there
+        self.assertTrue(fileExists(self.link))
+        # Read the data with get
+        filedata = get(self.file)
+        # Read the data with get
+        linkdata = get(self.link)
+        # Make sure they are equal
+        self.assertEqual(filedata.decode('utf-8'),self.testdata)
+        self.assertEqual(linkdata.decode('utf-8'),self.testdata)
+        self.assertEqual(filedata.decode('utf-8'),linkdata.decode('utf-8'))
+
+class TestLinkToFileInDir(unittest.TestCase):
+
+    def setUp(self):
+        self.file = 'lntest.csv'
+        self.dir = 'lnlinkdir'
+        self.link = 'lnlink'
+        self.testdata = testdata        
+        fh = open(self.file,'w')
+        fh.write(testdata)
+        fh.close()
+        # Delete input file if it exists already
+        if fileExists(self.file):
+          rm(self.file)
+        # Delete output file if it exists already
+        if fileExists(self.link):
+          rm(self.outfile)
+        # Create directory if it doesn't exist
+        if not fileExists(self.dir):
+          mkdir(self.dir)
+        # Put local file to VOSpace
+        put(self.file,self.file)
+        # Delete temporary local test file
+        os.remove(self.file)
+            
+    def tearDown(self):
+        # Delete input file in VOSpace
+        rm(self.file)
+        # Delete output file in VOSpace
+        rm(self.link)
+        # Delete the directory
+        rmdir(self.dir)
+                         
+    def test_linktofileindir(self):
+        # Try copying the file
+        storeClient.ln(TEST_TOKEN,'vos://'+self.link,'vos://'+self.file)
+        # Check that the file is there
+        self.assertTrue(fileExists(self.link))
+        # Read the data with get
+        filedata = get(self.file)
+        # Read the data with get
+        linkdata = get(self.link)
+        # Make sure they are equal
+        self.assertEqual(filedata.decode('utf-8'),self.testdata)
+        self.assertEqual(linkdata.decode('utf-8'),self.testdata)
+        self.assertEqual(filedata.decode('utf-8'),linkdata.decode('utf-8'))
+       
 class TestList(unittest.TestCase):
 
     def setUp(self):
@@ -374,7 +454,7 @@ class TestList(unittest.TestCase):
         self.dir1 = 'lstest1'
         self.dir2 = 'lstest2'
         self.testdata = testdata        
-        fh = open(self.file1,'wb')
+        fh = open(self.file1,'w')
         fh.write(testdata)
         fh.close()
         # Delete input file1 if it exists already
@@ -409,13 +489,13 @@ class TestList(unittest.TestCase):
       
     def test_list(self):
         # Make sure that file1 exists in VOSpace
-        self.assertEqual(True,fileExists(self.file1))
+        self.assertTrue(fileExists(self.file1))
         # Make sure that file2 does NOT exist in VOSpace
-        self.assertEqual(False,fileExists(self.file2))
+        self.assertFalse(fileExists(self.file2))
         # Make sure that dir1 exists in VOSpace
-        self.assertEqual(True,fileExists(self.dir1))
+        self.assertTrue(fileExists(self.dir1))
         # Make sure that dir2 does NOT exist in VOSpace
-        self.assertEqual(False,fileExists(self.dir2))
+        self.assertFalse(fileExists(self.dir2))
 
 class TestMkdir(unittest.TestCase):
 
@@ -433,7 +513,7 @@ class TestMkdir(unittest.TestCase):
         # Try making the directory
         storeClient.mkdir(TEST_TOKEN,self.dir)
         # Check that the file is gone
-        self.assertEqual(True,fileExists(self.dir))
+        self.assertTrue(fileExists(self.dir))
 
 class TestRmdir(unittest.TestCase):
 
@@ -451,18 +531,42 @@ class TestRmdir(unittest.TestCase):
         # Try making the directory
         storeClient.rmdir(TEST_TOKEN,self.dir)
         # Check that the file is gone
-        self.assertEqual(False,fileExists(self.dir))
+        self.assertFalse(fileExists(self.dir))
 
-#class TestSaveas(unittest.TestCase):
-#
-#    def setUp(self):
-#
-#    def tearDown(self):
-#      
-#    def test_copy(self):
+    
+class TestSaveAs(unittest.TestCase):
+
+    def setUp(self):
+        self.file = 'svtest.csv'
+        self.outfile = 'svtest2.csv'
+        self.testdata = testdata        
+        fh = open(self.file,'w')
+        fh.write(testdata)
+        fh.close()
+        # Delete input file if it exists already
+        if fileExists(self.file):
+          rm(self.file)
+        # Put local file to VOSpace
+        put(self.file,self.file)
+        # Delete temporary local test file
+        os.remove(self.file)
+        
+    def tearDown(self):
+        # Delete input file in VOSpace
+        rm(self.file)
+        # Delete output file in VOSpace
+        rm(self.outfile)
       
-
-# query with WHERE clause with SORT BY and LIMIT
+    def test_saveas(self):
+        indata = get(self.file)
+        # Try saving the data
+        storeClient.saveAs(indata,self.outfile)
+        # Check that the file is there
+        self.assertTrue(fileExists(self.outfile))
+        # Read the data with get
+        outdata = get(self.outfile)
+        # Make sure they are equal
+        self.assertEqual(outdata.decode('utf-8'),indata.decode('utf-8'))
        
 if __name__ == '__main__':
   suite = suite()

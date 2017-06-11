@@ -190,17 +190,15 @@ class TestQuerySqlToVospaceFits(unittest.TestCase):
 
     def setUp(self):
         self.outfile = 'qrytest.fits'
-        # Delete file if it already exists
-        if fileExists(self.outfile):
-          rm(self.outfile)
+        # Make sure the output file doesn't exist
+        rm(self.outfile)
         # Delete local file if it exists
         if os.path.exists(self.outfile):
           os.remove(self.outfile)
           
     def tearDown(self):
         # Delete temporary file
-        if fileExists(self.outfile):
-          rm(self.outfile)
+        rm(self.outfile)
         # Delete temporary local file
         if os.path.exists(self.outfile):
           os.remove(self.outfile)
@@ -303,17 +301,15 @@ class TestQueryAdqlToVospaceFits(unittest.TestCase):
 
     def setUp(self):
         self.outfile = 'adqrytest.fits'
-        # Delete file if it already exists
-        if fileExists(self.outfile):
-          rm(self.outfile)
+        # Make sure the output file doesn't exist
+        rm(self.outfile)
         # Delete local file if it exists
         if os.path.exists(self.outfile):
           os.remove(self.outfile)
           
     def tearDown(self):
         # Delete temporary file
-        if fileExists(self.outfile):
-          rm(self.outfile)
+        rm(self.outfile)
         # Delete temporary local file
         if os.path.exists(self.outfile):
           os.remove(self.outfile)

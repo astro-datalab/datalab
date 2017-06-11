@@ -8,6 +8,8 @@ from dl import storeClient
 import os
 import unittest
 import requests
+import numpy as np
+from io import StringIO
 
 # Service URLs
 AM_URL = "http://dlsvcs.datalab.noao.edu/auth"      # Auth Manager
@@ -20,6 +22,10 @@ TEST_TOKEN = "dltest.99998.99998.test_access"
 testdata = 'id,ra,dec\n'\
            '77.1096574,150.552192729936,-32.7846851370221\n'\
            '77.572838,150.55443538686,-32.7850014657006\n'
+
+qryresid = np.array(['77.1096574','77.572838'])
+qryresra = np.array([150.552192729936,150.55443538686])
+qryresdec = np.array([-32.7846851370221,-32.7850014657006])
 
 def fileExists(name):
   url = SM_URL + "/ls?name=vos://%s&format=%s" % (name, 'raw')
@@ -538,36 +544,26 @@ class TestSaveAs(unittest.TestCase):
 
     def setUp(self):
         self.file = 'svtest.csv'
-        self.outfile = 'svtest2.csv'
         self.testdata = testdata        
-        fh = open(self.file,'w')
-        fh.write(testdata)
-        fh.close()
         # Delete input file if it exists already
         if fileExists(self.file):
           rm(self.file)
-        # Put local file to VOSpace
-        put(self.file,self.file)
-        # Delete temporary local test file
-        os.remove(self.file)
         
     def tearDown(self):
         # Delete input file in VOSpace
         rm(self.file)
-        # Delete output file in VOSpace
-        rm(self.outfile)
       
     def test_saveas(self):
-        indata = get(self.file)
         # Try saving the data
-        storeClient.saveAs(TEST_TOKEN,indata,self.outfile)
+        res = storeClient.saveAs(TEST_TOKEN,testdata,self.file)
+        self.assertEqual(res,'OK')
         # Check that the file is there
-        self.assertTrue(fileExists(self.outfile))
+        self.assertTrue(fileExists(self.file))
         # Read the data with get
-        outdata = get(self.outfile)
+        outdata = get(self.file)
         # Make sure they are equal
-        self.assertEqual(outdata.decode('utf-8'),indata.decode('utf-8'))
-       
+        self.assertEqual(outdata.decode('utf-8'),testdata)
+        
 if __name__ == '__main__':
   suite = suite()
   unittest.TextTestRunner(verbosity = 2).run(suite)

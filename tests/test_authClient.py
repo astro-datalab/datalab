@@ -99,11 +99,11 @@ class TestLogin(unittest.TestCase):
       
     def test_loginnotvalid1(self):
         token = authClient.login('temptemptemp','blah')
-        self.assertEqual(token,'')
+        self.assertEqual(token,'Error: Username "temptemptemp" does not exist.')
       
     def test_loginnotvalid2(self):
         token = authClient.login('datalabtest','blah')
-        self.assertEqual(token,'')
+        self.assertEqual(token,'Error: Invalid password')
 
 class TestLogout(unittest.TestCase):
   
@@ -115,17 +115,20 @@ class TestLogout(unittest.TestCase):
     def test_logoutinvalid1(self):
         token = 'datalabtest.1148.1148.abcdefghijklmnopqrstuvwxyz12345678'
         res = authClient.logout(token)
-        self.assertEqual(res,'')
+        self.assertNotEqual(res,'')
+        self.assertIn('500 Internal Server Error',res)
 
     def test_logoutinvalid2(self):
         token = 'datalabtest.1148.1148.abcdefghijklmnopqrstuvwxyz12345678910111213'
         res = authClient.logout(token)
-        self.assertEqual(res,'')
+        self.assertNotEqual(res,'')
+        self.assertIn('500 Internal Server Error',res)
 
     def test_logoutinvalid3(self):
         token = 'abcdefghijklmnopqrstuvwxyz12345678910111213'
         res = authClient.logout(token)
-        self.assertEqual(res,'')
+        self.assertNotEqual(res,'')
+        self.assertIn('500 Internal Server Error',res)
 
 class TestValidUser(unittest.TestCase):
 

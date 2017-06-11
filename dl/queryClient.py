@@ -45,7 +45,7 @@ TIMEOUT_REQUEST = 120 # sync query timeout default (120sec)
 class queryClientError(Exception):
     def __init__(self, message):
         self.message = message
-    def __str__(self, message):
+    def __str__(self):
         return self.message
 
 def isAlive(svc_url=DEF_SERVICE_URL):
@@ -193,7 +193,7 @@ def query(token, adql=None, sql=None, fmt='csv', out=None, async=False, **kw):
         dburl += "&profile=%s" % PROFILE
 
     r = requests.get(dburl, headers=headers)
-
+    
     if r.status_code != 200:
         raise queryClientError(r.text)
 

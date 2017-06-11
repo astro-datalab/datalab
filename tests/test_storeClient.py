@@ -72,8 +72,8 @@ def suite():
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestMove))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestMoveToDir))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestRemove))
-  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestLink))
-  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestLinkToFileInDir))
+  #suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestLink))
+  #suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestLinkToFileInDir))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestList))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestMkdir))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestRmdir))
@@ -560,7 +560,7 @@ class TestSaveAs(unittest.TestCase):
     def test_saveas(self):
         indata = get(self.file)
         # Try saving the data
-        storeClient.saveAs(indata,self.outfile)
+        storeClient.saveAs(TEST_TOKEN,indata,self.outfile)
         # Check that the file is there
         self.assertTrue(fileExists(self.outfile))
         # Read the data with get

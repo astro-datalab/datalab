@@ -2,11 +2,11 @@
 from distutils.core import setup
 import sys
 import os
-from vos.__version__ import version
+#from vos.__version__ import version
 
-if sys.version_info[0] > 2:
-    print 'The vos package is only compatible with Python version 2.n'
-    sys.exit(-1)
+#if sys.version_info[0] > 2:
+#    print 'The vos package is only compatible with Python version 2.n'
+#    sys.exit(-1)
 
 ## Build the list of scripts to be installed.
 script_dir = 'scripts'
@@ -23,9 +23,14 @@ except:
     from distutils.core import setup
     has_setuptools = False
 
+import unittest
+def my_test_suite():
+    test_loader = unittest.TestLoader()
+    test_suite = test_loader.discover('tests', pattern='test_*.py')
+    return test_suite
 
 setup(name="datalab-client",
-      version="1.0.12",
+      version="1.0.17",
       url="https://github.noao.edu/noao-datalab/datalab-client",
       description="Tools for interacting with NOAO Data Lab.",
       author="M.J. Graham, M.J. Fitzpatrick, D.L. Nidever, R. Nikutta",
@@ -36,6 +41,7 @@ setup(name="datalab-client",
         'datalab': ['caps/*']
       },
       scripts=['scripts/datalab', 'scripts/mountvofs'],
+      test_suite='setup.my_test_suite',
       classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',

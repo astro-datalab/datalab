@@ -495,13 +495,13 @@ class TestList(unittest.TestCase):
       
     def test_list(self):
         # Make sure that file1 exists in VOSpace
-        self.assertTrue(fileExists(self.file1))
+        self.assertEqual(storeClient.ls(TEST_TOKEN,self.file1,'csv'),self.file1)
         # Make sure that file2 does NOT exist in VOSpace
-        self.assertFalse(fileExists(self.file2))
+        self.assertEqual(storeClient.ls(TEST_TOKEN,self.file2,'csv'),'')
         # Make sure that dir1 exists in VOSpace
-        self.assertTrue(fileExists(self.dir1))
+        self.assertEqual(storeClient.ls(TEST_TOKEN,self.dir1,'csv'),self.dir1)
         # Make sure that dir2 does NOT exist in VOSpace
-        self.assertFalse(fileExists(self.dir2))
+        self.assertEqual(storeClient.ls(TEST_TOKEN,self.dir2,'csv'),'')
 
 class TestMkdir(unittest.TestCase):
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # D. Nidever
 #
-# testdlinterface.py
+# test_queryClient.py
 # Python code to (unit) test the DL Client tools
 
 from dl import authClient, storeClient, queryClient

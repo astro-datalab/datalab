@@ -658,7 +658,6 @@ class Dlinterface:
                     self.loginstatus = "loggedin"
                     #self.user = user
                     #self.token = token
-                    self.loginstatus = "loggedin"
         return
 
     def logout(self, unmount=None, verbose=True):

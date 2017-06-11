@@ -489,9 +489,9 @@ class TestList(unittest.TestCase):
           rm(self.file2)
         # Delete dir1 if it exists
         if fileExists(self.dir1):
-          rm(self.dir1)
+          rmdir(self.dir1)
         if fileExists(self.dir2):
-          rm(self.dir2)
+          rmdir(self.dir2)
       
     def test_list(self):
         # Make sure that file1 exists in VOSpace

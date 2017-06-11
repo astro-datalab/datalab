@@ -219,7 +219,7 @@ def reformatQueryOutput(self, res=None, fmt='csv', verbose=True):
     mapping = self.fmtmapping
         
     # Check that this format is supported
-    if mapping.has_key(fmt) is False:
+    if fmt not in mapping.keys():
         print ("Format %s not supported." % fmt)
         return ""
             

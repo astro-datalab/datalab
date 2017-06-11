@@ -38,6 +38,16 @@ QM_URL = "http://dlsvcs.datalab.noao.edu/query"     # Query Manager
 # Test token
 TEST_TOKEN = "dltest.99998.99998.test_access"
 
+# Create test data sample
+testdata = 'id,ra,dec\n'\
+           '77.1096574,150.552192729936,-32.7846851370221\n'\
+           '77.572838,150.55443538686,-32.7850014657006\n'
+
+qryresid = np.array(['77.1096574','77.572838'])
+qryresra = np.array([150.552192729936,150.55443538686])
+qryresdec = np.array([-32.7846851370221,-32.7850014657006])
+
+
 # Test query
 qry = "select id,ra,dec from smash_dr1.object where "\
       "(ra > 180 and ra < 180.1 and dec > -36.3 and dec < -36.2) "\
@@ -56,9 +66,9 @@ qryresascii = '109.127614\t180.000153966131\t'\
               '-36.2301641016901\n109.128390\t'\
               '180.000208026483\t-36.2290234336001\n'
 
-qryresid = np.array(['109.127614','109.128390'])
-qryresra = np.array([180.000153966, 180.000208026])
-qryresdec = np.array([-36.2301641017, -36.2290234336])
+qryid = np.array(['109.127614','109.128390'])
+qryra = np.array([180.000153966, 180.000208026])
+qrydec = np.array([-36.2301641017, -36.2290234336])
 
 qryresvotablesql = '<?xml version="1.0" encoding="utf-8"?>\n<!-- Produced with astropy.io.votable version 1.3.2\n     http://www.astropy.org/ -->\n<VOTABLE version="1.2" xmlns="http://www.ivoa.net/xml/VOTable/v1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.ivoa.net/xml/VOTable/v1.2">\n <RESOURCE type="results">\n  <TABLE>\n   <FIELD ID="id" arraysize="10" datatype="char" name="id"/>\n   <FIELD ID="ra" datatype="double" name="ra"/>\n   <FIELD ID="dec" datatype="double" name="dec"/>\n   <DATA>\n    <TABLEDATA>\n     <TR>\n      <TD>109.127614</TD>\n      <TD>180.00015396613099</TD>\n      <TD>-36.2301641016901</TD>\n     </TR>\n     <TR>\n      <TD>109.128390</TD>\n      <TD>180.00020802648299</TD>\n      <TD>-36.229023433600098</TD>\n     </TR>\n    </TABLEDATA>\n   </DATA>\n  </TABLE>\n </RESOURCE>\n</VOTABLE>\n'
 
@@ -68,9 +78,9 @@ def login(dl):
   token = authClient.login('dltest','datalab')
   dl.loginuser = 'dltest'
   dl.dl.save("login", "status", "loggedin")
-  dl.dl.save("login", "user", 'dltest')
+  dl.dl.save("login", "user", "dltest")
   dl.dl.save("login", "authtoken", token)
-  dl.dl.save(user, "authtoken", token)
+  dl.dl.save("dltest", "authtoken", token)
   dl.loginstatus = "loggedin"
 
 def logout(dl):
@@ -81,7 +91,7 @@ def logout(dl):
   dl.dl.save("login", "user", "")
   dl.dl.save("login", "authtoken", "")
   dl.loginstatus = "loggedout"
-
+  
 def suite():
   suite = unittest.TestSuite()
   #suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestHelp))
@@ -121,59 +131,71 @@ class TestList(unittest.TestCase):
         self.file2 = 'lstest2.csv'
         self.dir1 = 'lstest1'
         self.dir2 = 'lstest2'
+        self.file3 = self.dir1+'/'+self.file1
         self.testdata = testdata        
         fh = open(self.file1,'w')
         fh.write(testdata)
         fh.close()
         # Delete input file1 if it exists already
-        if fileExists(self.file1):
-          rm(self.file1)
+        if storeClient.ls(TEST_TOKEN,self.file1,'csv') != '':
+          storeClient.rm(TEST_TOKEN,self.file1)
         # Delete input file2 if it exists already
-        if fileExists(self.file2):
-          rm(self.file2)
+        if storeClient.ls(TEST_TOKEN,self.file2,'csv') != '':
+          storeClient.rm(TEST_TOKEN,self.file2)
         # Create dir1 if it does NOT exist already
-        if not fileExists(self.dir1):
-          mkdir(self.dir1)
+        if storeClient.ls(TEST_TOKEN,self.dir1,'csv') == '':
+          storeClient.mkdir(TEST_TOKEN,self.dir1)
         # Delete dir2 if it exists already
-        if fileExists(self.dir2):
-          rmdir(self.dir2)
+        if storeClient.ls(TEST_TOKEN,self.dir2,'csv') != '':
+          storeClient.rmdir(TEST_TOKEN,self.dir2)
         # Put local file to VOSpace
-        put(self.file1,self.file1)
+        storeClient.put(TEST_TOKEN,self.file1,self.file1)
+        # Put local file to VOSpace directory
+        storeClient.put(TEST_TOKEN,self.file1,self.file3)
         # Delete temporary local test file
         os.remove(self.file1)
         
     def tearDown(self):
         # Delete file1 if it exists
-        if fileExists(self.file1):
-          rm(self.file1)
+        if storeClient.ls(TEST_TOKEN,self.file1,'csv') != '':
+          storeClient.rm(TEST_TOKEN,self.file1)
         # Delete file2 if it exists
-        if fileExists(self.file2):
-          rm(self.file2)
+        if storeClient.ls(TEST_TOKEN,self.file2,'csv') != '':
+          storeClient.rm(TEST_TOKEN,self.file2)
+        # Delete file2 if it exists
+        if storeClient.ls(TEST_TOKEN,self.file3,'csv') != '':
+          storeClient.rm(TEST_TOKEN,self.file3)
         # Delete dir1 if it exists
-        if fileExists(self.dir1):
-          rm(self.dir1)
-        if fileExists(self.dir2):
-          rm(self.dir2)
+        if storeClient.ls(TEST_TOKEN,self.dir1,'csv') != '':
+          storeClient.rmdir(TEST_TOKEN,self.dir1)
+        # Delete dir2 if it exists
+        if storeClient.ls(TEST_TOKEN,self.dir2,'csv') != '':
+          storeClient.rmdir(TEST_TOKEN,self.dir2)
       
     def test_list(self):
         dl = Dlinterface()
-        login(dl)        
+        login(dl)
         # Make sure that file1 exists in VOSpace
         with Capturing() as output:
           dl.ls(self.file1)
-        self.assertEqual(output[0],self.file1)
+        self.assertEqual(output[0].strip(),self.file1)
         # Make sure that file2 does NOT exist in VOSpace
         with Capturing() as output:
           dl.ls(self.file2)
-        self.assertEqual(output[0],'')
-        # Make sure that dir1 exists in VOSpace
+        self.assertEqual(output[0].strip(),'')
+        # Make sure that file3 exists in VOSpace
+        with Capturing() as output:
+          dl.ls(self.file3)
+        self.assertEqual(output[0].strip(),os.path.basename(self.file3))
+        # Make sure that dir1 exists in VOSpace and contains file3
+        #   which has the same base name as file1
         with Capturing() as output:
           dl.ls(self.dir1)
-        self.assertEqual(output[0],self.dir11)
+        self.assertEqual(output[0].strip(),self.file1)
         # Make sure that dir2 does NOT exist in VOSpace
         with Capturing() as output:
           dl.ls(self.dir2)
-        self.assertEqual(output[0],'')
+        self.assertEqual(output[0].strip(),'')
         logout(dl)
         
 if __name__ == '__main__':

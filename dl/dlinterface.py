@@ -34,6 +34,7 @@ except ImportError:
     from urllib.request import urlopen, Request         # Python 3
     from io import StringIO
 import requests
+from io import BytesIO
     
 # std lib imports
 import getpass
@@ -224,7 +225,8 @@ def reformatQueryOutput(self, res=None, fmt='csv', verbose=True):
         return ""
             
     # Convert to the desired format
-    s = StringIO(res)
+    #s = StringIO(res)
+    s = BytesIO(res.encode())
     output = mapping[fmt][2](s)
     if verbose is True:
         print ("Returning %s" % mapping[fmt][1])

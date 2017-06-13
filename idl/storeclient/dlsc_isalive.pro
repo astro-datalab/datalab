@@ -1,6 +1,6 @@
 ;+
 ;
-; DLAC_ISALIVE
+; DLSC_ISALIVE
 ;
 ; INPUTS:
 ;  svc_url   The service URL.
@@ -9,21 +9,21 @@
 ;  Return    1 if the service is alive and 0 if not.
 ;
 ; USAGE:
-;  IDL>good = dlac_isalive(svc_url)
+;  IDL>good = dlsc_isalive(svc_url)
 ;
 ; By D. Nidever  June 2017, copied from authClient.py
 ;-
 
-function dlac_isalive,svc_url
+function dlsc_isalive,svc_url
 
 compile_opt idl2
 On_error,2
   
 ; Initialize the DL Auth global structure
-DEFSYSV,'!dla',exists=dlaexists
-if dlaexists eq 0 then DLAC_CREATEGLOBAL
+DEFSYSV,'!dls',exists=dlsexists
+if dlsexists eq 0 then DLSC_CREATEGLOBAL
   
-if n_elements(svc_url) eq 0 then svc_url=!dla.def_service_url
+if n_elements(svc_url) eq 0 then svc_url=!dls.def_service_url
 
 response = 'None'
 ourl = obj_new('IDLnetURL')

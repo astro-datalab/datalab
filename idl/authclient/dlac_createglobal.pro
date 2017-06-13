@@ -2,13 +2,16 @@
 ;
 ; DLAC_CREATEGLOBAL
 ;
-; Create the DL Auth Client global system variable !dlauth
+; Create the DL Auth Client global system variable !dla.
 ;
 ; By D. Nidever  June 2017
 ;-
 
 pro dlac_createglobal
 
+compile_opt idl2
+On_error,2
+  
 ; Pre-defined authentication tokens. These are fixed strings that provide
 ; limited access to Data Lab services, this access is controlled on the
 ; server-side so we don't need strict security here.
@@ -35,14 +38,14 @@ DEFSYSV,'!dla',exists=exists
 if exists eq 1 then return
 
 ; Initialize the DL Auth global structure
-dlauth = {svc_url: DEF_SERVICE_URL,$	        ; service URL
-          svc_profile: DEF_SERVICE_PROFILE,$   ; service prfile
-          username: "",$                       ; default client logn user
-          auth_token: "",$			; default client logn token
-          home: expand_path('~')+'/.datalab',$ ; Get the $HOME/.datalab directory.
-          debug: DEBUG,$                        ; interface debug flag
-          def_service_url: DEF_SERVICE_URL,$
-          def_service_profile: DEF_SERVICE_PROFILE,$
-          def_users: DEF_USERS}
-DEFSYSV, '!dla', dlauth
+dla = {svc_url: DEF_SERVICE_URL,$	        ; service URL
+       svc_profile: DEF_SERVICE_PROFILE,$   ; service prfile
+       username: "",$                       ; default client logn user
+       auth_token: "",$			; default client logn token
+       home: expand_path('~')+'/.datalab',$ ; Get the $HOME/.datalab directory.
+       debug: DEBUG,$                        ; interface debug flag
+       def_service_url: DEF_SERVICE_URL,$
+       def_service_profile: DEF_SERVICE_PROFILE,$
+       def_users: DEF_USERS}
+DEFSYSV, '!dla', dla
 end

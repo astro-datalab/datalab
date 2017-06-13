@@ -2,6 +2,8 @@
 ;
 ; DLAC_ISVALIDUSER
 ;
+; See whether the specified user is valid.
+;
 ; INPUTS:
 ;  user    The DL authentication token string.
 ;
@@ -16,6 +18,9 @@
 
 function dlac_isvaliduser,user
 
+compile_opt idl2
+On_error,2
+  
 ; Initialize the DL Auth global structure
 DEFSYSV,'!dla',exists=dlaexists
 if dlaexists eq 0 then DLAC_CREATEGLOBAL
@@ -32,8 +37,7 @@ url = !dla.svc_url + "/isValidUser?"
 url += 'user='+user
 url += '&profile='+!dla.svc_profile
 
-;if self.debug:
-;   print ("isValidUser: url = '%s'" % url)
+if keyword_set(!dla.debug) then print,"isvaliduser: url = '"+url+"'"
 
 val = dlac_retboolvalue(url)
 return,val

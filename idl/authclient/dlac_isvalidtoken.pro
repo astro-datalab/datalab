@@ -2,6 +2,8 @@
 ;
 ; DLAC_ISVALIDTOKEN
 ;
+; See whether the current token is valid.
+;
 ; INPUTS:
 ;  token    The DL authentication token string.
 ;
@@ -16,6 +18,9 @@
 
 function dlac_isvalidtoken,token
 
+compile_opt idl2
+On_error,2
+  
 ; Initialize the DL Auth global structure
 DEFSYSV,'!dla',exists=dlaexists
 if dlaexists eq 0 then DLAC_CREATEGLOBAL
@@ -24,12 +29,12 @@ if dlaexists eq 0 then DLAC_CREATEGLOBAL
 if n_elements(token) eq 0 then message,'Token not supplied'
 
 ; Split the token into its parts
-tokenarr = strsplit(token,'.')
-if n_elements(tokenarr) ne 4 then return,0 ; not correct token
+tokenarr = strsplit(token,'.',/extract)
+if n_elements(tokenarr) lt 4 then return,0 ; not correct token
 user = tokenarr[0]
 uid = tokenarr[1]
 gid = tokenarr[2]
-hash = tokenarr[3]
+hash = strjoin(tokenarr[3:*],'.')  ; recombine if dots in hash
 
 ; Check for default user accounts
 defuser = where(tag_names(!dla.def_users) eq user,ndefuser)
@@ -41,8 +46,7 @@ url = !dla.svc_url + "/isValidToken?"
 url += 'token='+token
 url += '&profile='+!dla.svc_profile
 
-;if self.debug:
-;   print ("isValidToken: url = '%s'" % url)
+if keyword_set(!dla.debug) then print,"isvalidtoken: url = '"+url+"'"
 
 val = dlac_retboolvalue(url)
 return,val

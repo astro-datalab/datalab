@@ -20,13 +20,16 @@
 
 function dlac_retboolvalue,url
 
-; Not enough inputs
-if n_elements(url) eq 0 then message,'url not supplied'
+compile_opt idl2
+On_error,2
 
 ; Initialize the DL Auth global structure
 DEFSYSV,'!dla',exists=dlaexists
 if dlaexists eq 0 then DLAC_CREATEGLOBAL
-  
+
+; Not enough inputs
+if n_elements(url) eq 0 then message,'url not supplied'
+
 response = ""
 ourl = obj_new('IDLnetURL')
 

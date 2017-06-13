@@ -39,12 +39,21 @@ if file_test(!dla.home,/directory) eq 0 then file_mkdir,!dla.home
 
 ; See if a datalab token file exists for the requested user.
 tok_file = !dla.home+'/id_token.'+username
-;if self.debug:
-;  print ("top of login: tok_file = '" + tok_file + "'")
-;  print ("top of login: self.auth_token = '%s'" % str(self.auth_token))
-;  print ("top of login: token = ")
-;  os.system('cat ' + tok_file)
-
+if keyword_set(!dla.debug) then begin
+  print,"top of login: tok_file = '" + tok_file + "'"
+  print,"top of login: !dla.auth_token = '"+!dla.auth_token+"'"
+  print,"top of login: token = "
+  ; Print the token file
+  openr,unit,/get_lun,tok_file
+  line = ''
+  while(~EOF(unit)) do begin
+    readf,unit,line
+    print,line
+  endwhile
+  close,unit
+  free_lun,unit
+endif
+  
 ; No password input
 if n_elements(password) eq 0 then begin
   ; Check the existing token file
@@ -61,12 +70,10 @@ if n_elements(password) eq 0 then begin
     if (strmid(o_tok,0,len(username)) eq username) and dlac_isvalidtoken(o_token) then begin
       !dla.username = username
       !dla.auth_token = o_tok
-      ;if self.debug:
-      ;  print ("using old token for '%s'" % username)
+      if keyword_set(!dla.debug) then print,"using old token for '"+username+"'"
       return,o_token
     endif else begin
-      ;if self.debug:
-      ;  print ("removing token file '%s'" % tok_file)
+      if keyword_set(!dla.debug) then print,"removing token file '"+tok_file+"'"
       file_delete,tok_file,/allow
     endelse
   endif
@@ -81,24 +88,21 @@ url = !dla.svc_url + "/login?"
 url += 'username='+username
 url += '&password='+password
 url += '&profile='+!dla.svc_profile
-url += '&debug='+strtrim(!dla.debug,2)
+url += '&debug='+(!dla.debug ? "True" : "False")
 ;'https://dlsvcs.datalab.noao.edu/auth/login?username=dnidever&password=datalab&profile=default&debug=False'
-;query_args = {username: username, password: password,$
-;              profile: !dla.svc_profile, debug: self.debug}
 response = 'None'
 ourl = obj_new('IDLnetURL')
 response = ourl->get(/string_array,url=url)
 ourl->GetProperty,response_code=status_code
 obj_destroy,ourl   ; destroy when we are done
 
-;if self.debug:
-;  print ('resp = ' + response)
-;  print ('code = ' + str(r.status_code))
+if keyword_set(!dla.debug) then begin
+  print,'resp = ' + response
+  print,'code = ' + status_code
+endif
 if status_code ne 200 then message,response
 
 
-;if self.debug:
-;  print ("Raw exception msg = '%s'" + str(e))
 if dlac_isalive(!dla.svc_url) ne 1 then $
    message,"AuthManager Service not responding."
 if dlac_isvaliduser(username) eq 1 then begin
@@ -121,11 +125,20 @@ if info.write eq 1 then begin
   close,unit
   free_lun,unit
 
-  ;if self.debug:
-  ;  print ("login: writing new token for '%s'" % username)
-  ;  print ("login: self.auth_token = '%s'" % str(self.auth_token))
-  ;  print ("login: token = ")
-  ;  os.system('cat ' + tok_file)
+  if keyword_set(!dla.debug) then begin
+    print,"login: writing new token for '"+username+"'"
+    print,"login: !dla.auth_token = '"+!dla.auth_token+"'"
+    print,"login: token = "
+    ; Print the token file
+    openr,unit,/get_lun,tok_file
+    line = ''
+    while(~EOF(unit)) do begin
+      readf,unit,line
+      print,line
+    endwhile
+    close,unit
+    free_lun,unit
+  endif
 endif
                 
 return,!dla.auth_token

@@ -2,6 +2,8 @@
 ;
 ; DLAC_ISVALIDPASSWORD
 ;
+; See whether the password is valid for the user.
+;
 ; INPUTS:
 ;  user      The DL authentication user string.
 ;  password  The DL authentication password string.
@@ -17,6 +19,9 @@
 
 function dlac_isvalidpassword,user,password
 
+compile_opt idl2
+On_error,2
+  
 ; Initialize the DL Auth global structure
 DEFSYSV,'!dla',exists=dlaexists
 if dlaexists eq 0 then DLAC_CREATEGLOBAL
@@ -35,8 +40,7 @@ url += 'user='+user
 url += '&password='+password
 url += '&profile='+!dla.svc_profile
 
-;if self.debug:
-;   print ("isValidPassword: url = '%s'" % url)
+if keyword_set(!dla.debug) then print,"isvalidpassword: url = '"+url+"'"
 
 val = dlac_retboolvalue(url)
 return,val

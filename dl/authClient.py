@@ -515,9 +515,6 @@ class authClient (object):
             raise dlAuthError(str(e))
         else:
             self.auth_token = None
-            if self.username is None or self.username == "":   # datalab client
-                username, uid, gid, hash = token.strip().split('.', 3)
-                self.username = username
             tok_file = self.home + '/id_token.' + self.username
             if os.path.exists(tok_file):
                 os.remove(tok_file)

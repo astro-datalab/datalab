@@ -11,7 +11,7 @@
 ; USAGE:
 ;  IDL>good = dlac_isalive(svc_url)
 ;
-; By D. Nidever  June 2017, copied from authClient.py
+; By D. Nidever  June 2017, translated from authClient.py
 ;-
 
 function dlac_isalive,svc_url
@@ -27,6 +27,7 @@ if n_elements(svc_url) eq 0 then svc_url=!dla.def_service_url
 
 response = 'None'
 ourl = obj_new('IDLnetURL')
+ourl->SetProperty,timeout=2
 response = ourl->get(/string_array,url=svc_url)
 ourl->GetProperty,response_code=status_code
 obj_destroy,ourl   ; destroy when we are done

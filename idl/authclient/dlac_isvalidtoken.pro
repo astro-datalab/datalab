@@ -13,7 +13,7 @@
 ; USAGE:
 ;  IDL>good = dlac_isvalidtoken(token)
 ;
-; By D. Nidever  June 2017, copied from authClient.py
+; By D. Nidever  June 2017, translated from authClient.py
 ;-
 
 function dlac_isvalidtoken,token

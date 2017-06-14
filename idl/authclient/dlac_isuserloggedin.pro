@@ -14,7 +14,7 @@
 ; USAGE:
 ;  IDL>good = dlac_isuserloggedin('username')
 ;
-; By D. Nidever  June 2017, copied from authClient.py
+; By D. Nidever  June 2017, translated from authClient.py
 ;-
 
 function dlac_isuserloggedin,user

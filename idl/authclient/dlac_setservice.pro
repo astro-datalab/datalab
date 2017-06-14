@@ -13,7 +13,7 @@
 ; USAGE:
 ;  IDL>dlac_setservice,"http://localhost:7001/"
 ;
-; By D. Nidever  June 2017, copied from authClient.py
+; By D. Nidever  June 2017, translated from authClient.py
 ;-
 
 pro dlac_setservice,svc_url

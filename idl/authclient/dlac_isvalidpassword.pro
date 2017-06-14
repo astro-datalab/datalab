@@ -14,7 +14,7 @@
 ; USAGE:
 ;  IDL>good = dlac_isvalidpassword(user,password)
 ;
-; By D. Nidever  June 2017, copied from authClient.py
+; By D. Nidever  June 2017, translated from authClient.py
 ;-
 
 function dlac_isvalidpassword,user,password

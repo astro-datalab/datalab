@@ -132,7 +132,6 @@ def suite():
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestQueryAdql))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestQueryAdqlToVospaceCsv))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestQueryAdqlToVospaceFits))
-  #suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestQueryAdqlToMydb))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestQueryAsync))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestQueryStatus))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestQueryResults))
@@ -326,34 +325,6 @@ class TestQueryAdqlToVospaceFits(unittest.TestCase):
         self.assertEqual(outdata['id'].data.tostring(),qryresid.tostring())
         self.assertTrue(np.allclose(outdata['ra'].data, qryresra))
         self.assertTrue(np.allclose(outdata['dec'].data, qryresdec))
-
-class TestQueryAdqlToMydb(unittest.TestCase):
-
-    def setUp(self):
-        self.table = 'adqrytable'
-        # Make sure test table does not exist
-        if list(self.table) != 'relation "'+self.table+'" not known':
-          drop(self.table)
-          
-    def tearDown(self):
-        # Delete table
-        if list(self.table) != 'relation "'+self.table+'" not known':
-          drop(self.table)
-          
-    def test_queryadqltomydb(self):
-        self.qry = qryadql
-        # Create the mydb table from a query
-        res = queryClient.query(TEST_TOKEN,adql=self.qry,out='mydb://'+self.table,async=False)
-        self.assertEqual(res,'OK')
-        res = list(self.table)
-        self.assertNotEqual(res,'relation "'+self.table+'" not known')
-        # Get the results and compare
-        mydbqry = 'select * from mydb://'+self.table
-        res = adqlquery(mydbqry,fmt='csv',async=False,out=None)
-        tab = np.loadtxt(StringIO(res),unpack=False,skiprows=1,delimiter=',')
-        self.assertTrue(np.array_equiv(tab[:,0],qryresid.astype('float64')))
-        self.assertTrue(np.allclose(tab[:,1],qryresra))
-        self.assertTrue(np.allclose(tab[:,2],qryresdec))
 
 class TestQueryAsync(unittest.TestCase):
 

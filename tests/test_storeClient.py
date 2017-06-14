@@ -32,7 +32,13 @@ def fileExists(name):
   r = requests.get(url, headers={'X-DL-AuthToken': TEST_TOKEN})
   res = r.content.decode('utf-8')
   return (True if (name in res) else False)
-  
+
+def list(name,fmt='raw'):
+  url = SM_URL + "/ls?name=vos://%s&format=%s" % (name, fmt)
+  r = requests.get(url, headers={'X-DL-AuthToken': TEST_TOKEN})
+  res = r.content.decode('utf-8')
+  return res
+
 def get(fr,to=None):
   url = requests.get(SM_URL + "/get?name=%s" % ('vos://'+fr),
                      headers={"X-DL-AuthToken": TEST_TOKEN})
@@ -72,14 +78,13 @@ def suite():
   #  get, put, load, cp, ln, ls, mkdir, mv, rm, rmdir, saveAs, 
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestPut))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestGet))
-  #suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestLoad))
+  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestLoad))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestCopy))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestCopyToDir))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestMove))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestMoveToDir))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestRemove))
-  #suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestLink))
-  #suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestLinkToFileInDir))
+  suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestLink))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestList))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestMkdir))
   suite.addTest(unittest.TestLoader().loadTestsFromTestCase(TestRmdir))
@@ -159,7 +164,7 @@ class TestLoad(unittest.TestCase):
     def setUp(self):
         # Download the url from the web
         self.file = 'loadtest.txt'
-        self.url = 'http://www.google.com'
+        self.url = 'http://datalab.noao.edu/tests/loadtest.txt'
         # Get the webpage contents
         self.testdata = requests.get(self.url).content
         # Delete input file if it exists already
@@ -393,65 +398,27 @@ class TestLink(unittest.TestCase):
         rm(self.link)
       
     def test_link(self):
-        # Try copying the file
+        # Create the link
         storeClient.ln(TEST_TOKEN,'vos://'+self.link,'vos://'+self.file)
         # Check that the file is there
         self.assertTrue(fileExists(self.link))
-        # Read the data with get
-        filedata = get(self.file)
-        # Read the data with get
-        linkdata = get(self.link)
-        # Make sure they are equal
-        self.assertEqual(filedata.decode('utf-8'),self.testdata)
-        self.assertEqual(linkdata.decode('utf-8'),self.testdata)
-        self.assertEqual(filedata.decode('utf-8'),linkdata.decode('utf-8'))
+        # Test it by looking at the raw listing and make sure the
+        #  properties match what we expect
+        res = list(self.link)
+        #  For now just check that the file and link are in the raw listing
+        #   in the future check that the properties are set correctly
+        self.assertIn(self.file,res)
+        self.assertIn(self.link,res)
+        # Links don't automatically return the data
+        ## Read the data with get
+        #filedata = get(self.file)
+        ## Read the data with get
+        #linkdata = get(self.link)
+        ## Make sure they are equal
+        #self.assertEqual(filedata.decode('utf-8'),self.testdata)
+        #self.assertEqual(linkdata.decode('utf-8'),self.testdata)
+        #self.assertEqual(filedata.decode('utf-8'),linkdata.decode('utf-8'))
 
-class TestLinkToFileInDir(unittest.TestCase):
-
-    def setUp(self):
-        self.file = 'lntest.csv'
-        self.dir = 'lnlinkdir'
-        self.link = 'lnlink'
-        self.testdata = testdata        
-        fh = open(self.file,'w')
-        fh.write(testdata)
-        fh.close()
-        # Delete input file if it exists already
-        if fileExists(self.file):
-          rm(self.file)
-        # Delete output file if it exists already
-        if fileExists(self.link):
-          rm(self.outfile)
-        # Create directory if it doesn't exist
-        if not fileExists(self.dir):
-          mkdir(self.dir)
-        # Put local file to VOSpace
-        put(self.file,self.file)
-        # Delete temporary local test file
-        os.remove(self.file)
-            
-    def tearDown(self):
-        # Delete input file in VOSpace
-        rm(self.file)
-        # Delete output file in VOSpace
-        rm(self.link)
-        # Delete the directory
-        rmdir(self.dir)
-                         
-    def test_linktofileindir(self):
-        # Try copying the file
-        storeClient.ln(TEST_TOKEN,'vos://'+self.link,'vos://'+self.file)
-        # Check that the file is there
-        self.assertTrue(fileExists(self.link))
-        # Read the data with get
-        filedata = get(self.file)
-        # Read the data with get
-        linkdata = get(self.link)
-        # Make sure they are equal
-        self.assertEqual(filedata.decode('utf-8'),self.testdata)
-        self.assertEqual(linkdata.decode('utf-8'),self.testdata)
-        self.assertEqual(filedata.decode('utf-8'),linkdata.decode('utf-8'))
-       
 class TestList(unittest.TestCase):
 
     def setUp(self):

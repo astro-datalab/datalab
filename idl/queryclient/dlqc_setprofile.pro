@@ -1,6 +1,6 @@
 ;+
 ;
-; DLSC_SETPROFILE
+; DLQC_SETPROFILE
 ;
 ; Set the requested service profile.
 ;
@@ -11,24 +11,24 @@
 ;  None
 ;
 ; USAGE:
-;  IDL>dlsc_setprofile,"dev"
+;  IDL>dlqc_setprofile,"dev"
 ;
-; By D. Nidever  June 2017, translated from storeClient.py
+; By D. Nidever  June 2017, translated from queryClient.py
 ;-
 
-pro dlsc_setprofile,profile
+pro dlqc_setprofile,profile
 
 compile_opt idl2
 On_error,2
   
-; Initialize the DL Storage global structure
-DEFSYSV,'!dls',exists=dlsexists
-if dlsexists eq 0 then DLSC_CREATEGLOBAL
+; Initialize the DL Query global structure
+DEFSYSV,'!dlq',exists=dlqexists
+if dlqexists eq 0 then DLQC_CREATEGLOBAL
 
 ; Not enough inputs
 if n_elements(profile) eq 0 then message,'Profile not supplied'
 
 ; Set the profile
-!dls.svc_profile = profile
+!dlq.svc_profile = profile
 
 end

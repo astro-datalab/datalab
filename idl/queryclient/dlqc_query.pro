@@ -1,6 +1,6 @@
 ;+
 ;
-; DLSC_GET
+; DLQC_QUERY
 ;
 ; Retrieve a file from the store manager service.
 ;
@@ -14,19 +14,19 @@
 ;  Result     'OK' if everything succeeded.
 ;
 ; USAGE:
-;  IDL>res = dlsc_get(token,'file.txt','file2.txt')
+;  IDL>res = dlqc_query(token,'file.txt','file2.txt')
 ;
-; By D. Nidever   June 2017, translated from storeClient.py
+; By D. Nidever   June 2017, translated from queryClient.py
 ;-
  
-function dlsc_get,token,fr,to,verbose=verbose
+function dlqc_query,token,fr,to,verbose=verbose
 
 compile_opt idl2
 On_error,2
 
-; Initialize the DL Storage global structure
-DEFSYSV,'!dls',exists=dlsexists
-if dlsexists eq 0 then DLSC_CREATEGLOBAL
+; Initialize the DL Query global structure
+DEFSYSV,'!dlq',exists=dlqexists
+if dlqexists eq 0 then DLQC_CREATEGLOBAL
 
 ; Not enough inputs
 if n_elements(token) eq 0 then message,'Token not input'

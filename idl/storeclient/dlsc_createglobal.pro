@@ -2,7 +2,7 @@
 ;
 ; DLSC_CREATEGLOBAL
 ;
-; Create the DL Store Client global system variable !dla.
+; Create the DL Storage Client global system variable !dla.
 ;
 ; By D. Nidever  June 2017
 ;-
@@ -19,7 +19,7 @@ DEBUG = 0
 DEFSYSV,'!dls',exists=exists
 if exists eq 1 then return
 
-; Initialize the DL Store global structure
+; Initialize the DL Storage global structure
 dls = {svc_url: DEF_SERVICE_URL,$	        ; service URL
        svc_profile: PROFILE,$                   ; service prfile
        debug: DEBUG,$                           ; interface debug flag

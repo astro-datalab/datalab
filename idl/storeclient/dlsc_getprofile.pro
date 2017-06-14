@@ -1,6 +1,6 @@
 ;+
 ;
-; DLAC_GETPROFILE
+; DLSC_GETPROFILE
 ;
 ; Get the requested service profile.
 ;
@@ -21,7 +21,7 @@ function dlsc_getprofile
 compile_opt idl2
 On_error,2
   
-; Initialize the DL Auth global structure
+; Initialize the DL Storage global structure
 DEFSYSV,'!dls',exists=dlsexists
 if dlsexists eq 0 then DLSC_CREATEGLOBAL
 

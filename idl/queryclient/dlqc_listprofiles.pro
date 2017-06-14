@@ -1,8 +1,8 @@
 ;+
 ;
-; DLAC_LISTPROFILES
+; DLQC_LISTPROFILES
 ;
-; Retrieve the profiles supported by the storage manager service.
+; Retrieve the profiles supported by the query manager service.
 ;
 ; INPUTS:
 ;  token      Secure token obtained via dlac_login.
@@ -14,9 +14,9 @@
 ;              dictionary of the specific profile.
 ;
 ; USAGE:
-;  IDL>profiles = dlsc_listprofiles(token,profile)
+;  IDL>profiles = dlqc_listprofiles(token,profile)
 ;
-; By D. Nidever  June 2017, translated from storeClient.py
+; By D. Nidever  June 2017, translated from queryClient.py
 ;-
 
 function dlsc_listprofiles,token,profile,format
@@ -24,21 +24,29 @@ function dlsc_listprofiles,token,profile,format
 compile_opt idl2
 On_error,2
   
-; Initialize the DL Storage global structure
-DEFSYSV,'!dls',exists=dlsexists
-if dlsexists eq 0 then DLSC_CREATEGLOBAL
+; Initialize the DL Query global structure
+DEFSYSV,'!dlq',exists=dlqexists
+if dlqexists eq 0 then DLQC_CREATEGLOBAL
 
 ; Not enough inputs
 if n_elements(token) eq 0 then message,'token not input'
 ; Defaults
 if n_elements(format) eq 0 then format='text'
 
-dburl = '/profiles?'
+dburl = !dlq.svc_url + '/profiles?jobid='+jobid
 if n_elements(profile) gt 0 then if profile ne 'None' and profile ne '' then $
   dburl += "profile="+profile+"&"
 dburl += "format="+format
 
-profiles = dlsc_getfromurl(dburl, token)
+profiles = ""
+ourl = obj_new('IDLnetURL')
+; Add the auth token to the request header.
+ourl->SetProperty,headers='Content-Type: text/ascii'
+ourl->SetProperty,headers='X-DL-AuthToken: '+token
+profiles = ourl->get(/string_array,url=dburl)
+ourl->GetProperty,response_code=status_code
+obj_destroy,ourl            ; destroy when we are done
+
 ; Parse json
 ;   on some system this throws errors, not sure why
 if strpos(profiles,'{') ne -1 then profiles = json_parse(profiles)

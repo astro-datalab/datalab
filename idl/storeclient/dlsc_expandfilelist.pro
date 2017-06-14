@@ -79,23 +79,23 @@ if not dlsc_hasmeta(name) then begin
 endif
    
 ; Make the service call to get a listing of the parent directory.
-url = !dls.def_service_url + "/ls?name=vos://"+dir+"&format=csv"
-stop
+url = !dls.svc_url + "/ls?name=vos://"+dir+"&format=csv"
 response = ""
 ourl = obj_new('IDLnetURL')
 ; Add the auth token to the request header.
-;headers = 'X-DL-AuthToken='+token
-;ourl->SetProperty,headers=headers
+headers = 'X-DL-AuthToken: '+token
+ourl->SetProperty,headers=headers
 response = ourl->get(/string_array,url=url)
 ourl->GetProperty,response_code=status_code
 obj_destroy,ourl   ; destroy when we are done
 
 ; Filter the directory contents list using the filename pattern.
-flist = strsplit(response,',')
+flist = strsplit(response,',',/extract)
 nflist = n_elements(flist)
 for i=0,nflist-1 do begin
   f = flist[i]
-  if strpos(f,pstr) gt -1 or f eq pstr then begin
+  ; need unix-like pattern matching with *, ?, etc. STRMATCH
+  if strmatch(f,pstr,/fold_case) or f eq pstr then begin
     if not keyword_set(full) then furi=f else $
       furi = uri + dir + '/' + f
     furi = repstr(furi,'///','//')

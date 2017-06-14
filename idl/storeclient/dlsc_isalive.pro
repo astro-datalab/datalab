@@ -23,7 +23,7 @@ On_error,2
 DEFSYSV,'!dls',exists=dlsexists
 if dlsexists eq 0 then DLSC_CREATEGLOBAL
   
-if n_elements(svc_url) eq 0 then svc_url=!dls.def_service_url
+if n_elements(svc_url) eq 0 then svc_url=!dls.svc_url
 
 response = 'None'
 ourl = obj_new('IDLnetURL')

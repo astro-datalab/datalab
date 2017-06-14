@@ -42,15 +42,16 @@ endif else begin
   nflist = n_elements(flist)
   for i=0,nflist-1 do begin
     f = flist[i]
-    url = !dls.def_service_url + "/ls?name=vos://"+f+"&format="+format
+    url = !dls.svc_url + "/ls?name=vos://"+f+"&format="+format 
     response = ""
     ourl = obj_new('IDLnetURL')
     ; Add the auth token to the request header.
-    headers = 'X-DL-AuthToken='+token
+    headers = 'X-DL-AuthToken: '+token
     ourl->SetProperty,headers=headers
     response = ourl->get(/string_array,url=url)
     ourl->GetProperty,response_code=status_code
-    obj_destroy,ourl   ; destroy when we are done
+    obj_destroy,ourl            ; destroy when we are done
+
     if n_elements(results) eq 0 then results=response else results=[results,response]
    endfor
    response = strjoin(results,'\n')

@@ -554,7 +554,6 @@ def getFromURL(path, token):
         resp = requests.get("%s%s" % (DEF_SERVICE_URL, path), headers = {"X-DL-AuthToken": token})
     except Exception as e:
         raise storeClientError(str(e))
-        #raise storeClientError(str(e))
     return resp
 
 

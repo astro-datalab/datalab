@@ -12,6 +12,7 @@ pro dlqc_createglobal
 compile_opt idl2
 On_error,2
 
+VERSION = '20170614'  ; yyyymmdd
 DEF_SERVICE_URL = "https://dlsvcs.datalab.noao.edu/query"
 PROFILE = "default"
 DEBUG = 0
@@ -23,7 +24,9 @@ if exists eq 1 then return
 ; Initialize the DL Query global structure
 dlq = {svc_url: DEF_SERVICE_URL,$	        ; service URL
        svc_profile: PROFILE,$                   ; service prfile
-       debug: DEBUG,$                           ; interface debug flag
+       timeout_request: TIMEOUT_REQUEST,$
+       version: VERSION,$
+       debug: DEBUG,$           ; interface debug flag
        def_service_url: DEF_SERVICE_URL,$
        def_service_profile: PROFILE}
 DEFSYSV, '!dlq', dlq

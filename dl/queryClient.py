@@ -503,7 +503,7 @@ def list_profiles(token, profile=None, format='text'):
     dburl += "format=%s" % format
 
     r = requests.get(dburl, headers=headers)
-    profiles = r.content.decode()
+    profiles = r.content.decode('utf-8')
     if '{' in profiles:
         #profiles = json.load(StringIO(profiles))
         profiles = json.loads(profiles)

@@ -78,14 +78,14 @@ for i=0,nfiles-1 do begin
     continue 
   endif
 
-  url = !dls.svc_url + "/put?name="+f
+  url1 = !dls.svc_url + "/put?name="+nm
   r = ""
   ourl = obj_new('IDLnetURL')
   ourl->SetProperty,headers=headers
-  r = ourl->get(/string_array,url=url)
+  url2 = ourl->get(/string_array,url=url1)
   ourl->GetProperty,response_code=status_code
   obj_destroy,ourl            ; destroy when we are done
-
+  
   ; Cannot upload directly to a container
   ; if r.status_code == 500 and r.content == "Data cannot be uploaded to a
   ; container":
@@ -100,23 +100,61 @@ for i=0,nfiles-1 do begin
     url2 = ourl->get(/string_array,url=url1)
     ourl->GetProperty,response_code=status_code
     obj_destroy,ourl            ; destroy when we are done
-    
-    if keyword_set(verbose) then print,'('+strtrim(fnum,2)+' / '+strtrim(nfiles,2)+' ) '+f+' -> '
-
-    response = ""
-    ourl = obj_new('IDLnetURL')
-    ourl->SetProperty,headers='Content-type: application/octet-stream'
-    ourl->SetProperty,headers=headers
-    response = ourl->put(f,url=url2)
-    ourl->GetProperty,response_code=status_code
-    obj_destroy,ourl            ; destroy when we are done
   endif
+    
+  if keyword_set(verbose) then $
+     print,'('+strtrim(fnum,2)+' / '+strtrim(nfiles,2)+' ) '+f+' -> ',format='(A,$)'
+     ; add $ to format string to suppres newline
+  
+  ; Use SOCKET for PUT call
+  urlstr = urlparse(url2)
+  server = urlstr.host
+  port = urlstr.port
+  UserAgentString= "IDL "+!version.release+' on '+!VERSION.OS+'/'+!VERSION.ARCH
+  finfo = file_info(f)
+  socket, unit, urlstr.host,  long(urlstr.port), /get_lun,/swap_if_little_endian, $
+          connect_timeout=timeout,read_timeout=timeout
+  printf,unit,'PUT /'+urlstr.path+' HTTP/1.1'
+  printf,unit,'Host: dldb1.sdm.noao.edu'
+  printf,unit,'User-Agent: '+ UserAgentString
+  printf,unit,'Connection: close'
+  ;printf,unit,'Keep-Alive: 300'
+  ;printf,unit,'Connection: keep-alive'
+  printf,unit,'Content-Type: application/octet-stream'
+  printf,unit,'Content-Length: '+strtrim(finfo.size,2)
+  printf,unit,'X-DL-AuthToken: '+token
+  printf,unit,''    ; need blank line b/w header and content
+  ; Load the data and write to socket
+  openr, runit, f, /get_lun
+  aaa = bytarr(finfo.size,/nozero)
+  readu, runit, aaa
+  writeu, unit, aaa
+  free_lun, runit
+  ; Now read the response header
+  line = ' '
+  undefine,response_header
+  while(line ne '') do begin
+    readf,unit,line
+    push,response_header,line
+  endwhile
+  free_lun, unit
+  close,unit
+
+  ; IDLnetURL PUT is currently causing segmentation faults
+  ;  Using SOCKET for now.
+  ;response = ""
+  ;ourl = obj_new('IDLnetURL')
+  ;ourl->SetProperty,headers='Content-type: application/octet-stream'
+  ;ourl->SetProperty,headers=headers
+  ;response = ourl->put(f,url=url2)
+  ;ourl->GetProperty,response_code=status_code
+  ;obj_destroy,ourl            ; destroy when we are done
 
   if keyword_set(verbose) then print,nm
                 
   fnum += 1
 endfor
 
-return,'OK'
+return,''
 
 end

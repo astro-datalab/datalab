@@ -44,7 +44,7 @@ free_lun,unit
 if strmid(name,0,6) eq 'vos://' then nm=name else nm='vos://'+name
 
 ; Put the temp file to the VOSpace.
-res = dlsc_put(token, fr=tfd, to=nm, verbose=0)
+res = dlsc_put(token, tfd, nm, verbose=0)
 
 ; Delete the temporary file
 file_delete,tfd,/allow

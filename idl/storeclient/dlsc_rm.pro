@@ -34,7 +34,7 @@ if n_elements(name) eq 0 then message,'name not input'
 if n_elements(verbose) eq 0 then verbose=0
 
 ; Patch the names with the URI prefix if needed.
-if strmid(fr,0,6) eq 'vos://' then nm=name else nm='vos://'+name
+if strmid(name,0,6) eq 'vos://' then nm=name else nm='vos://'+name
 if nm eq 'vos://' or nm eq 'vos://tmp' or nm eq 'vos://public' then $
    return,'Error: operation not permitted'
 
@@ -42,7 +42,7 @@ if nm eq 'vos://' or nm eq 'vos://tmp' or nm eq 'vos://public' then $
 ; If the 'from' string has no metacharacters we're copying a single file,
 ; otherwise expand the file list on the and process the matches
 ; individually.
-if not dlsc_hasmeta(fr) then begin
+if not dlsc_hasmeta(nm) then begin
   r = dlsc_getfromurl("/rm?file="+nm, token)
   return,r
 endif else begin

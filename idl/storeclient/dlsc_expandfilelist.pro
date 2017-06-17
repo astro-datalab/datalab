@@ -58,7 +58,7 @@ endif
 
 if (name ne '' and dlsc_hasmeta(name)) then pstr=name else pstr='*'
 
-if dir ne '' then begin
+if n_elements(dir) gt 0 then begin
   if dir eq "/" and name ne '' then begin
     dir = dir + name
   endif else begin

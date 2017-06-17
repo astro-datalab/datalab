@@ -31,9 +31,9 @@ if n_elements(token) eq 0 then message,'Token not input'
 if n_elements(name) eq 0 then message,'name not input'
 
 ; Patch the names with the URI prefix if needed.
-if strmid(fr,0,6) eq 'vos://' then nm=name else nm='vos://'+name
+if strmid(name,0,6) eq 'vos://' then nm=name else nm='vos://'+name
 
-r = dlsc_getfromurl("/mkdir?file="+nm, token)
+r = dlsc_getfromurl("/mkdir?dir="+nm, token)
 
 return,'OK'
 

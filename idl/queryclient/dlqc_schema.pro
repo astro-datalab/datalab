@@ -7,10 +7,12 @@
 ; INPUTS:
 ;  value      The database schema value to look up.  The input value should
 ;               be in the following format <catalog>.<table>.<column>.  Not
-;               all levels must be specified.
-;  format     The output format.  Only 'text' for now.
-;  profile    The name of the profile to use. The list of available ones can be
+;               all levels must be specified.  Input an empty string
+;               to see all the catalogs.
+;  =format    The output format.  Only 'text' for now.
+;  =profile   The name of the profile to use. The list of available ones can be
 ;               retrieved from the service (see function dlqc_list_profiles().
+;               The default is 'default'.
 ;
 ; OUTPUTS:
 ;  schema     The schema information for the particular input value.
@@ -21,7 +23,7 @@
 ; By D. Nidever   June 2017, translated from queryClient.py
 ;-
  
-function dlqc_schema,value,format,profile
+function dlqc_schema,value,format=format,profile=profile
 
 compile_opt idl2
 On_error,2
@@ -32,8 +34,9 @@ if dlqexists eq 0 then DLQC_CREATEGLOBAL
 
 ; Not enough inputs
 if n_elements(value) eq 0 then message,'value not input'
-if n_elements(format) eq 0 then message,'format not input'
-if n_elements(profile) eq 0 then message,'profile not input'
+; Defaults
+if n_elements(format) eq 0 then format='text'
+if n_elements(profile) eq 0 then profile='default'
 
 dburl = !dlq.svc_url + '/schema?value='+value
 dburl += '&format='+strtrim(format,2)

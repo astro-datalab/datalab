@@ -31,7 +31,7 @@ if n_elements(token) eq 0 then message,'Token not input'
 if n_elements(name) eq 0 then message,'name not input'
 
 ; Patch the names with the URI prefix if needed.
-if strmid(fr,0,6) eq 'vos://' then nm=name else nm='vos://'+name
+if strmid(name,0,6) eq 'vos://' then nm=name else nm='vos://'+name
 if nm eq 'vos://' or nm eq 'vos://tmp' or nm eq 'vos://public' then $
    return,'Error: operation not permitted'
 

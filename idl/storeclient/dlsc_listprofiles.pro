@@ -41,7 +41,8 @@ dburl += "format="+format
 profiles = dlsc_getfromurl(dburl, token)
 ; Parse json
 ;   on some system this throws errors, not sure why
-if strpos(profiles,'{') ne -1 then profiles = json_parse(profiles)
+dum = where(stregex(profiles,'{',/boolean) eq 1,njson)
+if njson gt 0 then profiles = json_parse(profiles)
 
 return,profiles
 

@@ -6,7 +6,8 @@
 ;
 ; INPUTS:
 ;  token      Authentication token (see function dlac_login()).
-;  table      The specific table to list (returns the schema).
+;  table      The specific table to list (returns the schema).  Use
+;               an empty string to see all tables.
 ;
 ; OUTPUTS:
 ;  listing    The list of tables in the user's MyDB or the schema of a specific table.

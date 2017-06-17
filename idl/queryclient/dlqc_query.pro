@@ -44,6 +44,36 @@ function dlqc_query,token,sql=sql,adql=adql,fmt=fmt,out=out,async=async,timeout=
 compile_opt idl2
 On_error,2
 
+; If the url object throws an error it will be caught here
+CATCH, errorStatus
+IF (errorStatus NE 0) THEN BEGIN
+   CATCH, /CANCEL
+ 
+   ; Get the properties that will tell us more about the error.
+   oUrl->GetProperty, RESPONSE_CODE=rspCode, $
+         RESPONSE_HEADER=rspHdr, RESPONSE_FILENAME=rspFn
+   ;PRINT, 'rspCode = ', rspCode
+   ;PRINT, 'rspHdr= ', rspHdr
+   ;PRINT, 'rspFn= ', rspFn
+   ;print, 'response=', response
+   
+   ; Destroy the url object
+   OBJ_DESTROY, oUrl
+
+   if rspCode gt 250 then MESSAGE, !ERROR_STATE.msg
+   
+   ; If no problem then return
+   if n_elements(response) gt 0 then return,'OK'
+
+   ; Display the error msg in a dialog and in the IDL output log
+   ;r = DIALOG_MESSAGE(!ERROR_STATE.msg, TITLE='URL Error', $
+   ;      /ERROR)
+   ;PRINT, !ERROR_STATE.msg
+   MESSAGE, !ERROR_STATE.msg
+   
+   RETURN,''
+ENDIF
+
 ; Initialize the DL Query global structure
 DEFSYSV,'!dlq',exists=dlqexists
 if dlqexists eq 0 then DLQC_CREATEGLOBAL
@@ -54,15 +84,17 @@ if n_elements(adql) eq 0 and n_elements(sql) eq 0 then message,'No query specifi
 ; Defaults
 if n_elements(async) eq 0 then async=0
 if n_elements(adql) eq 0 then adql=''
+if n_elements(fmt) eq 0 then fmt='csv'
 if n_elements(sql) eq 0 then sql=''
-if n_elements(out) eq 0 then out=''
+if n_elements(out) eq 0 then out='None'
 
 ; Set any requested timeout on the call.
 if n_elements(timeout) then dlqc_settimeout,timeout
 
 ; ADQL query
 if adql ne '' then begin
-  query = mg_urlquote(adql)
+  query = mg_urlquote(strtrim(adql,2),safe=' ')
+  query = repstr(query,' ','+')  ; convert spaced to +
   dburl = !dlq.svc_url + '/query?adql='+query+'&ofmt='+fmt
   dburl += '&out='+out+'&async='+(async ? "True" : "False")
   if strpos(query,'q3c_') ne -1 then $
@@ -72,7 +104,8 @@ if adql ne '' then begin
      
 ; SQL query   
 endif else begin
-  query = mg_urlquote(sql)
+  query = mg_urlquote(strtrim(sql,2),safe=' ')
+  query = repstr(query,' ','+')    ; convert spaced to +
   dburl = !dlq.svc_url + '/query?sql='+query+'&ofmt='+fmt
   dburl += '&out='+out+'&async='+(async ? "True" : "False")
 endelse

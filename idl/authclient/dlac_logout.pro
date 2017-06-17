@@ -5,7 +5,7 @@
 ; Log the user out of the Data Lab.
 ;
 ; INPUTS:
-;  None
+;  token      Secure token obtained via dlac_login.
 ;
 ; OUTPUTS:
 ;  Response   If logout was successful then 'OK' is returned,
@@ -17,7 +17,7 @@
 ; By D. Nidever   June 2017, translated from authClient.py
 ;-
  
-function dlac_logout
+function dlac_logout,token
 
 compile_opt idl2
 On_error,2

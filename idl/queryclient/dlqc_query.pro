@@ -130,7 +130,7 @@ obj_destroy,ourl
 if status_code ne 200 then message,response
 
 ; Output requested
-if out ne '' and not keyword_set(async) then begin
+if out ne '' and out ne 'None' and not keyword_set(async) then begin
   if strmid(out,0,7) eq 'file://' then ofile=strmid(out,7) else ofile=out
   if strmid(out,0,3) ne 'vos' and strmid(out,0,4) ne 'mydb' then begin
     openw,unit,/get_lun,ofile

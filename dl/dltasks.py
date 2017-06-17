@@ -35,7 +35,7 @@ try:
     import ConfigParser                         # Python 2
     from urllib import quote_plus               # Python 2
 except ImportError:
-    import configParse as ConfigParser          # Python 2
+    import configparser as ConfigParser          # Python 2
     from urllib.parse import quote_plus         # Python 3
 
 try:
@@ -46,10 +46,11 @@ except ImportError:
 import requests             # need to standarize on one library at some point
 
 # VOSpace imports
-import vos as vos
-from vos.fuse import FUSE
-from vos.__version__ import version
-from vos.vofs import VOFS
+#import vos as vos
+#from vos.fuse import FUSE
+#from vos.__version__ import version
+version = "2.2.0"                  # VOS version
+#from vos.vofs import VOFS
 DAEMON_TIMEOUT = 60                             # Mount timeout
 CAPS_DIR = "../caps"                            # Capability directory
 
@@ -146,6 +147,7 @@ class DataLab:
             self.config.add_section('login')
             self.config.set('login', 'status', 'loggedout')
             self.config.set('login', 'user', '')
+            self.config.set('login', 'authtoken', '')
             self.config.add_section('vospace')
             self.config.set('vospace', 'mount', '')
             self._write()
@@ -174,7 +176,7 @@ class DataLab:
     def _write(self):
         ''' Write out the configuration file to disk.
         '''
-        with open('%s/dl.conf' % self.home, 'wb') as configfile:
+        with open('%s/dl.conf' % self.home, 'w') as configfile:
             self.config.write(configfile)
 
 
@@ -240,8 +242,7 @@ class Task:
                 logLevel = logging.WARNING
         else:
             logLevel = logLevel
-        self.addLogger(logLevel, "/tmp/datalab.err")
-
+        self.addLogger(logLevel, "%s/.datalab/datalab.err" % os.path.expanduser('~'))
 
     def setOption(self, name, value):
         ''' Set a Task option.
@@ -443,7 +444,6 @@ class Logout(Task):
         else:
             token = getUserToken(self)
             user, uid, gid, hash = token.strip().split('.', 3)
-
             res = authClient.logout (token)
             if res != "OK":
                 print ("Error: %s" % res)
@@ -655,14 +655,14 @@ class Query2 (Task):
             elif self.out.value== '' or self.out.value is None:
                 print (res)                         # Return the results
         except Exception as e:
-            if not self.async.value and e.message is not None:
-                err = e.message
+            if not self.async.value and str(e) is not None:
+                err = str(e)
                 if err.find("Time-out") > 0:
                     print ("Error: Sync query timeout, try an async query")
                 else:
-                    print (e.message)
+                    print (str(e))
             else:
-                print (e.message)
+                print (str(e))
 
 
 class QueryStatus(Task):

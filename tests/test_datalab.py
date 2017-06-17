@@ -4,7 +4,7 @@
 # testclient.py
 # Python code to (unit) test datalab operations
 
-from dl import datalab as dl
+from dl import dltasks as dl
 import unittest
 
 def suite():
@@ -175,7 +175,7 @@ class ListTestCase(DataLabTestCase):
     Test getting a listing in XML format
     """
     resp = self.list.run()
-    assert 
+    #assert 
 
   def test_csv(self):
     """

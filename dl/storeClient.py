@@ -40,7 +40,8 @@ DEBUG = False
 class storeClientError(Exception):
     def __init__(self, message):
         self.message = message
-
+    def __str__(self):
+        return self.message
 
 def isAlive(svc_url=DEF_SERVICE_URL):
     """ Check whether the StorageManager service at the given URL is
@@ -49,7 +50,7 @@ def isAlive(svc_url=DEF_SERVICE_URL):
     """
     try:
         r = requests.get(svc_url, timeout=2)
-        output = r.content
+        output = r.content.decode('utf-8')
         status_code = r.status_code
     except Exception:
         return False
@@ -113,6 +114,7 @@ def get(token, fr, to, verbose = True):
                 total_length = (0 if clen is None else int(clen))
 
                 dl = 0
+                done = 0
                 with open(dlname, 'wb', 0) as fd:
                     for chunk in r.iter_content(chunk_size=1024):
                         dl += len (chunk)
@@ -218,8 +220,8 @@ def put(token, fr, to, verbose=True):
                 print ("%s" % nm)
 
         except Exception as e:
-            #raise storeClientError(e.message)
-            resp.append (e.message)
+            #raise storeClientError(str(e))
+            resp.append (str(e))
         else:
             resp.append ("OK")
 
@@ -271,7 +273,7 @@ def ln(token, fr, target):
     try:
         r = getFromURL("/ln?from=%s&to=%s" % (fr, target), token)
     except Exception:
-        raise storeClientError(r.content)
+        raise storeClientError(r.content.decode('utf-8'))
     else:
         return "OK"
 
@@ -319,7 +321,7 @@ def ls(token, name, format = 'csv'):
         for f in flist:
             url = DEF_SERVICE_URL + "/ls?name=vos://%s&format=%s" % (f, format)
             r = requests.get(url, headers={'X-DL-AuthToken': token})
-            results.append(r.content)
+            results.append(r.content.decode('utf-8'))
 
         return "\n".join(results)
 
@@ -334,7 +336,7 @@ def mkdir (token, name):
     try:
         r = getFromURL("/mkdir?dir=%s" % nm, token)
     except Exception:
-        raise storeClientError(r.content)
+        raise storeClientError(r.content.decode('utf-8'))
     else:
         return "OK"
         
@@ -430,12 +432,12 @@ def saveAs(token, data, name):
     import tempfile
 
     try:
-        with tempfile.NamedTemporaryFile(delete=False) as tfd:
+        with tempfile.NamedTemporaryFile(mode='w',delete=False) as tfd:
             tfd.write(str(data))
             tfd.flush()
             tfd.close()
     except Exception as e:
-        raise storeClientError(e.message)
+        raise storeClientError(str(e))
 
     # Patch the names with the URI prefix if needed.
     nm = (name if name.startswith("vos://") else ("vos://" + name))
@@ -456,7 +458,7 @@ def tag(token, name, tag):
     try:
         r = getFromURL("/tag?file=%s&tag=%s" % (name, tag), token)
     except Exception:
-        raise storeClientError (r.content)
+        raise storeClientError (r.content.decode('utf-8'))
     else:
         return "OK"
     
@@ -469,7 +471,7 @@ def create(token, name, type):
     try:
         r = getFromURL("/create?name=%s&type=%s" % (name, type), token)   
     except Exception:
-        raise storeClientError(r.content)
+        raise storeClientError(r.content.decode('utf-8'))
     else:
         return "OK"
 
@@ -533,7 +535,7 @@ def expandFileList(token, pattern, format, full=False):
 
     # Filter the directory contents list using the filename pattern.
     list = []
-    flist = r.content.split(',')
+    flist = r.content.decode('utf-8').split(',')
     for f in flist:
         if fnmatch.fnmatch(f, pstr) or f == pstr:
             furi = (f if not full else (uri + dir + "/" + f))
@@ -550,8 +552,8 @@ def expandFileList(token, pattern, format, full=False):
 def getFromURL(path, token):
     try:
         resp = requests.get("%s%s" % (DEF_SERVICE_URL, path), headers = {"X-DL-AuthToken": token})
-    except Exception, e:
-        raise storeClientError(e.message)
+    except Exception as e:
+        raise storeClientError(str(e))
     return resp
 
 
@@ -618,7 +620,7 @@ def list_profiles(token, profile = None, format = 'text'):
     dburl += "format=%s" % format
     
     r = getFromURL(dburl, token)
-    profiles = r.content
+    profiles = r.content.decode('utf-8')
     if '{' in profiles:
 #        profiles = json.load(StringIO(profiles))
         profiles = json.loads(profiles)

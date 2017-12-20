@@ -1,5 +1,7 @@
 """Legacy helpers for Data Lab. Most are deprecated."""
 
+from __future__ import print_function
+
 __authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
 __version__ = '20171211' # yyyymmdd
 
@@ -37,11 +39,11 @@ class Querist:
         
         Parameters
         ----------
-        username: str
+        username : str
             User name, will be supplied to :func:`authClient.login()`
             to obtain an authentication token. The default username is
             'anonymous', which obtains an anonymous access token from
-            :module:`authClient`.
+            :func:`authClient.login()`.
 
             Other user names will trigger a password prompt.
 
@@ -89,13 +91,13 @@ class Querist:
         if username == 'anonymous':
             token = authClient.login('anonymous','')
         else:
-#            print ("Enter password:")
+#            print("Enter password:")
             token = authClient.login(username,getpass.getpass(prompt='Enter password:'))
 
         if not authClient.isValidToken(token):
             raise Exception ("Invalid user name and/or password provided. Please try again.")
         else:
-            print ("Authentication successful.")
+            print("Authentication successful.")
             return token
 
         
@@ -117,6 +119,7 @@ class Querist:
             The query string (sql). Example:
             
             .. code-block:: python
+
                query = "SELECT ra,dec,g FROM ls_dr3.tractor_primary WHERE g != 'nan'"
 
             If None, and the async FIFO queue is not empty, this
@@ -126,12 +129,18 @@ class Querist:
         outfmt : str
             Desired output container type. The result of a query will
             be returned in this format. Possible values are:
-                'string' (default) -- A table as comma-separated string.
-                'array' -- Numpy array, with shape (ncols,nrows)
-                'array' -- Numpy structured / record array, with shape (ncols,), and column names.
-                'pandas' -- Pandas dataframe.
-                'table' -- Astropy.table Table object.
-                'votable' -- Astropy.io.votable. Note that this is much slower than e.g. 'pandas' or 'array'.
+
+            ``'string'`` (default) -- A table as comma-separated string.
+
+            ``'array'`` -- Numpy array, with shape (ncols,nrows)
+
+            ``'array'`` -- Numpy structured / record array, with shape (ncols,), and column names.
+
+            ``'pandas'`` -- Pandas dataframe.
+
+            ``'table'`` -- Astropy.table Table object.
+
+            ``'votable'`` -- Astropy.io.votable. Note that this is much slower than e.g. 'pandas' or 'array'.
             
         preview : int
             Number of lines to preview on STDOUT. This does not count
@@ -140,13 +149,13 @@ class Querist:
             around. Default: 0
             
         async : bool
-            If False (default), submit queries in sync mode,
+            If ``False`` (default), submit queries in sync mode,
             i.e. expecting results immediately.
 
-            If True, submit query in async mode, storing the jobid in
-            a FIFO queue (first-in-first-out). A subsequent call
+            If ``True``, submit query in async mode, storing the jobid
+            in a FIFO queue (first-in-first-out). A subsequent call
             without arguments will attempt to retrieve the query
-            result. If the query status is not yet COMPLETED, the
+            result. If the query status is not yet ``COMPLETED``, the
             jobid is re-inserted into the queue (at old position), and
             the user is instructed to try later.
 
@@ -163,7 +172,7 @@ class Querist:
             try:
                 response = queryClient.query(self.token,sql=query,fmt=self.mapping[outfmt][0],async=async)  # submit the query, using your authentication token
             except Exception as e:
-                print (str(e))
+                print(str(e))
                 raise
 
         output = self._processOutput(response,outfmt,async,preview)
@@ -175,7 +184,7 @@ class Querist:
 
         """Clears the async job queue, i.e. they become unretrievable."""
         
-        print ("Clearing the queue of async queries.")
+        print("Clearing the queue of async queries.")
         self.openjobs.clear()
 
         
@@ -217,15 +226,15 @@ class Querist:
             if async is False:
                 s = StringIO(response)
                 output = self.mapping[outfmt][2](s)
-                print ("Returning %s" % self.mapping[outfmt][1])
+                print("Returning %s" % self.mapping[outfmt][1])
                 self._printPreview(response,preview)
                 return output
 
             # ... and async is True, means the response is an async query jobID; put in in the FIFO queue
             elif async is True:
                 self.openjobs.append((response,outfmt,preview))
-                print ("Asynchronous query submitted as jobid=%s" % response)
-                print ("Get results a bit later with: result = Q()")
+                print("Asynchronous query submitted as jobid=%s" % response)
+                print("Get results a bit later with: result = Q()")
                 return None
     
 
@@ -251,26 +260,26 @@ class Querist:
 
         try:
             jobid, outfmt, preview = self.openjobs.popleft()
-            print ("jobid, outfmt, preview", jobid, outfmt, preview)
+            print("jobid, outfmt, preview", jobid, outfmt, preview)
             
         except IndexError:
-            print ("There are no pending async jobs.")
+            print("There are no pending async jobs.")
             return None, None, None
 
         except Exception as e:
-            print (str(e))
+            print(str(e))
             raise
 
         else:
             status = queryClient.status(self.token,jobid)
             
             if status in ('QUEUED','EXECUTING'):
-                print ("Async query job %s is currently %s. Please check a bit later with: result=Q()" % (jobid,status))
+                print("Async query job %s is currently %s. Please check a bit later with: result=Q()" % (jobid,status))
                 self.openjobs.appendleft((jobid,outfmt,preview))  # putting back in queue (from left, i.e. old position)
                 return None, None, None
 
             elif status == 'COMPLETED':
-                print ("Async query job %s is COMPLETED. Attempting to retrieve results." % jobid)
+                print("Async query job %s is COMPLETED. Attempting to retrieve results." % jobid)
                 response = queryClient.results(self.token,jobid)
                 return response, outfmt, preview
 
@@ -300,8 +309,8 @@ class Querist:
         
         if response is not None:
             if preview > 0: # TODO: take a (large enough) heading sub-string of response, and count lines on that)
-                print ("RESULT PREVIEW (%d rows)" % preview)
-                print (response[:response.replace('\n', '|', preview).find('\n')]) # print the response preview
+                print("RESULT PREVIEW (%d rows)" % preview)
+                print(response[:response.replace('\n', '|', preview).find('\n')]) # print the response preview
 
                 
     def printMapping(self):
@@ -321,9 +330,9 @@ class Querist:
         length = max([len(s) for s in self.mapping.keys()]) + 1 # max length of any outfmt string, plus one
         fmt = "%%%ds   %%s" % length
         title = fmt % ("'outfmt' arg","Returned output")  # mini table header
-        print (title)
-        print ('-'*len(title))
+        print(title)
+        print('-'*len(title))
         for k,v in self.mapping.items():
-            print (fmt % (k,v[1]))
+            print(fmt % (k,v[1]))
 
     output_formats = property(printMapping)

@@ -3,15 +3,15 @@
 # std lib
 from __future__ import print_function
 
+__authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
+__version__ = '20171219' # yyyymmdd
+
 # 3rd party
 import numpy as np
 import pylab as plt
 
 # own
-from ..helpers.cluster import *
-
-__authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20171211' # yyyymmdd
+from helpers.cluster import constructOutlines
 
 
 def plotSkymapScatter(x,y,c=None,clusterlabels=None,s=3,plot='both',xlabel='RA',ylabel='Dec',clabel='',title='',projection='aitoff',**kwargs):

@@ -3,11 +3,11 @@
 # std lib
 from __future__ import print_function
 
+__authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
+__version__ = '20171219' # yyyymmdd
+
 # 3rd party
 import numpy as np
-
-__authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20171211' # yyyymmdd
 
 
 def findClusters(x,y,method='MiniBatchKMeans',**kwargs):  # x,y can be for instance ra,dec

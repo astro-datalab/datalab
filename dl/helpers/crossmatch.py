@@ -1,13 +1,14 @@
 """Data Lab helpers for (local) positional cross-matching."""
 
 from __future__ import print_function
+
+__authors__ = 'Robert Nikutta <nikutta@noao.edu>, NOAO Data Lab Team <datalab@noao.edu>'
+__version__ = '20171219'
+
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 import numpy as np
 import pylab as plt
-
-__authors__ = 'Robert Nikutta <nikutta@noao.edu>, NOAO Data Lab Team <datalab@noao.edu>'
-__version__ = '20171207'
 
 
 def xmatch(ra1,dec1,ra2,dec2,maxdist=None,units='deg',method='astropy',**kwargs):
@@ -39,17 +40,15 @@ def xmatch(ra1,dec1,ra2,dec2,maxdist=None,units='deg',method='astropy',**kwargs)
         Currently only astropy's :func:`match_to_catalog_sky()` method
         is supported, i.e. the default 'astropy'.
 
-    Optional keyword arguments
-    --------------------------
-    For method='astropy':
-
+    Other Parameters
+    ----------------
     nthneighbor : int, optional
-        Which closest neighbor to search for.  Typically ``1`` is
-        desired here, as that is correct for matching one set of
-        coordinates to another. The next likely use case is ``2``, for
-        matching a coordinate catalog against *itself* (``1`` is
-        inappropriate because each point will find itself as the
-        closest match).
+        If ``method='astropy'``. Which closest neighbor to search for.
+        Typically ``1`` is desired here, as that is correct for
+        matching one set of coordinates to another. The next likely
+        use case is ``2``, for matching a coordinate catalog against
+        *itself* (``1`` is inappropriate because each point will find
+        itself as the closest match).
 
     Returns
     -------
@@ -69,13 +68,14 @@ def xmatch(ra1,dec1,ra2,dec2,maxdist=None,units='deg',method='astropy',**kwargs)
         If `maxdist` was not `None` but a number instead, then
         'dist2d' only contains the objects matched up to the `maxdist`
         radius.
+
     """
 
     # turn coordinate sequences into 1d arrays
-    ra1 = arrayify(ra1)
-    dec1 = arrayify(dec1)
-    ra2 = arrayify(ra2)
-    dec2 = arrayify(dec2)
+    ra1 = _arrayify(ra1)
+    dec1 = _arrayify(dec1)
+    ra2 = _arrayify(ra2)
+    dec2 = _arrayify(dec2)
 
     if method == 'astropy':
         unit = getattr(u,units)
@@ -97,7 +97,7 @@ def xmatch(ra1,dec1,ra2,dec2,maxdist=None,units='deg',method='astropy',**kwargs)
     return idx, dist2d
 
 
-def arrayify(a):
+def _arrayify(a):
 
     """Turn seq into a 1-d numpy array."""
     

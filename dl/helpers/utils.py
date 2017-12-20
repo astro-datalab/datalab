@@ -2,6 +2,10 @@
 
 # std lib
 from __future__ import print_function
+
+__authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
+__version__ = '20171219' # yyyymmdd
+
 from functools import partial
 
 try:
@@ -17,9 +21,6 @@ from astropy.table import Table
 from astropy.io.votable import parse_single_table
 from astropy.coordinates import SkyCoord
 import astropy.units as u
-
-__authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20171211' # yyyymmdd
 
 
 def convert(inp,outfmt='pandas'):

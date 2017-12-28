@@ -21,11 +21,11 @@ Authentication to DataLab is based on a username and password.
 
 ## INSTALLATION
 
-You can retrieve the [gitlab](http://gitlab.noao.edu/mjg/datalab.git)
-distribution and install via:
+You can retrieve the datalab client from [gitlab](https://github.com/noao-datalab/datalab-client.git) and
+install via:
 
 ```
-git clone http://gitlab.noao.edu/mjg/datalab.git
+git clone https://github.com/noao-datalab/datalab-client.git
 cd datalab
 python setup.py install
 ```

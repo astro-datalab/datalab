@@ -56,7 +56,7 @@ DEF_USERS = {'anonymous': ANON_TOKEN,
              'dltest': TEST_TOKEN}
 
 # API debug flag.
-DEBUG = False
+DEBUG = True
 
 
 # ######################################################################
@@ -82,7 +82,7 @@ def login(user, password=None, debug=False, verbose=False):
         try:
             response = client.login(user, password, debug)
         except Exception as e:
-            response = e.message
+            response = str(e)
     return response
 
 
@@ -90,7 +90,7 @@ def isAlive(svc_url=DEF_SERVICE_URL):
     try:
         response = client.isAlive(svc_url)
     except Exception as e:
-        response = e.message
+        response = str(e)
     return response
 
 
@@ -106,7 +106,7 @@ def isValidToken(token):
         try:
             response = client.isValidToken(token)
         except Exception as e:
-            print (e.message)
+            print (str(e))
             return False
 
     return response
@@ -119,7 +119,7 @@ def isValidUser(user):
         try:
             response = client.isValidUser(user)
         except Exception as e:
-            response = e.message
+            response = str(e)
     return response
 
 
@@ -130,7 +130,7 @@ def isValidPassword(user, password):
         try:
             response = client.isValidPassword(user, password)
         except Exception as e:
-            response = e.message
+            response = str(e)
     return response
 
 
@@ -138,7 +138,7 @@ def hasAccess(user, resource):
     try:
         response = client.hasAccess(user, resource)
     except Exception as e:
-        response = e.message
+        response = str(e)
     return response
 
 
@@ -146,7 +146,7 @@ def isUserLoggedIn(user):
     try:
         response = client.isUserLoggedIn(user)
     except Exception as e:
-        response = e.message
+        response = str(e)
     return response
 
 
@@ -154,7 +154,7 @@ def isTokenLoggedIn(token):
     try:
         response = client.isTokenLoggedIn(token)
     except Exception as e:
-        response = e.message
+        response = str(e)
     return response
 
 
@@ -162,7 +162,7 @@ def logout(token):
     try:
         response = client.logout(token)
     except Exception as e:
-        response = e.message
+        response = str(e)
     return response
 
 
@@ -170,7 +170,7 @@ def passwordReset(token, username, password):
     try:
         response = client.passwordReset(token, username, password)
     except Exception as e:
-        response = e.message
+        response = str(e)
     return response
 
 
@@ -205,6 +205,9 @@ class dlAuthError (Exception):
 
     def __init__(self, message):
         self.message = message
+
+    def __str__(self, message):
+        return self.message
 
 
 #####################################
@@ -350,10 +353,12 @@ class authClient (object):
             response = urlopen(request,timeout=2)
             output = response.read()
             status_code = response.code
+
         except Exception:
             return False
         else:
             return (True if (output is not None and status_code == 200) else False)
+
 
 
     ###################################################
@@ -413,6 +418,7 @@ class authClient (object):
             if os.path.exists(tok_file):
                 tok_fd = open(tok_file, "r", 0)
                 o_tok = tok_fd.read(128)		# read the old token
+		tok_fd.close()
 
                 # Return a valid token, otherwise remove the file and obtain a
                 # new one.
@@ -424,7 +430,7 @@ class authClient (object):
                     return o_tok
                 else:
                     if self.debug:
-                        print ("removing token file '%s'" % tok_file)
+                        print ("removing invalid token file '%s'" % tok_file)
                     os.remove(tok_file)
 
         # Either the user is not logged in or the token is invalid, so
@@ -458,11 +464,11 @@ class authClient (object):
                     else:
                         raise dlAuthError("No password supplied")
                 elif not self.isValidPassword(username, password):
-                    raise dlAuthError("Invalid password")
+                    raise dlAuthError("Invalid password in login()")
                 else:
-                    raise dlAuthError(e.message)
+                    raise dlAuthError(str(e))
             else:
-                raise dlAuthError("Invalid username")
+                raise dlAuthError("Invalid username in login()")
 
         else:
             self.auth_token = response
@@ -510,7 +516,7 @@ class authClient (object):
                 raise Exception(r.text)
 
         except Exception as e:
-            raise dlAuthError(e.message)
+            raise dlAuthError(str(e))
         else:
             self.auth_token = None
             tok_file = self.home + '/id_token.' + self.username
@@ -540,11 +546,12 @@ class authClient (object):
             return "Error: Invalid user token"
 
         if self.auth_token is None:
-            return "Error: User is not currently logged in"
-        else:
-            user, uid, gid, hash = self.auth_token.strip().split('.', 3)
-            if user != 'root' and user != username:
-                return "Error: Invalid user or non-root token"
+            print ("Error: User '%s' is not currently logged in" % username)
+	    self.auth_token = token
+
+        user, uid, gid, hash = self.auth_token.strip().split('.', 3)
+        if user != 'root' and user != username:
+            return "Error: Invalid user or non-root token"
 
         try:
             # Add the auth token to the reauest header.
@@ -557,13 +564,15 @@ class authClient (object):
                 raise Exception(r.text)
 
         except Exception as e:
-            raise dlAuthError(e.message)
+            raise dlAuthError(str(e))
         else:
             # Update the saved user token.
+	    print ("Updating saved user token ....")
             if response is not None:
                 self.auth_token = response
                 tok_file = self.home + '/id_token.' + self.username
                 if os.path.exists(tok_file):
+		    print ("pwreset: removing token file " + tok_file)
                     os.remove(tok_file)
                 with open(tok_file, 'wb', 0) as tok_fd:
                     if self.debug:
@@ -601,7 +610,7 @@ class authClient (object):
         """
         url = self.svc_url + "/isValidToken?"
         args = urlencode({"token": token,
-                                 "profile": self.svc_profile})
+                          "profile": self.svc_profile})
         url = url + args
 
         if self.debug:
@@ -614,8 +623,8 @@ class authClient (object):
         """
         url = self.svc_url + "/isValidPassword?"
         args = urlencode({"user": user,
-                                 "password": password,
-                                 "profile": self.svc_profile})
+                          "password": password,
+                          "profile": self.svc_profile})
         url = url + args
 
         if self.debug:
@@ -709,7 +718,7 @@ class authClient (object):
                 raise Exception(r.text)
 
         except Exception as e:
-            return e.message
+            return str(e)
         else:
             return response
 

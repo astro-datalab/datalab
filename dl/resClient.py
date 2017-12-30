@@ -11,7 +11,7 @@ import os, time
 
 
 # The URL of the ResManager service to contact.  This may be changed by
-# passing a new URL into the set_service() method before beginning.
+# passing a new URL into the set_svc_url() method before beginning.
 
 #DEF_SERVICE_URL = "http://dlsvcs.datalab.noao.edu/res"
 DEF_SERVICE_URL = "http://dldev.datalab.noao.edu/res"
@@ -94,11 +94,11 @@ def deleteResource (resource):
 
 
 # Service methods
-def set_service (svc_url):
-    return client.set_service (svc_url)
+def set_svc_url (svc_url):
+    return client.set_svc_url (svc_url)
 
-def get_service ():
-    return client.set_service ()
+def get_svc_url ():
+    return client.set_svc_url ()
 
 def set_profile (profile):
     return client.set_profile (svc_url)
@@ -145,7 +145,7 @@ class resClient (object):
         self.debug = DEBUG			# interface debug flag
     
 
-    def set_service (self, svc_url):
+    def set_svc_url (self, svc_url):
         """ Set the URL of the Resource Management Service to be used.
     
         Parameters
@@ -162,13 +162,13 @@ class resClient (object):
         .. code-block:: python
     
             from dl import resMgr
-            resMgr.client.set_service ("http://localhost:7001/")
+            resMgr.client.set_svc_url ("http://localhost:7001/")
         """
 
         self.svc_url = svc_url
 
 
-    def get_service (self):
+    def get_svc_url (self):
         """ Return the currently-used Resource Management Service URL.
     
         Parameters
@@ -185,7 +185,7 @@ class resClient (object):
         .. code-block:: python
     
             from dl import resMgr
-            service_url = resMgr.client.get_service ()
+            service_url = resMgr.client.get_svc_url ()
         """
 
         return self.svc_url

@@ -585,6 +585,32 @@ def set_svc_url(svc_url):
     DEF_SERVICE_URL = svc_url
 
 
+# GET_SVC_URL -- Get the service url to use
+#
+def get_svc_url():
+    """Get the query manager service URL.
+
+    Parameters
+    ----------
+        None
+
+    Returns
+    -------
+        Current Query Manager service URL
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        # get the service url
+        print (queryClient.get_scv_url())
+
+    """
+    global DEF_SERVICE_URL
+    return DEF_SERVICE_URL
+
+
 # PROFILES -- Get the profiles supported by the storage manager service
 #
 def list_profiles(token, profile = None, format = 'text'):
@@ -655,7 +681,7 @@ def set_profile(profile):
 
 # PROFILES -- Set the profile to be used
 #
-def get_profile(profile):
+def get_profile():
     """Get the profile
 
     Parameters

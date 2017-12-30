@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20170530'  # yyyymmdd
+__version__ = '20171229'  # yyyymmdd
 
 
 """ 
@@ -39,7 +39,7 @@ TEST_TOKEN = "dltest.99998.99998.test_access"
 
 
 # The URL of the AuthManager service to contact.  This may be changed by
-# passing a new URL into the set_service() method before beginning.
+# passing a new URL into the set_svc_url() method before beginning.
 
 DEF_SERVICE_URL = "https://dlsvcs.datalab.noao.edu/auth"
 
@@ -175,12 +175,12 @@ def passwordReset(token, username, password):
 
 
 # Standard Service Methods
-def set_service(svc_url):
-    return client.set_service(svc_url)
+def set_svc_url(svc_url):
+    return client.set_svc_url(svc_url)
 
 
-def get_service():
-    return client.get_service()
+def get_svc_url():
+    return client.get_svc_url()
 
 
 def set_profile(profile):
@@ -191,8 +191,8 @@ def get_profile():
     return client.get_profile()
 
 
-def list_profiles(token):
-    return client.list_profiles(token)
+def list_profiles(token, profile=None, format='text'):
+    return client.list_profiles(token, profile, format)
 
 
 # ###################################
@@ -233,7 +233,7 @@ class authClient (object):
 
         self.debug = DEBUG			# interface debug flag
 
-    def set_service(self, svc_url):
+    def set_svc_url(self, svc_url):
         """ Set the URL of the Authentication Service to be used.
 
         Parameters
@@ -250,12 +250,12 @@ class authClient (object):
         .. code-block:: python
 
             from dl import authMgr
-            authMgr.client.set_service ("http://localhost:7001/")
+            authMgr.client.set_svc_url ("http://localhost:7001/")
         """
 
         self.svc_url = svc_url
 
-    def get_service(self):
+    def get_svc_url(self):
         """ Return the currently-used Authentication Service URL.
 
         Parameters
@@ -272,7 +272,7 @@ class authClient (object):
         .. code-block:: python
 
             from dl import authMgr
-            service_url = authMgr.client.get_service ()
+            service_url = authMgr.client.get_svc_url ()
         """
 
         return self.svc_url
@@ -321,7 +321,7 @@ class authClient (object):
 
         return self.svc_profile
 
-    def list_profiles(self, token):
+    def list_profiles(self, token, profile=None, format='text'):
         """ List the service profiles which can be accessed by the user.
 
         Parameters
@@ -338,7 +338,7 @@ class authClient (object):
         .. code-block:: python
 
             from dl import authMgr
-            profiles = authMgr.client.list_profiles (token)
+            profiles = authMgr.client.list_profiles (token, profile, format)
         """
 
         pass
@@ -587,17 +587,17 @@ class authClient (object):
         return response
 
 
-    def hasAccess(self, user, resource):
-        """  See whether the user has access to the named Resource.  Returns
+    def hasAccess(self, token, resource):
+        """  See whether the token has access to the named Resource.  Returns
              True if the user owns the Resource, or if the Resource grants
-             group permissions to a Group to which the user belongs.
+             group permissions to a Group to which the token belongs.
         """
         # Either the user is not logged in or the token is invalid, so
         # make a service call to get a new token.
         url = self.svc_url + "/hasAccess?"
-        args = urlencode({"user": user,
-                                 "resource": resource,
-                                 "profile": self.svc_profile})
+        args = urlencode({"user": token,
+                          "resource": resource,
+                          "profile": self.svc_profile})
         url = url + args
 
         if self.debug:

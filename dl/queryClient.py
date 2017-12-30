@@ -540,7 +540,7 @@ def set_profile(profile):
 
 # GET_PROFILES -- Set the profile to be used
 #
-def get_profile(profile):
+def get_profile():
     """Get the profile
 
     Parameters

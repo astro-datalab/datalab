@@ -106,8 +106,8 @@ def set_profile (profile):
 def get_profile ():
     return client.get_profile ()
 
-def list_profiles (token):
-    return client.list_profiles (token)
+def list_profiles (token, profile=None, format='text'):
+    return client.list_profiles (token, profile, format)
 
 
 
@@ -237,7 +237,7 @@ class resClient (object):
         return self.svc_profile
 
 
-    def list_profiles (self):
+    def list_profiles (self, token, profile=None, format='text'):
 
         """ List the service profiles which can be accessed by the user.
     
@@ -250,7 +250,7 @@ class resClient (object):
         .. code-block:: python
     
             from dl import resMgr
-            profiles = resMgr.client.list_profiles ()
+            profiles = resMgr.client.list_profiles (token, profile, format)
         """
 
         pass

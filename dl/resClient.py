@@ -6,6 +6,8 @@
 """ Client methods for the Data Lab Resource Management Service.
 """
 
+from __future__ import print_function
+
 import requests
 import os, time
 
@@ -41,7 +43,7 @@ DEBUG = False
 def createUser (username, password, email, name, institute):
     try:
         resp = client.createUser (username, password, email, name, institute)
-    except dlResError, e:
+    except dlResError as e:
         resp = str (e.message)
 
     return resp
@@ -135,14 +137,14 @@ class resClient (object):
     def __init__ (self):
         """ Initialize the Resource Manager client. """
 
-        self.svc_url = DEF_SERVICE_URL	        # service URL
+        self.svc_url = DEF_SERVICE_URL          # service URL
         self.svc_profile = DEF_SERVICE_PROFILE  # service prfile
         self.auth_token = None
 
         # Get the $HOME/.datalab directory.
         self.home = '%s/.datalab' % os.path.expanduser('~')
 
-        self.debug = DEBUG			# interface debug flag
+        self.debug = DEBUG                      # interface debug flag
     
 
     def set_svc_url (self, svc_url):
@@ -294,14 +296,14 @@ class resClient (object):
             response = r.text
 
             if self.debug:
-                print 'resp = ' + response
-                print 'code = ' + str(r.status_code)
+                print ('resp = ' + response)
+                print ('code = ' + str(r.status_code))
             if r.status_code != 200:
                 raise Exception (r.text)
 
         except Exception as e:
             raise dlResError ("Error creating user '" + 
-		username + "' : " + e.message)
+                  username + "' : " + e.message)
         else:
             pass
 
@@ -337,7 +339,7 @@ class resClient (object):
         """
         try:
             if self.debug:
-                print "url = '" + url + "'"
+                print ("url = '" + url + "'")
 
             # Add the auth token to the reauest header.
             headers = {'X-DL-AuthToken': token}
@@ -345,7 +347,7 @@ class resClient (object):
             response = r.text
 
             if r.status_code == 302:
-		return "OK"
+                return "OK"
             elif r.status_code != 200:
                 raise Exception (r.text)
 
@@ -358,42 +360,42 @@ class resClient (object):
     def passwordReset (self, token, user, password):
         """ Change a user's password.
         """
-	print ('passwordReset:  token = %s' % token)
-	print ('passwordReset:  user = %s  pw = %s' % (user, password))
+        print ('passwordReset:  token = %s' % token)
+        print ('passwordReset:  user = %s  pw = %s' % (user, password))
 
         url = self.svc_url + ("/pwReset?user=%s&password=%s" % (user, password))
 
-	try:
+        try:
             resp = self.svcGet (token, url)
-	    print (resp)
-	except Exception as e:
-	    raise Exception (e.message)
-	else:
-	    # Service call was successful.
-	    print ("passwordReset:  success, removing local token file")
+            print (resp)
+        except Exception as e:
+            raise Exception (e.message)
+        else:
+            # Service call was successful.
+            print ("passwordReset:  success, removing local token file")
             tok_file = ('%s/id_token.%s' % (self.home, user))
-	    if os.path.exists (tok_file):
-	        os.remove(tok_file)
+            if os.path.exists (tok_file):
+                os.remove(tok_file)
 
-    
+
     def sendPasswordLink (self, token, user):
         """ Send a password-reset link to the user.
         """
         url = self.svc_url + ("/pwResetLink?user=%s" % user)
 
-	try:
+        try:
             # Add the auth token to the reauest header.
             headers = {'X-DL-AuthToken': token}
             r = requests.get(url, headers=headers)
             response = r.text
 
             if r.status_code == 200:
-		return "OK"
-	    else:
+                return "OK"
+            else:
                 raise Exception (r.text)
 
-	except Exception as e:
-	    raise Exception (e.message)
+        except Exception as e:
+            raise Exception (e.message)
 
 
     def listFields (self):
@@ -401,22 +403,22 @@ class resClient (object):
         """
         url = self.svc_url + ("/listFields")
 
-	try:
+        try:
             return (self.svcGet (self.auth_token, url))
-	except Exception as e:
-	    raise Exception (e.message)
+        except Exception as e:
+            raise Exception (e.message)
 
-	pass
+        pass
 
     def approveUser (self, token, user):
         """ Approve a pending user request
         """
         url = self.svc_url + "/approveUser?approve=True&user=" + user
 
-	try:
+        try:
             return (self.svcGet (token, url))
-	except Exception as e:
-	    raise Exception (e.message)
+        except Exception as e:
+            raise Exception (e.message)
 
 
     def disapproveUser (self, token, user):
@@ -424,10 +426,10 @@ class resClient (object):
         """
         url = self.svc_url + "/approveUser?approve=False&user=" + user
 
-	try:
+        try:
             return (self.svcGet (token, url))
-	except Exception as e:
-	    raise Exception (e.message)
+        except Exception as e:
+            raise Exception (e.message)
 
 
     def userRecord (self, token, user, value, format):
@@ -439,14 +441,14 @@ class resClient (object):
         url = self.svc_url + \
                 ("/userRecord?user=%s&value=%s&fmt=%s" % (user,value,format))
 
-	try:
+        try:
             resp = self.svcGet (token, url)
-	except Exception as e:
-	    raise Exception (e.message)
-	else:
-	    return resp
+        except Exception as e:
+            raise Exception (e.message)
+        else:
+            return resp
 
-	return "OK"
+        return "OK"
 
 
     def listPending (self, token, verbose=False):
@@ -454,30 +456,30 @@ class resClient (object):
         """
         url = self.svc_url + "/pending?verbose=" + str(verbose)
 
-	try:
+        try:
             resp = self.svcGet (token, url)
-	except Exception as e:
-	    raise Exception (e.message)
-	else:
-	    return resp
+        except Exception as e:
+            raise Exception (e.message)
+        else:
+            return resp
 
-	return "OK"
+        return "OK"
 
 
     def setField (self, token, user, field, value):
         """ Set a specific user record field
         """
         url = self.svc_url + "/setField?user=%s&field=%s&value=%s" % \
-			(user, field, value)
+                       (user, field, value)
 
-	try:
+        try:
             resp = self.svcGet (token, url)
-	except Exception as e:
-	    raise Exception (e.message)
-	else:
-	    return resp
+        except Exception as e:
+            raise Exception (e.message)
+        else:
+            return resp
 
-	return "OK"
+        return "OK"
 
 
 
@@ -491,7 +493,7 @@ class resClient (object):
         """
         try:
             if self.debug:
-                print "url = '" + url + "'"
+                print ("url = '" + url + "'")
 
             # Add the auth token to the reauest header.
             headers = {'X-DL-AuthToken': token}
@@ -512,10 +514,10 @@ class resClient (object):
         """
         url = self.svc_url + "/approveUser?approve=True&user=" + user
 
-	try:
+        try:
             return (self.svcGet (token, url))
-	except Exception as e:
-	    raise Exception (e.message)
+        except Exception as e:
+            raise Exception (e.message)
 
 
     def disapproveUser (self, token, user):
@@ -523,10 +525,10 @@ class resClient (object):
         """
         url = self.svc_url + "/approveUser?approve=False&user=" + user
 
-	try:
+        try:
             return (self.svcGet (token, url))
-	except Exception as e:
-	    raise Exception (e.message)
+        except Exception as e:
+            raise Exception (e.message)
 
 
     def userRecord (self, token, user, value, format):
@@ -538,14 +540,14 @@ class resClient (object):
         url = self.svc_url + \
                 ("/userRecord?user=%s&value=%s&fmt=%s" % (user,value,format))
 
-	try:
+        try:
             resp = self.svcGet (token, url)
-	except Exception as e:
-	    raise Exception (e.message)
-	else:
-	    return resp
+        except Exception as e:
+            raise Exception (e.message)
+        else:
+            return resp
 
-	return "OK"
+        return "OK"
 
 
     def listPending (self, token, verbose=False):
@@ -553,30 +555,30 @@ class resClient (object):
         """
         url = self.svc_url + "/pending?verbose=" + str(verbose)
 
-	try:
+        try:
             resp = self.svcGet (token, url)
-	except Exception as e:
-	    raise Exception (e.message)
-	else:
-	    return resp
+        except Exception as e:
+            raise Exception (e.message)
+        else:
+            return resp
 
-	return "OK"
+        return "OK"
 
 
     def setField (self, token, user, field, value):
         """ Set a specific user record field
         """
         url = self.svc_url + "/setField?user=%s&field=%s&value=%s" % \
-			(user, field, value)
+                        (user, field, value)
 
-	try:
+        try:
             resp = self.svcGet (token, url)
-	except Exception as e:
-	    raise Exception (e.message)
-	else:
-	    return resp
+        except Exception as e:
+            raise Exception (e.message)
+        else:
+            return resp
 
-	return "OK"
+        return "OK"
 
 
     
@@ -594,7 +596,7 @@ class resClient (object):
                        "debug" : self.debug }
         try:
             if self.debug:
-                print "createGroup: " + name
+                print ("createGroup: " + name)
 
             # Add the auth token to the reauest header.
             headers = {'X-DL-AuthToken': self.auth_token}
@@ -648,7 +650,7 @@ class resClient (object):
                        "debug" : self.debug }
         try:
             if self.debug:
-                print "createResource: " + resource
+                print ("createResource: " + resource)
 
             # Add the auth token to the reauest header.
             headers = {'X-DL-AuthToken': self.auth_token}
@@ -723,7 +725,7 @@ class resClient (object):
                        "debug" : self.debug }
         try:
             if self.debug:
-                print "get" + what + ": url = '" + url + "'"
+                print ("get" + what + ": url = '" + url + "'")
 
             # Add the auth token to the reauest header.
             headers = {'X-DL-AuthToken': self.auth_token}
@@ -752,7 +754,7 @@ class resClient (object):
                        "debug" : self.debug }
         try:
             if self.debug:
-                print "set" + what + ": url = '" + url + "'"
+                print ("set" + what + ": url = '" + url + "'")
 
             # Add the auth token to the reauest header.
             headers = {'X-DL-AuthToken': self.auth_token}
@@ -777,7 +779,7 @@ class resClient (object):
 
         try:
             if self.debug:
-                print "delete" + what + ": url = '" + url + "'"
+                print ("delete" + what + ": url = '" + url + "'")
 
             # Add the auth token to the reauest header.
             headers = {'X-DL-AuthToken': token}

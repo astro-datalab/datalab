@@ -20,10 +20,10 @@ Import via
 """
 
 try:
-    from urllib import urlencode		        # Python 2
+    from urllib import urlencode                      # Python 2
     from urllib2 import urlopen, Request                # Python 2
 except ImportError:
-    from urllib.parse import urlencode		        # Python 3
+    from urllib.parse import urlencode                      # Python 3
     from urllib.request import urlopen, Request         # Python 3
 import requests
 import os
@@ -42,6 +42,7 @@ TEST_TOKEN = "dltest.99998.99998.test_access"
 # passing a new URL into the set_svc_url() method before beginning.
 
 DEF_SERVICE_URL = "https://dlsvcs.datalab.noao.edu/auth"
+DEF_SERVICE_URL = "http://dldev.datalab.noao.edu/auth"
 
 # The requested authentication "profile".  A profile refers to the specific
 # machines and services used by the AuthManager on the server.
@@ -223,15 +224,15 @@ class authClient (object):
     def __init__(self):
         """ Initialize the authorization client. """
 
-        self.svc_url = DEF_SERVICE_URL	        # service URL
+        self.svc_url = DEF_SERVICE_URL          # service URL
         self.svc_profile = DEF_SERVICE_PROFILE  # service prfile
-        self.username = ""			# default client logn user
-        self.auth_token = None			# default client logn token
+        self.username = ""                      # default client logn user
+        self.auth_token = None                  # default client logn token
 
         # Get the $HOME/.datalab directory.
         self.home = '%s/.datalab' % os.path.expanduser('~')
 
-        self.debug = DEBUG			# interface debug flag
+        self.debug = DEBUG                      # interface debug flag
 
     def set_svc_url(self, svc_url):
         """ Set the URL of the Authentication Service to be used.
@@ -417,12 +418,12 @@ class authClient (object):
         if password is None:
             if os.path.exists(tok_file):
                 tok_fd = open(tok_file, "r", 0)
-                o_tok = tok_fd.read(128)		# read the old token
-		tok_fd.close()
+                o_tok = tok_fd.read(128)                # read the old token
+                tok_fd.close()
 
                 # Return a valid token, otherwise remove the file and obtain a
                 # new one.
-                if o_tok.startswith(username + '.') and self.isValidToken(o_tok):
+                if o_tok.startswith(username+'.') and self.isValidToken(o_tok):
                     self.username = username
                     self.auth_token = o_tok
                     if self.debug:
@@ -547,7 +548,7 @@ class authClient (object):
 
         if self.auth_token is None:
             print ("Error: User '%s' is not currently logged in" % username)
-	    self.auth_token = token
+            self.auth_token = token
 
         user, uid, gid, hash = self.auth_token.strip().split('.', 3)
         if user != 'root' and user != username:
@@ -567,12 +568,12 @@ class authClient (object):
             raise dlAuthError(str(e))
         else:
             # Update the saved user token.
-	    print ("Updating saved user token ....")
+            print ("Updating saved user token ....")
             if response is not None:
                 self.auth_token = response
                 tok_file = self.home + '/id_token.' + self.username
                 if os.path.exists(tok_file):
-		    print ("pwreset: removing token file " + tok_file)
+                    print ("pwreset: removing token file " + tok_file)
                     os.remove(tok_file)
                 with open(tok_file, 'wb', 0) as tok_fd:
                     if self.debug:
@@ -634,7 +635,7 @@ class authClient (object):
             val = self.retBoolValue(url)
         except Exception:
             val = "False"
-	
+        
         return val
 
     def isValidUser(self, user):

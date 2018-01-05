@@ -57,7 +57,7 @@ DEF_USERS = {'anonymous': ANON_TOKEN,
              'dltest': TEST_TOKEN}
 
 # API debug flag.
-DEBUG = True
+DEBUG = False
 
 
 # ######################################################################

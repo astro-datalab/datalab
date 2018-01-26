@@ -50,7 +50,7 @@ def isAlive(svc_url=DEF_SERVICE_URL):
     """
     try:
         r = requests.get(svc_url, timeout=2)
-        output = r.content.decode('utf-8')
+        output = r.content
         status_code = r.status_code
     except Exception:
         return False
@@ -273,7 +273,7 @@ def ln(token, fr, target):
     try:
         r = getFromURL("/ln?from=%s&to=%s" % (fr, target), token)
     except Exception:
-        raise storeClientError(r.content.decode('utf-8'))
+        raise storeClientError(r.content)
     else:
         return "OK"
 
@@ -321,7 +321,7 @@ def ls(token, name, format = 'csv'):
         for f in flist:
             url = DEF_SERVICE_URL + "/ls?name=vos://%s&format=%s" % (f, format)
             r = requests.get(url, headers={'X-DL-AuthToken': token})
-            results.append(r.content.decode('utf-8'))
+            results.append(r.content)
 
         return "\n".join(results)
 
@@ -336,7 +336,7 @@ def mkdir (token, name):
     try:
         r = getFromURL("/mkdir?dir=%s" % nm, token)
     except Exception:
-        raise storeClientError(r.content.decode('utf-8'))
+        raise storeClientError(r.content)
     else:
         return "OK"
         
@@ -458,7 +458,7 @@ def tag(token, name, tag):
     try:
         r = getFromURL("/tag?file=%s&tag=%s" % (name, tag), token)
     except Exception:
-        raise storeClientError (r.content.decode('utf-8'))
+        raise storeClientError (r.content)
     else:
         return "OK"
     
@@ -471,7 +471,7 @@ def create(token, name, type):
     try:
         r = getFromURL("/create?name=%s&type=%s" % (name, type), token)   
     except Exception:
-        raise storeClientError(r.content.decode('utf-8'))
+        raise storeClientError(r.content)
     else:
         return "OK"
 
@@ -535,7 +535,7 @@ def expandFileList(token, pattern, format, full=False):
 
     # Filter the directory contents list using the filename pattern.
     list = []
-    flist = r.content.decode('utf-8').split(',')
+    flist = r.content.split(',')
     for f in flist:
         if fnmatch.fnmatch(f, pstr) or f == pstr:
             furi = (f if not full else (uri + dir + "/" + f))
@@ -585,6 +585,32 @@ def set_svc_url(svc_url):
     DEF_SERVICE_URL = svc_url
 
 
+# GET_SVC_URL -- Get the service url to use
+#
+def get_svc_url():
+    """Get the query manager service URL.
+
+    Parameters
+    ----------
+        None
+
+    Returns
+    -------
+        Current Query Manager service URL
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        # get the service url
+        print (queryClient.get_scv_url())
+
+    """
+    global DEF_SERVICE_URL
+    return DEF_SERVICE_URL
+
+
 # PROFILES -- Get the profiles supported by the storage manager service
 #
 def list_profiles(token, profile = None, format = 'text'):
@@ -620,7 +646,7 @@ def list_profiles(token, profile = None, format = 'text'):
     dburl += "format=%s" % format
     
     r = getFromURL(dburl, token)
-    profiles = r.content.decode('utf-8')
+    profiles = r.content
     if '{' in profiles:
 #        profiles = json.load(StringIO(profiles))
         profiles = json.loads(profiles)
@@ -655,7 +681,7 @@ def set_profile(profile):
 
 # PROFILES -- Set the profile to be used
 #
-def get_profile(profile):
+def get_profile():
     """Get the profile
 
     Parameters

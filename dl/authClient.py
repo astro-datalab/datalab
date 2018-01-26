@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20170530'  # yyyymmdd
+__version__ = '20171229'  # yyyymmdd
 
 
 """ 
@@ -20,10 +20,10 @@ Import via
 """
 
 try:
-    from urllib import urlencode		        # Python 2
+    from urllib import urlencode                      # Python 2
     from urllib2 import urlopen, Request                # Python 2
 except ImportError:
-    from urllib.parse import urlencode		        # Python 3
+    from urllib.parse import urlencode                      # Python 3
     from urllib.request import urlopen, Request         # Python 3
 import requests
 import os
@@ -39,9 +39,10 @@ TEST_TOKEN = "dltest.99998.99998.test_access"
 
 
 # The URL of the AuthManager service to contact.  This may be changed by
-# passing a new URL into the set_service() method before beginning.
+# passing a new URL into the set_svc_url() method before beginning.
 
 DEF_SERVICE_URL = "https://dlsvcs.datalab.noao.edu/auth"
+DEF_SERVICE_URL = "http://dldev.datalab.noao.edu/auth"
 
 # The requested authentication "profile".  A profile refers to the specific
 # machines and services used by the AuthManager on the server.
@@ -90,7 +91,7 @@ def isAlive(svc_url=DEF_SERVICE_URL):
     try:
         response = client.isAlive(svc_url)
     except Exception as e:
-        repsponse = str(e)
+        response = str(e)
     return response
 
 
@@ -175,12 +176,12 @@ def passwordReset(token, username, password):
 
 
 # Standard Service Methods
-def set_service(svc_url):
-    return client.set_service(svc_url)
+def set_svc_url(svc_url):
+    return client.set_svc_url(svc_url)
 
 
-def get_service():
-    return client.get_service()
+def get_svc_url():
+    return client.get_svc_url()
 
 
 def set_profile(profile):
@@ -191,8 +192,8 @@ def get_profile():
     return client.get_profile()
 
 
-def list_profiles(token):
-    return client.list_profiles(token)
+def list_profiles(token, profile=None, format='text'):
+    return client.list_profiles(token, profile, format)
 
 
 # ###################################
@@ -205,9 +206,10 @@ class dlAuthError (Exception):
 
     def __init__(self, message):
         self.message = message
-    def __str__(self):
+
+    def __str__(self, message):
         return self.message
-        
+
 
 #####################################
 #  Authentication client procedures
@@ -222,17 +224,17 @@ class authClient (object):
     def __init__(self):
         """ Initialize the authorization client. """
 
-        self.svc_url = DEF_SERVICE_URL	        # service URL
+        self.svc_url = DEF_SERVICE_URL          # service URL
         self.svc_profile = DEF_SERVICE_PROFILE  # service prfile
-        self.username = ""			# default client logn user
-        self.auth_token = None			# default client logn token
+        self.username = ""                      # default client logn user
+        self.auth_token = None                  # default client logn token
 
         # Get the $HOME/.datalab directory.
         self.home = '%s/.datalab' % os.path.expanduser('~')
 
-        self.debug = DEBUG			# interface debug flag
+        self.debug = DEBUG                      # interface debug flag
 
-    def set_service(self, svc_url):
+    def set_svc_url(self, svc_url):
         """ Set the URL of the Authentication Service to be used.
 
         Parameters
@@ -249,12 +251,12 @@ class authClient (object):
         .. code-block:: python
 
             from dl import authMgr
-            authMgr.client.set_service ("http://localhost:7001/")
+            authMgr.client.set_svc_url ("http://localhost:7001/")
         """
 
         self.svc_url = svc_url
 
-    def get_service(self):
+    def get_svc_url(self):
         """ Return the currently-used Authentication Service URL.
 
         Parameters
@@ -271,7 +273,7 @@ class authClient (object):
         .. code-block:: python
 
             from dl import authMgr
-            service_url = authMgr.client.get_service ()
+            service_url = authMgr.client.get_svc_url ()
         """
 
         return self.svc_url
@@ -320,7 +322,7 @@ class authClient (object):
 
         return self.svc_profile
 
-    def list_profiles(self, token):
+    def list_profiles(self, token, profile=None, format='text'):
         """ List the service profiles which can be accessed by the user.
 
         Parameters
@@ -337,7 +339,7 @@ class authClient (object):
         .. code-block:: python
 
             from dl import authMgr
-            profiles = authMgr.client.list_profiles (token)
+            profiles = authMgr.client.list_profiles (token, profile, format)
         """
 
         pass
@@ -352,10 +354,12 @@ class authClient (object):
             response = urlopen(request,timeout=2)
             output = response.read()
             status_code = response.code
+
         except Exception:
             return False
         else:
             return (True if (output is not None and status_code == 200) else False)
+
 
 
     ###################################################
@@ -413,12 +417,13 @@ class authClient (object):
 
         if password is None:
             if os.path.exists(tok_file):
-                tok_fd = open(tok_file, "r")
-                o_tok = tok_fd.read(128)		# read the old token
+                tok_fd = open(tok_file, "r", 0)
+                o_tok = tok_fd.read(128)                # read the old token
+                tok_fd.close()
 
                 # Return a valid token, otherwise remove the file and obtain a
                 # new one.
-                if o_tok.startswith(username + '.') and self.isValidToken(o_tok):
+                if o_tok.startswith(username+'.') and self.isValidToken(o_tok):
                     self.username = username
                     self.auth_token = o_tok
                     if self.debug:
@@ -426,7 +431,7 @@ class authClient (object):
                     return o_tok
                 else:
                     if self.debug:
-                        print ("removing token file '%s'" % tok_file)
+                        print ("removing invalid token file '%s'" % tok_file)
                     os.remove(tok_file)
 
         # Either the user is not logged in or the token is invalid, so
@@ -460,11 +465,11 @@ class authClient (object):
                     else:
                         raise dlAuthError("No password supplied")
                 elif not self.isValidPassword(username, password):
-                    raise dlAuthError("Invalid password")
+                    raise dlAuthError("Invalid password in login()")
                 else:
                     raise dlAuthError(str(e))
             else:
-                raise dlAuthError("Invalid username")
+                raise dlAuthError("Invalid username in login()")
 
         else:
             self.auth_token = response
@@ -473,7 +478,7 @@ class authClient (object):
         # Save the token.
         if os.access(self.home, os.W_OK):
             tok_file = '%s/id_token.%s' % (self.home, username)
-            with open(tok_file, 'w') as tok_fd:
+            with open(tok_file, 'wb', 0) as tok_fd:
                 if self.debug:
                     print ("login: writing new token for '%s'" % username)
                     print ("login: self.auth_token = '%s'" % str(self.auth_token))
@@ -482,7 +487,7 @@ class authClient (object):
 
                 tok_fd.write(self.auth_token)
                 tok_fd.close()
-                
+
         return self.auth_token
 
     def logout(self, token):
@@ -507,10 +512,10 @@ class authClient (object):
 
             r = requests.get(url, params=args, headers=headers)
             response = r.text
-            
+
             if r.status_code != 200:
                 raise Exception(r.text)
-            
+
         except Exception as e:
             raise dlAuthError(str(e))
         else:
@@ -518,7 +523,7 @@ class authClient (object):
             tok_file = self.home + '/id_token.' + self.username
             if os.path.exists(tok_file):
                 os.remove(tok_file)
-                
+
         return response
 
     def passwordReset(self, token, username, password):
@@ -542,11 +547,12 @@ class authClient (object):
             return "Error: Invalid user token"
 
         if self.auth_token is None:
-            return "Error: User is not currently logged in"
-        else:
-            user, uid, gid, hash = self.auth_token.strip().split('.', 3)
-            if user != 'root' and user != username:
-                return "Error: Invalid user or non-root token"
+            print ("Error: User '%s' is not currently logged in" % username)
+            self.auth_token = token
+
+        user, uid, gid, hash = self.auth_token.strip().split('.', 3)
+        if user != 'root' and user != username:
+            return "Error: Invalid user or non-root token"
 
         try:
             # Add the auth token to the reauest header.
@@ -562,12 +568,14 @@ class authClient (object):
             raise dlAuthError(str(e))
         else:
             # Update the saved user token.
+            print ("Updating saved user token ....")
             if response is not None:
                 self.auth_token = response
                 tok_file = self.home + '/id_token.' + self.username
                 if os.path.exists(tok_file):
+                    print ("pwreset: removing token file " + tok_file)
                     os.remove(tok_file)
-                with open(tok_file, 'w') as tok_fd:
+                with open(tok_file, 'wb', 0) as tok_fd:
                     if self.debug:
                         print ("pwreset: writing new token for '%s'" + username)
                         print ("pwreset: response = '%s'" + response)
@@ -580,17 +588,17 @@ class authClient (object):
         return response
 
 
-    def hasAccess(self, user, resource):
-        """  See whether the user has access to the named Resource.  Returns
+    def hasAccess(self, token, resource):
+        """  See whether the token has access to the named Resource.  Returns
              True if the user owns the Resource, or if the Resource grants
-             group permissions to a Group to which the user belongs.
+             group permissions to a Group to which the token belongs.
         """
         # Either the user is not logged in or the token is invalid, so
         # make a service call to get a new token.
         url = self.svc_url + "/hasAccess?"
-        args = urlencode({"user": user,
-                                 "resource": resource,
-                                 "profile": self.svc_profile})
+        args = urlencode({"user": token,
+                          "resource": resource,
+                          "profile": self.svc_profile})
         url = url + args
 
         if self.debug:
@@ -603,7 +611,7 @@ class authClient (object):
         """
         url = self.svc_url + "/isValidToken?"
         args = urlencode({"token": token,
-                                 "profile": self.svc_profile})
+                          "profile": self.svc_profile})
         url = url + args
 
         if self.debug:
@@ -616,8 +624,8 @@ class authClient (object):
         """
         url = self.svc_url + "/isValidPassword?"
         args = urlencode({"user": user,
-                                 "password": password,
-                                 "profile": self.svc_profile})
+                          "password": password,
+                          "profile": self.svc_profile})
         url = url + args
 
         if self.debug:
@@ -627,7 +635,7 @@ class authClient (object):
             val = self.retBoolValue(url)
         except Exception:
             val = "False"
-	
+        
         return val
 
     def isValidUser(self, user):

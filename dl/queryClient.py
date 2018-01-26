@@ -34,19 +34,21 @@ import json
 
 
 DEF_SERVICE_URL = "https://dlsvcs.datalab.noao.edu/query"
-SM_SERVICE_URL = "https://dlsvcs.datalab.noao.edu/storage"
+SM_SERVICE_URL  = "https://dlsvcs.datalab.noao.edu/storage"
 
 PROFILE = "default"
 DEBUG = False
 
-TIMEOUT_REQUEST = 120 # sync query timeout default (120sec)
+TIMEOUT_REQUEST = 120 		# sync query timeout default (120sec)
 
 
 class queryClientError(Exception):
     def __init__(self, message):
         self.message = message
+
     def __str__(self):
         return self.message
+
 
 def isAlive(svc_url=DEF_SERVICE_URL):
     """ Check whether the QueryManager service at the given URL is
@@ -55,7 +57,7 @@ def isAlive(svc_url=DEF_SERVICE_URL):
     """
     try:
         r = requests.get(svc_url, timeout=2)
-        output = r.content.decode('utf-8')
+        output = r.content
         status_code = r.status_code
     except Exception:
         return False
@@ -193,7 +195,7 @@ def query(token, adql=None, sql=None, fmt='csv', out=None, async=False, **kw):
         dburl += "&profile=%s" % PROFILE
 
     r = requests.get(dburl, headers=headers)
-    
+
     if r.status_code != 200:
         raise queryClientError(r.text)
 
@@ -205,7 +207,7 @@ def query(token, adql=None, sql=None, fmt='csv', out=None, async=False, **kw):
             file.write(r.content)
             file.close()
     else:
-        return r.content.decode('utf-8')
+        return r.content
 
     return "OK"
 
@@ -242,7 +244,7 @@ def siaquery(token, input=None, out=None, search=0.5):
             file.close()
 
     else:
-        return r.content.decode('utf-8')
+        return r.content
 
 
 # STATUS -- Get the status of an asynchronous query
@@ -302,7 +304,7 @@ def status(token, jobId=None):
                'X-DL-AuthToken': token}  # application/x-sql
     dburl = '%s/status?jobid=%s' % (DEF_SERVICE_URL, jobId)
     r = requests.get(dburl, headers=headers)
-    return r.content.decode('utf-8')
+    return r.content
 
 
 # RESULTS -- Get the results of an asynchronous query
@@ -355,7 +357,7 @@ def results(token, jobId=None):
     if PROFILE != "default":
         dburl += "&profile=%s" % PROFILE
     r = requests.get(dburl, headers=headers)
-    return r.content.decode('utf-8')
+    return r.content
 
 
 # SET_TIMEOUT_REQUEST -- Set the requested sync query timeout value (in seconds).
@@ -503,7 +505,7 @@ def list_profiles(token, profile=None, format='text'):
     dburl += "format=%s" % format
 
     r = requests.get(dburl, headers=headers)
-    profiles = r.content.decode('utf-8')
+    profiles = r.content
     if '{' in profiles:
         #profiles = json.load(StringIO(profiles))
         profiles = json.loads(profiles)
@@ -538,7 +540,7 @@ def set_profile(profile):
 
 # GET_PROFILES -- Set the profile to be used
 #
-def get_profile(profile):
+def get_profile():
     """Get the profile
 
     Parameters
@@ -590,7 +592,7 @@ def list(token, table=''):
                'X-DL-AuthToken': token}  # application/x-sql
     dburl = '%s/list?table=%s' % (DEF_SERVICE_URL, table)
     r = requests.get(dburl, headers=headers)
-    return r.content.decode('utf-8')
+    return r.content
 
 
 # SCHEMA -- Return information about a data service schema value.
@@ -622,7 +624,7 @@ def schema(value, format, profile):
     url = '%s/schema?value=%s&format=%s&profile=%s' % \
             (DEF_SERVICE_URL, (value), str(format), str(profile))
     r = requests.get(url)
-    return r.content.decode('utf-8')
+    return r.content
 
 
 # REMOVE -- Drop the specified table from the user's MyDB
@@ -651,4 +653,39 @@ def drop(token, table=''):
                'X-DL-AuthToken': token}  # application/x-sql
     dburl = '%s/delete?table=%s' % (DEF_SERVICE_URL, table)
     r = requests.get(dburl, headers=headers)
-    return r.content.decode('utf-8')
+    return r.content
+
+
+# CONEQUERY -- Send a cone search query to the query manager service
+#
+def conequery(token, input=None, out=None, schema=None, table=None, ra=None, dec=None, search=0.5):
+    """Send a cone search query to the consearch service
+    """
+
+    headers = {'X-DL-AuthToken': token}
+    user, uid, gid, hash = token.strip().split('.', 3)
+
+#    shortname = '%s_%s' % (uid, input[input.rfind('/') + 1:])
+#    if input[:input.find(':')] not in ['vos', 'mydb']:
+#        # Need to set this from config?
+#        target = 'vos://datalab.noao.edu!vospace/siawork/%s' % shortname
+#        r = requests.get(SM_SERVICE_URL + "/put?name=%s" %
+#                         target, headers={'X-DL-AuthToken': token})
+#        file = open(input).read()
+#
+#        headers2 = {'Content-type': 'application/octet-stream',
+#                    'X-DL-AuthToken': token}
+#        requests.put(r.content, data=file, headers=headers2)
+
+    dburl = '%s/scs/%s/%s?ra=%s&dec=%s&radius=%s' % (
+        DAL_SERVICE_URL, schema, table, ra, dec)
+    r = requests.get(dburl, headers=headers)
+
+    if out is not None:
+        if out[:out.index(':')] not in ['vos', 'mydb']:
+            file = open(out, 'wb')
+            file.write(r.content)
+            file.close()
+
+    else:
+        return r.content

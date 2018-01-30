@@ -1,20 +1,15 @@
 """Data Lab utility helper functions."""
 
 # Python 2/3 compatibility
-
 from __future__ import print_function
 
 __authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20180125' # yyyymmdd
+__version__ = '20180129' # yyyymmdd
 
 # std lib
 from functools import partial
-
-try:
-    from cStringIO import StringIO   # python 2
-except ImportError:
-    from io import StringIO          # python 3
-
+from io import BytesIO
+    
 try:
     input = raw_input # use 'input' function in both Python 2 and 3
 except NameError:
@@ -60,7 +55,7 @@ def resolve(name=None):
     return coords
 
 
-def convert(inp,outfmt='pandas',**kwargs):
+def convert(inp,outfmt='pandas',verbose=False,**kwargs):
 
     """Convert input `inp` to a data structure defined by `outfmt`.
 
@@ -85,6 +80,9 @@ def convert(inp,outfmt='pandas',**kwargs):
         For outfmt='votable', the input string must be an
         XML-formatted string. For all other values, as CSV-formatted
         string.
+
+    verbose : bool
+        If True, print status message after conversion. Default: False
 
     kwargs : optional params
         Will be passed as **kwargs to the converter method.
@@ -118,9 +116,14 @@ def convert(inp,outfmt='pandas',**kwargs):
         ('votable'     , ('votable', 'Astropy VOtable',                 parse_single_table))
     ])
 
-    s = StringIO(inp)
-    output = mapping[outfmt][2](s,**kwargs)
-    print("Returning %s" % mapping[outfmt][1])
+    b = BytesIO(inp.encode())
+    output = mapping[outfmt][2](b,**kwargs)
+
+    if isinstance(output,bytes):
+        output = output.decode()
+    
+    if verbose:
+        print("Returning %s" % mapping[outfmt][1])
 
     return output
 

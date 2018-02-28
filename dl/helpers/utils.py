@@ -1,17 +1,19 @@
 """Data Lab utility helper functions."""
 
-# std lib
+# Python 2/3 compatibility
 from __future__ import print_function
 
 __authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20171219' # yyyymmdd
+__version__ = '20180129' # yyyymmdd
 
+# std lib
 from functools import partial
-
+from io import BytesIO
+    
 try:
-    from cStringIO import StringIO   # python 2
-except ImportError:
-    from io import StringIO          # python 3
+    input = raw_input # use 'input' function in both Python 2 and 3
+except NameError:
+    pass
 
 # 3rd party
 from collections import OrderedDict
@@ -19,11 +21,41 @@ import numpy as np
 from pandas import read_csv
 from astropy.table import Table
 from astropy.io.votable import parse_single_table
-from astropy.coordinates import SkyCoord
+from astropy.coordinates import SkyCoord, name_resolve
 import astropy.units as u
 
 
-def convert(inp,outfmt='pandas'):
+def resolve(name=None):
+
+    """Resolve object name to coordinates.
+
+    Parameters
+    ----------
+    name : str or None
+        If str, it is the name of the object to resolve. If None
+        (default), a primpt for the object name will be presented.
+
+    Returns
+    -------
+    sc : instance
+        Instance of SkyCoord from astropy. Get e.g. RA via sc.ra (with
+        units), or sc.ra.value (without units). Or explictly in a
+        different coordinate system, e.g. sc.galactic.b, etc.
+
+    """
+    
+    if name is None:
+        name = input("Object name (+ENTER): ")
+    
+    try:
+        coords = name_resolve.get_icrs_coordinates(name)
+    except Exception as e:
+        raise
+
+    return coords
+
+
+def convert(inp,outfmt='pandas',verbose=False,**kwargs):
 
     """Convert input `inp` to a data structure defined by `outfmt`.
 
@@ -49,14 +81,26 @@ def convert(inp,outfmt='pandas'):
         XML-formatted string. For all other values, as CSV-formatted
         string.
 
+    verbose : bool
+        If True, print status message after conversion. Default: False
+
+    kwargs : optional params
+        Will be passed as **kwargs to the converter method.
+
+
     Example
     -------
     Convert a CSV-formatted string to a Pandas dataframe
 
     .. code-block:: python
 
-       df = helpers.convert(inpst,outfmt='pandas')
-       print df.head()  # df is as Pandas dataframe, with all its methods
+       arr = convert(inp,'array')
+       arr.shape  # arr is a Numpy array
+
+       df = convert(inp,outfmt='pandas')
+       df.head()  # df is as Pandas dataframe, with all its methods
+
+       df = convert(inp,'pandas',na_values='Infinity') # na_values is a kwarg; adds 'Infinity' to list of values converter to np.inf
 
     """
     
@@ -72,9 +116,14 @@ def convert(inp,outfmt='pandas'):
         ('votable'     , ('votable', 'Astropy VOtable',                 parse_single_table))
     ])
 
-    s = StringIO(inp)
-    output = mapping[outfmt][2](s)
-    print ("Returning %s" % mapping[outfmt][1])
+    b = BytesIO(inp.encode())
+    output = mapping[outfmt][2](b,**kwargs)
+
+    if isinstance(output,bytes):
+        output = output.decode()
+    
+    if verbose:
+        print("Returning %s" % mapping[outfmt][1])
 
     return output
 

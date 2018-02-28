@@ -33,6 +33,7 @@ import json
 
 
 DEF_SERVICE_URL = "https://dlsvcs.datalab.noao.edu/storage"
+DEF_SERVICE_URL = "http://dldev.datalab.noao.edu/storage"
 PROFILE = "default"
 DEBUG = False
 

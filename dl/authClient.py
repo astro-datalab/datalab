@@ -41,7 +41,7 @@ TEST_TOKEN = "dltest.99998.99998.test_access"
 # The URL of the AuthManager service to contact.  This may be changed by
 # passing a new URL into the set_svc_url() method before beginning.
 
-DEF_SERVICE_URL = "https://dlsvcs.datalab.noao.edu/auth"
+#DEF_SERVICE_URL = "https://dlsvcs.datalab.noao.edu/auth"
 DEF_SERVICE_URL = "http://dldev.datalab.noao.edu/auth"
 
 # The requested authentication "profile".  A profile refers to the specific
@@ -250,8 +250,8 @@ class authClient (object):
         -------
         .. code-block:: python
 
-            from dl import authMgr
-            authMgr.client.set_svc_url ("http://localhost:7001/")
+            from dl import authClient
+            authClient.client.set_svc_url ("http://localhost:7001/")
         """
 
         self.svc_url = svc_url
@@ -272,8 +272,8 @@ class authClient (object):
         -------
         .. code-block:: python
 
-            from dl import authMgr
-            service_url = authMgr.client.get_svc_url ()
+            from dl import authClient
+            service_url = authClient.client.get_svc_url ()
         """
 
         return self.svc_url
@@ -294,8 +294,8 @@ class authClient (object):
         -------
         .. code-block:: python
 
-            from dl import authMgr
-            token = authMgr.client.set_profile ("dev")
+            from dl import authClient
+            token = authClient.client.set_profile ("dev")
         """
 
         self.svc_profile = profile
@@ -316,8 +316,8 @@ class authClient (object):
         -------
         .. code-block:: python
 
-            from dl import authMgr
-            profile = authMgr.client.get_profile ()
+            from dl import authClient
+            profile = authClient.client.get_profile ()
         """
 
         return self.svc_profile
@@ -338,8 +338,8 @@ class authClient (object):
         -------
         .. code-block:: python
 
-            from dl import authMgr
-            profiles = authMgr.client.list_profiles (token, profile, format)
+            from dl import authClient
+            profiles = authClient.client.list_profiles (token, profile, format)
         """
 
         pass
@@ -398,8 +398,8 @@ class authClient (object):
         -------
         .. code-block:: python
 
-            from dl import authMgr
-            token = authMgr.login ('dldemo', 'dldemo')   # get security token
+            from dl import authClient
+            token = authClient.login ('dldemo', 'dldemo')   # get security token
         """
 
         # Check the $HOME/.datalab directory for a valid token.  If that dir
@@ -455,7 +455,7 @@ class authClient (object):
 
         except Exception as e:
             if self.debug:
-                print ("Raw exception msg = '%s'" + str(e))
+                print ("Raw exception msg = '%s'" + r.text)
             if self.isAlive(self.svc_url) == False:
                 raise dlAuthError("AuthManager Service not responding.")
             if self.isValidUser(username):
@@ -538,21 +538,24 @@ class authClient (object):
                                  "debug": self.debug})
         url = url + args
 
+	self.debug = True
+
         if self.debug:
             print ("passwdReset: token = '%s'" % token)
             print ("passwdReset: auth_token = '%s'" % self.auth_token)
             print ("passwdReset: url = '%s'" % url)
 
         if not self.isValidToken(token):
-            return "Error: Invalid user token"
+	    if self.debug:
+	        print ("passwdReset: Invalid user token")
+            raise Exception ("Error: Invalid user token")
 
-        if self.auth_token is None:
-            print ("Error: User '%s' is not currently logged in" % username)
-            self.auth_token = token
+	# Reset the auth_token to the one passed in by the service call.
+        self.auth_token = token
 
         user, uid, gid, hash = self.auth_token.strip().split('.', 3)
         if user != 'root' and user != username:
-            return "Error: Invalid user or non-root token"
+            raise Exception ("Error: Invalid user or non-root token")
 
         try:
             # Add the auth token to the reauest header.
@@ -565,7 +568,7 @@ class authClient (object):
                 raise Exception(r.text)
 
         except Exception as e:
-            raise dlAuthError(str(e))
+            raise dlAuthError(r.text)
         else:
             # Update the saved user token.
             print ("Updating saved user token ....")
@@ -617,7 +620,12 @@ class authClient (object):
         if self.debug:
             print ("isValidToken: url = '%s'" % url)
 
-        return self.retBoolValue(url)
+	# Save the value before returning so we can print it in debug mode.
+        isValid = self.retBoolValue(url)
+        if self.debug:
+            print ("isValidToken: valid = " + isValid)
+
+        return isValid
 
     def isValidPassword(self, user, password):
         """ See whether the password is valid for the user.
@@ -719,7 +727,7 @@ class authClient (object):
                 raise Exception(r.text)
 
         except Exception as e:
-            return str(e)
+            return r.text
         else:
             return response
 

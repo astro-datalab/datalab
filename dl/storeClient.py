@@ -305,7 +305,7 @@ def ls(token, name, format = 'csv'):
     .. code-block:: python
 
         listing = dl.storeClient.ls(token,name='vos://somedir')
-        print listing
+        print (listing)
 
     This prints for instance:
 

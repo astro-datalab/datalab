@@ -546,8 +546,8 @@ class authClient (object):
             print ("passwdReset: url = '%s'" % url)
 
         if not self.isValidToken(token):
-	    if self.debug:
-	        print ("passwdReset: Invalid user token")
+            if self.debug:
+                print ("passwdReset: Invalid user token")
             raise Exception ("Error: Invalid user token")
 
 	# Reset the auth_token to the one passed in by the service call.

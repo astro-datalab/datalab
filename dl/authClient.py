@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20180220'  # yyyymmdd
+__version__ = '20171229'  # yyyymmdd
 
 
 """ 
@@ -567,7 +567,7 @@ class authClient (object):
             if r.status_code != 200:
                 raise Exception(r.text)
 
-        except Exception as e:
+        except Exception:
             raise dlAuthError(r.text)
         else:
             # Update the saved user token.
@@ -726,7 +726,7 @@ class authClient (object):
             if r.status_code != 200:
                 raise Exception(r.text)
 
-        except Exception as e:
+        except Exception:
             return r.text
         else:
             return response

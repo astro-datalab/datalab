@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Matthew Graham <graham@noao.edu>, Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20180220'  # yyyymmdd
+__version__ = '20170530'  # yyyymmdd
 
 
 """
@@ -24,7 +24,7 @@ try:
     from urllib import quote_plus               # Python 2
 except ImportError:
     from urllib.parse import quote_plus         # Python 3
-from io import StringIO				# Python 2/3 compatible
+#from io import StringIO			# Python 2/3 compatible
 import json
 
 
@@ -32,9 +32,11 @@ import json
 #  Query manager client procedures
 #####################################
 
+DAL_SERVICE_URL  = "https://datalab.noao.edu"
 
 DEF_SERVICE_URL = "https://dlsvcs.datalab.noao.edu/query"
 SM_SERVICE_URL  = "https://dlsvcs.datalab.noao.edu/storage"
+
 DEF_SERVICE_URL = "http://dldev.datalab.noao.edu/query"
 SM_SERVICE_URL  = "http://dldev.datalab.noao.edu/storage"
 

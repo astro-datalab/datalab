@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Matthew Graham <graham@noao.edu>, Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20190220'  # yyyymmdd
+__version__ = '20170530'  # yyyymmdd
 
 
 """
@@ -23,7 +23,7 @@ Import via
 import os, sys
 import fnmatch, glob
 import requests
-from io import StringIO           # Python 2/3 compatible
+#from io import StringIO           # Python 2/3 compatible
 import json
 
 
@@ -32,9 +32,8 @@ import json
 #####################################
 
 
-#DEF_SERVICE_URL = "https://dlsvcs.datalab.noao.edu/storage"
+DEF_SERVICE_URL = "https://dlsvcs.datalab.noao.edu/storage"
 DEF_SERVICE_URL = "http://dldev.datalab.noao.edu/storage"
-
 PROFILE = "default"
 DEBUG = False
 
@@ -232,9 +231,11 @@ def put(token, fr, to, verbose=True):
 
 # LOAD -- Load a file from a remote endpoint to the store manager service
 def load(token, name, endpoint):
-    """Load a file from a remote endpoint to the store manager service
+    """
+        Load a file from a remote endpoint to the store manager service
     """
     r = getFromURL("/load?name=%s&endpoint=%s" % (name, endpoint), token)
+    return r
 
     
 # CP -- Copy a file/directory within the store manager service
@@ -553,7 +554,8 @@ def expandFileList(token, pattern, format, full=False):
 # Get from a URL
 def getFromURL(path, token):
     try:
-        resp = requests.get("%s%s" % (DEF_SERVICE_URL, path), headers = {"X-DL-AuthToken": token})
+        resp = requests.get("%s%s" % (DEF_SERVICE_URL, path), 
+                            headers = {"X-DL-AuthToken": token})
     except Exception as e:
         raise storeClientError(str(e))
     return resp
@@ -616,7 +618,8 @@ def get_svc_url():
 # PROFILES -- Get the profiles supported by the storage manager service
 #
 def list_profiles(token, profile = None, format = 'text'):
-    """Retrieve the profiles supported by the storage manager service
+    """ 
+    Retrieve the profiles supported by the storage manager service
 
     Parameters
     ----------
@@ -641,7 +644,6 @@ def list_profiles(token, profile = None, format = 'text'):
         profiles = storeClient.list_profiles(token)
     """
     
-    headers = {'Content-Type': 'text/ascii', 'X-DL-AuthToken': token} # application/x-sql
     dburl = '/profiles?' 
     if profile != None and profile != 'None' and profile != '':
         dburl += "profile=%s&" % profile

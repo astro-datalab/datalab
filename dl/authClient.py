@@ -538,7 +538,7 @@ class authClient (object):
                                  "debug": self.debug})
         url = url + args
 
-	self.debug = True
+        self.debug = True
 
         if self.debug:
             print ("passwdReset: token = '%s'" % token)

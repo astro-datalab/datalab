@@ -8,18 +8,15 @@
 
 from __future__ import print_function
 
-__authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20180220'  # yyyymmdd
-
-
 import requests
-import os, time
+import os
 
 
 # The URL of the ResManager service to contact.  This may be changed by
 # passing a new URL into the set_svc_url() method before beginning.
 
-DEF_SERVICE_URL = "http://dlsvcs.datalab.noao.edu/res"
+#DEF_SERVICE_URL = "http://dlsvcs.datalab.noao.edu/res"
+DEF_SERVICE_URL = "http://dldev.datalab.noao.edu/res"
 
 # The requested service "profile".  A profile refers to the specific
 # machines and services used by the ResManager on the server.
@@ -106,7 +103,7 @@ def get_svc_url ():
     return client.set_svc_url ()
 
 def set_profile (profile):
-    return client.set_profile (svc_url)
+    return client.set_profile (profile)
 
 def get_profile ():
     return client.get_profile ()
@@ -270,7 +267,7 @@ class resClient (object):
             r = requests.get(svc_url)
             if r.status_code != 200:
                 raise Exception (r.text)
-        except Exception as e:
+        except Exception:
             return False
         else:
             return True
@@ -295,7 +292,7 @@ class resClient (object):
                        "debug" : self.debug }
         try:
             headers = {'X-DL-AuthToken': self.auth_token}
-            r = requests.get(url, params=query_args)
+            r = requests.get(url, params=query_args, header=headers)
             response = r.text
 
             if self.debug:
@@ -390,7 +387,6 @@ class resClient (object):
             # Add the auth token to the reauest header.
             headers = {'X-DL-AuthToken': token}
             r = requests.get(url, headers=headers)
-            response = r.text
 
             if r.status_code == 200:
                 return "OK"
@@ -486,105 +482,6 @@ class resClient (object):
 
 
 
-
-    ###################################
-    #  Account Admin Methods
-    ###################################
-
-    def svcGet (self, token, url):
-        """ Get the named user's account status
-        """
-        try:
-            if self.debug:
-                print ("url = '" + url + "'")
-
-            # Add the auth token to the reauest header.
-            headers = {'X-DL-AuthToken': token}
-            r = requests.get(url, headers=headers)
-            response = r.text
-
-            if r.status_code != 200:
-                raise Exception (r.text)
-
-        except Exception as e:
-            raise dlResError (e.message)
-
-        return response
-
-
-    def approveUser (self, token, user):
-        """ Approve a pending user request
-        """
-        url = self.svc_url + "/approveUser?approve=True&user=" + user
-
-        try:
-            return (self.svcGet (token, url))
-        except Exception as e:
-            raise Exception (e.message)
-
-
-    def disapproveUser (self, token, user):
-        """ Disapprove a pending user request
-        """
-        url = self.svc_url + "/approveUser?approve=False&user=" + user
-
-        try:
-            return (self.svcGet (token, url))
-        except Exception as e:
-            raise Exception (e.message)
-
-
-    def userRecord (self, token, user, value, format):
-        """ Get a value from the User record.  The special 'all' value will
-            return all fields accessible to the token.  The 'format' will
-            return either 'text' for a single value, or 'json' for a complete
-            record.
-        """
-        url = self.svc_url + \
-                ("/userRecord?user=%s&value=%s&fmt=%s" % (user,value,format))
-
-        try:
-            resp = self.svcGet (token, url)
-        except Exception as e:
-            raise Exception (e.message)
-        else:
-            return resp
-
-        return "OK"
-
-
-    def listPending (self, token, verbose=False):
-        """ List all pending user accounts.
-        """
-        url = self.svc_url + "/pending?verbose=" + str(verbose)
-
-        try:
-            resp = self.svcGet (token, url)
-        except Exception as e:
-            raise Exception (e.message)
-        else:
-            return resp
-
-        return "OK"
-
-
-    def setField (self, token, user, field, value):
-        """ Set a specific user record field
-        """
-        url = self.svc_url + "/setField?user=%s&field=%s&value=%s" % \
-                        (user, field, value)
-
-        try:
-            resp = self.svcGet (token, url)
-        except Exception as e:
-            raise Exception (e.message)
-        else:
-            return resp
-
-        return "OK"
-
-
-    
     ################################################### 
     #  GROUP MANAGEMENT
     ################################################### 
@@ -610,7 +507,7 @@ class resClient (object):
             if r.status_code != 200:
                 raise Exception (r.text)
 
-        except Exception as e:
+        except Exception:
             raise dlResError (response)
         else:
             pass
@@ -664,7 +561,7 @@ class resClient (object):
             if r.status_code != 200:
                 raise Exception (r.text)
 
-        except Exception as e:
+        except Exception:
             raise dlResError (response)
         else:
             pass
@@ -707,13 +604,13 @@ class resClient (object):
             # Add the auth token to the reauest header.
             headers = {'X-DL-AuthToken': self.auth_token}
 
-            r = requests.get(url, params=args, headers=headers)
+            r = requests.get(url, headers=headers)
             response = r.text
 
             if r.status_code != 200:
                 raise Exception (r.text)
 
-        except Exception as e:
+        except Exception:
             raise dlResError ("Invalid user")
         else:
             return response
@@ -739,7 +636,7 @@ class resClient (object):
             if r.status_code != 200:
                 raise Exception (r.text)
 
-        except Exception as e:
+        except Exception:
             raise dlResError (response)
         else:
             pass
@@ -768,7 +665,7 @@ class resClient (object):
             if r.status_code != 200:
                 raise Exception (r.text)
 
-        except Exception as e:
+        except Exception:
             raise dlResError (response)
         else:
             pass
@@ -793,7 +690,7 @@ class resClient (object):
             if r.status_code != 200:
                 raise Exception (r.text)
 
-        except Exception as e:
+        except Exception:
             raise dlResError (response)
         else:
             pass

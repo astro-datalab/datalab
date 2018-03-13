@@ -8,6 +8,10 @@
 
 from __future__ import print_function
 
+__authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
+__version__ = '20180311'  # yyyymmdd
+
+
 import requests
 import os
 
@@ -15,8 +19,7 @@ import os
 # The URL of the ResManager service to contact.  This may be changed by
 # passing a new URL into the set_svc_url() method before beginning.
 
-#DEF_SERVICE_URL = "http://dlsvcs.datalab.noao.edu/res"
-DEF_SERVICE_URL = "http://dldev.datalab.noao.edu/res"
+DEF_SERVICE_URL = "https://datalab.noao.edu/res"
 
 # The requested service "profile".  A profile refers to the specific
 # machines and services used by the ResManager on the server.

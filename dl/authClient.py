@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20171229'  # yyyymmdd
+__version__ = '20180311'  # yyyymmdd
 
 
 """ 
@@ -19,14 +19,16 @@ Import via
     from dl import authClient
 """
 
+import requests
+import socket
+import os
+
 try:
     from urllib import urlencode                      # Python 2
-    from urllib2 import urlopen, Request                # Python 2
+    from urllib2 import urlopen, Request              # Python 2
 except ImportError:
-    from urllib.parse import urlencode                      # Python 3
-    from urllib.request import urlopen, Request         # Python 3
-import requests
-import os
+    from urllib.parse import urlencode                # Python 3
+    from urllib.request import urlopen, Request       # Python 3
 
 
 # Pre-defined authentication tokens. These are fixed strings that provide
@@ -37,18 +39,6 @@ ANON_TOKEN = "anonymous.0.0.anon_access"
 DEMO_TOKEN = "dldemo.99999.99999.demo_access"
 TEST_TOKEN = "dltest.99998.99998.test_access"
 
-
-# The URL of the AuthManager service to contact.  This may be changed by
-# passing a new URL into the set_svc_url() method before beginning.
-
-#DEF_SERVICE_URL = "https://dlsvcs.datalab.noao.edu/auth"
-DEF_SERVICE_URL = "http://dldev.datalab.noao.edu/auth"
-
-# The requested authentication "profile".  A profile refers to the specific
-# machines and services used by the AuthManager on the server.
-
-DEF_SERVICE_PROFILE = "default"
-
 # Set the default user accounts for the authentication service.  We don't
 # include privileged users so that account can remain secure.
 
@@ -56,8 +46,28 @@ DEF_USERS = {'anonymous': ANON_TOKEN,
              'dldemo': DEMO_TOKEN,
              'dltest': TEST_TOKEN}
 
-# API debug flag.
-DEBUG = False
+
+# The URL of the AuthManager service to contact.  This may be changed by
+# passing a new URL into the set_svc_url() method before beginning.
+
+DEF_SERVICE_URL = "https://datalab.noao.edu/auth"
+
+# Allow the service URL for dev/test systems to override the default.
+THIS_HOST = socket.gethostname()
+if THIS_HOST[:5] == 'dldev':
+    DEF_SERVICE_URL = "http://dldev.datalab.noao.edu/auth"
+elif THIS_HOST[:6] == 'dltest':
+    DEF_SERVICE_URL = "http://dltest.datalab.noao.edu/auth"
+
+
+# The requested authentication "profile".  A profile refers to the specific
+# machines and services used by the AuthManager on the server. Note that 
+# profiles are not currently used.
+
+DEF_SERVICE_PROFILE = "default"
+
+# Use a /tmp/AM_DEBUG file as a way to turn on debugging in the client code.
+DEBUG 	= os.path.isfile ('/tmp/AM_DEBUG')
 
 
 # ######################################################################
@@ -74,7 +84,7 @@ DEBUG = False
 
 # User methods -- All methods except login() return either a 'True' string
 # or an error of the form 'ERR <message>'.  On success, the login() method
-# will return the user if token.
+# will return the user-id token.
 
 def login(user, password=None, debug=False, verbose=False):
     if user in list(DEF_USERS.keys()):
@@ -251,7 +261,7 @@ class authClient (object):
         .. code-block:: python
 
             from dl import authClient
-            authClient.client.set_svc_url ("http://localhost:7001/")
+            authClient.set_svc_url ("http://localhost:7001/")
         """
 
         self.svc_url = svc_url
@@ -273,7 +283,7 @@ class authClient (object):
         .. code-block:: python
 
             from dl import authClient
-            service_url = authClient.client.get_svc_url ()
+            service_url = authClient.get_svc_url ()
         """
 
         return self.svc_url
@@ -344,22 +354,42 @@ class authClient (object):
 
         pass
 
-    def isAlive(self, svc_url):
+    def isAlive(self, svc_url=DEF_SERVICE_URL):
         """ Check whether the AuthManager service at the given URL is
             alive and responding.  This is a simple call to the root 
             service URL or ping() method.
-        """
-        try:
-            request = Request(svc_url)
-            response = urlopen(request,timeout=2)
-            output = response.read()
-            status_code = response.code
 
+        Parameters
+        ----------
+        service_url : str
+            The Query Service URL to ping.
+
+        Returns
+        -------
+        result : bool
+            True if service responds properly, False otherwise
+
+        Example
+        -------
+        .. code-block:: python
+
+            from dl import authClient
+            if authClient.isAlive():
+                print ("Auth Manager is alive")
+        """
+        url = svc_url
+        try:
+            r = requests.get(url)
+            response = r.text
+
+            if r.status_code != 200:
+                return False
+	    elif r.text.lower()[:11] != "hello world":
+                return False
         except Exception:
             return False
         else:
-            return (True if (output is not None and status_code == 200) else False)
-
+            return True
 
 
     ###################################################
@@ -411,7 +441,8 @@ class authClient (object):
         tok_file = ('%s/id_token.%s' % (self.home, username))
         if self.debug:
             print ("top of login: tok_file = '" + tok_file + "'")
-            print ("top of login: self.auth_token = '%s'" % str(self.auth_token))
+            print ("top of login: self.auth_token = '%s'" %
+                   str(self.auth_token))
             print ("top of login: token = ")
             os.system('cat ' + tok_file)
 
@@ -481,7 +512,8 @@ class authClient (object):
             with open(tok_file, 'wb', 0) as tok_fd:
                 if self.debug:
                     print ("login: writing new token for '%s'" % username)
-                    print ("login: self.auth_token = '%s'" % str(self.auth_token))
+                    print ("login: self.auth_token = '%s'" %
+                           str(self.auth_token))
                     print ("login: token = ")
                     os.system('cat ' + tok_file)
 
@@ -495,7 +527,7 @@ class authClient (object):
         """
         url = self.svc_url + "/logout?"
         args = urlencode({"token": token,
-                                 "debug": self.debug})
+                          "debug": self.debug})
         url = url + args
 
         if self.debug:
@@ -533,12 +565,10 @@ class authClient (object):
         """
         url = self.svc_url + "/passwordReset?"
         args = urlencode({"token": token,
-                                 "username": username,
-                                 "password": password,
-                                 "debug": self.debug})
+                          "username": username,
+                          "password": password,
+                          "debug": self.debug})
         url = url + args
-
-        self.debug = True
 
         if self.debug:
             print ("passwdReset: token = '%s'" % token)
@@ -548,14 +578,14 @@ class authClient (object):
         if not self.isValidToken(token):
             if self.debug:
                 print ("passwdReset: Invalid user token")
-            raise Exception ("Error: Invalid user token")
+            raise Exception("Error: Invalid user token")
 
-	# Reset the auth_token to the one passed in by the service call.
+        # Reset the auth_token to the one passed in by the service call.
         self.auth_token = token
 
         user, uid, gid, hash = self.auth_token.strip().split('.', 3)
         if user != 'root' and user != username:
-            raise Exception ("Error: Invalid user or non-root token")
+            raise Exception("Error: Invalid user or non-root token")
 
         try:
             # Add the auth token to the reauest header.
@@ -590,7 +620,6 @@ class authClient (object):
 
         return response
 
-
     def hasAccess(self, token, resource):
         """  See whether the token has access to the named Resource.  Returns
              True if the user owns the Resource, or if the Resource grants
@@ -620,7 +649,7 @@ class authClient (object):
         if self.debug:
             print ("isValidToken: url = '%s'" % url)
 
-	# Save the value before returning so we can print it in debug mode.
+        # Save the value before returning so we can print it in debug mode.
         isValid = self.retBoolValue(url)
         if self.debug:
             print ("isValidToken: valid = " + isValid)
@@ -643,7 +672,7 @@ class authClient (object):
             val = self.retBoolValue(url)
         except Exception:
             val = "False"
-        
+
         return val
 
     def isValidUser(self, user):
@@ -651,7 +680,7 @@ class authClient (object):
         """
         url = self.svc_url + "/isValidUser?"
         args = urlencode({"user": user,
-                                 "profile": self.svc_profile})
+                          "profile": self.svc_profile})
         url = url + args
 
         if self.debug:
@@ -670,7 +699,7 @@ class authClient (object):
         """
         url = self.svc_url + "/isUserLoggedIn?"
         args = urlencode({"user": user,
-                                 "profile": self.svc_profile})
+                          "profile": self.svc_profile})
         url = url + args
 
         if self.debug:
@@ -689,7 +718,7 @@ class authClient (object):
         """
         url = self.svc_url + "/isTokenLoggedIn?"
         args = urlencode({"token": token,
-                                 "profile": self.svc_profile})
+                          "profile": self.svc_profile})
         url = url + args
 
         if self.debug:
@@ -738,5 +767,6 @@ class authClient (object):
 
 def getClient():
     return authClient()
+
 
 client = getClient()

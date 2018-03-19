@@ -147,17 +147,20 @@ def multifunc(nargs):
 # =========================================================================
 # Globals
 ANON_TOKEN	= 'anonymous.0.0.anon_access'
+TOK_DEBUG	= False
 
 #  READTOKENFILE -- Read the contents of the named token file.  If it 
 #  doesn't exist, default to the anonymous token.
 #
 def readTokenFile (tok_file):
     if not os.path.exists(tok_file):
+        if TOK_DEBUG: print ('returning ANON_TOKEN')
         return ANON_TOKEN 			# FIXME -- print a warning?
     else:
         tok_fd = open(tok_file, "r", 0)
-        user_tok = tok_fd.read(128)             # read the old token
+        user_tok = tok_fd.read(128).strip('\n') # read the old token
         tok_fd.close()
+        if TOK_DEBUG: print ('returning user_tok: ' + user_tok)
         return user_tok				# return named user tok
 
 
@@ -178,6 +181,7 @@ def def_token(tok):
         # No token supplied, check for a logged-in user token.
         tok_file = ('%s/id_token.%s' % (home, os.getlogin()))
         if not os.path.exists(home) or not os.path.exists(tok_file):
+            if TOK_DEBUG: print ('returning ANON_TOKEN')
             return ANON_TOKEN
         else:
             return readTokenFile(tok_file)
@@ -185,12 +189,14 @@ def def_token(tok):
         # Check for a plan user name or valid token.  If we're given a
         # token just return it.  If it may be a user name, look for a token
         # id file and return that, otherwise we're just anonymous.
-        if len(tok.split('.')) == 4:			# looks like a token
+        if len(tok.split('.')) >= 4:			# looks like a token
+            if TOK_DEBUG: print ('returning input tok:  ' + tok)
             return tok
         elif len(tok.split('.')) == 1:			# user name maybe?
             tok_file = ('%s/id_token.%s' % (home, tok))
             return readTokenFile(tok_file)
         else:
+            if TOK_DEBUG: print ('returning ANON_TOKEN')
             return ANON_TOKEN
 
 

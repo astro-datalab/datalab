@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20180311'  # yyyymmdd
+__version__ = '20180321'  # yyyymmdd
 
 
 """ 
@@ -379,17 +379,17 @@ class authClient (object):
         """
         url = svc_url
         try:
-            r = requests.get(url)
-            response = r.text
+            r = requests.get(url, timeout=2)
+            resp = r.text
 
             if r.status_code != 200:
                 return False
-	    elif r.text.lower()[:11] != "hello world":
+	    elif resp is not None and r.text.lower()[:11] != "hello world":
                 return False
         except Exception:
             return False
-        else:
-            return True
+
+        return True
 
 
     ###################################################

@@ -9,7 +9,7 @@
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20180311'  # yyyymmdd
+__version__ = '20180321'  # yyyymmdd
 
 
 import requests

@@ -85,7 +85,7 @@ CONNECTION_TIMEOUT = 30  # seconds before HTTP connection should drop, should be
 
 VOSPACE_ARCHIVE = os.getenv("VOSPACE_ARCHIVE", "vospace")
 #HEADER_DELEG_TOKEN = 'X-CADC-DelegationToken'
-HEADER_DELEG_TOKEN = 'X-DL-Authtoken'
+HEADER_DELEG_TOKEN = 'X-DL-AuthToken'
 HEADER_CONTENT_LENGTH = 'X-CADC-Content-Length'
 HEADER_PARTIAL_READ = 'X-CADC-Partial-Read'
 CONNECTION_COUNTER = 0

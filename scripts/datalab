@@ -1,11 +1,19 @@
 #!/usr/bin/env python
+#
+# DATALAB -- A Data Lab command-line client
+#
 
-""" 
-    A Data Lab command-line client
-"""
+
 
 from __future__ import print_function
 
+__authors__ = 'Matthew Graham <graham@noao.edu>, Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
+__version__ = '20180321'  # yyyymmdd
+
+
+""" 
+    Command-line tass for the NOAO Data Lab
+"""
 
 from dl import dltasks as dl
 #import dltasks as dl
@@ -19,7 +27,11 @@ try:
 except NameError:
     raw_input = input
 
-def parseSelf(obj):
+
+
+def parseSelf (obj):
+    ''' Parse the object to ensure Options have values.
+    '''
     opt = Values()
     for attr in dir(obj):
         if isinstance(getattr(obj, attr), Option):
@@ -27,36 +39,44 @@ def parseSelf(obj):
     return opt
 
 
-def parseArgs(task, args):
-    ''' Parse task parameters '''
+def parseArgs (task, args):
+    ''' Parse task parameters. 
+    '''
     params = []
+
     if any(x in args for x in ['--help', '--h', '-h', 'help', '-help']):
+        # Print task help and exist
         print ("The '%s' task takes the following parameters:" % task.name)
         for par in task.params:
-            opt = getattr(task, par)
+            opt = getattr (task, par)
             name = opt.display and opt.display or par
             if opt.required:
                 print ("  %s - %s [required]" % (name, opt.description))
             else:
                 print ("  %s - %s [optional]" % (name, opt.description))
-        sys.exit()
+        sys.exit (0)
+
     else:
-        # Set task parameters
+        # Set task parameters from the command-line arguments.
+        param_err = False
         for i in range(2, len(args)):
             parts = args[i].strip().split("=")
             name = parts[0][0] == "-" and parts[0][2:] or parts[0]
-            params.append(name)
-            if hasattr(task, name):
-                opt = getattr(task, name)
+            params.append (name)
+            if hasattr (task, name):
+                opt = getattr (task, name)
                 opt.value = '='.join(parts[1:])
             else:
+                # Print all param errors and exit after processing.
                 print ("Parameter '%s' is not supported by this task" % name)
-                sys.exit(-1)
+                param_err = True
 
-        # Set logging
-        task.setLogger()
+        if param_err:
+            sys.exit (1)
+        else:
+            task.setLogger() 		# set task logger
 
-        # Check that required parameters are not missing
+        # Check that required parameters are not missing, prompt if necessary.
         for par in task.params:
             if getattr(task, par).required and par not in params:
                 opt = getattr(task, par)
@@ -68,35 +88,38 @@ def parseArgs(task, args):
                     opt.value = var
 
 
+# #######################
+#   Task Main
+# #######################
 if __name__ == "__main__":
 
-    # Initialize datalab
+    # Initialize the 'datalab' object.
     datalab = None
 
-    # Supported tasks
-    tasks = {'login': dl.Login,
-             'logout': dl.Logout,
-             'schema': dl.Schema,
-             'whoami': dl.WhoAmI,
-             'status': dl.Status,
-             'query': dl.Query2,
-             'qstatus': dl.QueryStatus,
-             'qresults': dl.QueryResults,
-             'listdb': dl.ListMyDB,
-             'dropdb': dl.DropMyDB,
-             'put': dl.Put,
-             'get': dl.Get,
-             'mv': dl.Move,
-             'cp': dl.Copy,
-             'rm': dl.Delete,
-             'ln': dl.Link,
-             'ls': dl.List,
-             'tag': dl.Tag,
-             'mkdir': dl.MkDir,
-             'rmdir': dl.RmDir,
-             'siaquery': dl.SiaQuery,
-             'list_query_profiles': dl.QueryProfiles,
-             'list_storage_profiles': dl.StorageProfiles
+    # Supported sub-tasks. Method to call is a Class defined in 'dl/dltasks.py'
+    tasks = {   'login' : dl.Login,
+               'logout' : dl.Logout,
+               'schema' : dl.Schema,
+               'whoami' : dl.WhoAmI,
+               'status' : dl.Status,
+                'query' : dl.Query2,
+              'qstatus' : dl.QueryStatus,
+             'qresults' : dl.QueryResults,
+               'listdb' : dl.ListMyDB,
+               'dropdb' : dl.DropMyDB,
+                  'put' : dl.Put,
+                  'get' : dl.Get,
+                   'mv' : dl.Move,
+                   'cp' : dl.Copy,
+                   'rm' : dl.Delete,
+                   'ln' : dl.Link,
+                   'ls' : dl.List,
+                  'tag' : dl.Tag,
+                'mkdir' : dl.MkDir,
+                'rmdir' : dl.RmDir,
+             'siaquery' : dl.SiaQuery,
+             'list_query_profiles' : dl.QueryProfiles,
+             'list_storage_profiles' : dl.StorageProfiles
              }
 
     # List tasks

@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Matthew Graham <graham@noao.edu>, Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20180321'  # yyyymmdd
+__version__ = '20180320'  # yyyymmdd
 
 
 """
@@ -122,39 +122,39 @@ def get_profile ():
 # --------------------------------------------------------------------
 # LIST_PROFILES -- List the profiles supported by the storage manager service
 #
-@multifunc(1)
-def list_profiles  (token, profile=None, format='text'):
-    '''  Usage:  storeClient.list_profiles (token)
-    '''
-    return client._list_profiles (token=def_token(token), profile=profile,
-                                  format=format)
+#@multifunc('sc',1)
+#def list_profiles  (token, profile=None, format='text'):
+#    '''  Usage:  storeClient.list_profiles (token)
+#    '''
+#    return client._list_profiles (token=def_token(token), profile=profile,
+#                                  format=format)
     
-@multifunc(0)
-def list_profiles  (token=None, profile=None, format='text'):
-    '''  Usage:  storeClient.list_profiles ()
-    '''
-    return client._list_profiles (token=def_token(token), profile=profile,
-                                  format=format)
+#@multifunc('sc',0)
+#def list_profiles  (token=None, profile=None, format='text'):
+#    '''  Usage:  storeClient.list_profiles ()
+#    '''
+#    return client._list_profiles (token=def_token(token), profile=profile,
+#                                  format=format)
     
 
 # --------------------------------------------------------------------
 # GET -- Retrieve a file (or files) from the Store Manager service
 #
-@multifunc(3)
+@multifunc('sc',3)
 def get  (token, fr, to, verbose=True, debug=False):
     '''  Usage:  storeClient.get (token, fr, to)
     '''
     return client._get (fr=fr, to=to, token=def_token(token),
                         verbose=verbose, debug=debug)
 
-@multifunc(2)
+@multifunc('sc',2)
 def get  (fr, to, token=None, verbose=True, debug=False):
     '''  Usage:  storeClient.get (fr, to)
     '''
     return client._get (fr=fr, to=to, token=def_token(token),
                         verbose=verbose, debug=debug)
 
-@multifunc(1)
+@multifunc('sc',1)
 def get (fr, to='', token=None, verbose=True, debug=False):
     '''  Usage:  storeClient.get (fr)
     '''
@@ -165,21 +165,21 @@ def get (fr, to='', token=None, verbose=True, debug=False):
 # --------------------------------------------------------------------
 # PUT -- Upload a file (or files) to the Store Manager service
 #
-@multifunc(3)
+@multifunc('sc',3)
 def put  (token, fr, to, verbose=True, debug=False):
     '''  Usage:  storeClient.put (token, fr, to)
     '''
     return client._put (fr=fr, to=to, token=def_token(token),
                         verbose=verbose, debug=debug)
 
-@multifunc(2)
+@multifunc('sc',2)
 def put  (fr, to, token=None, verbose=True, debug=False):
     '''  Usage:  storeClient.put (fr, to)
     '''
     return client._put (fr=fr, to=to, token=def_token(token),
                         verbose=verbose, debug=debug)
 
-@multifunc(1)
+@multifunc('sc',1)
 def put  (fr, to='vos://', token=None, verbose=True, debug=False):
     '''  Usage:  storeClient.put (fr)
     '''
@@ -190,13 +190,13 @@ def put  (fr, to='vos://', token=None, verbose=True, debug=False):
 # --------------------------------------------------------------------
 # CP -- Copy a file/directory within the store manager service
 #
-@multifunc(3)
+@multifunc('sc',3)
 def cp  (token, fr, to, verbose=False):
     '''  Usage:  storeClient.cp (token, fr, to)
     '''
     return client._cp (fr=fr, to=to, token=def_token(token), verbose=verbose)
 
-@multifunc(2)
+@multifunc('sc',2)
 def cp  (fr, to, token=None, verbose=False):
     '''  Usage:  storeClient.cp (fr, to)
     '''
@@ -206,14 +206,14 @@ def cp  (fr, to, token=None, verbose=False):
 # --------------------------------------------------------------------
 # LN -- Create a link to a file/directory in the store manager service
 #
-@multifunc(3)
+@multifunc('sc',3)
 def ln  (token, fr, target, verbose=False):
     '''  Usage:  storeClient.ln (token, fr, target)
     '''
     return client._ln (fr=fr, target=target, token=def_token(token), 
                        verbose=verbose)
 
-@multifunc(2)
+@multifunc('sc',2)
 def ln  (fr, target, token=None, verbose=False):
     '''  Usage:  storeClient.ln (fr, target)
     '''
@@ -224,19 +224,20 @@ def ln  (fr, target, token=None, verbose=False):
 # --------------------------------------------------------------------
 # LS -- Get a file/directory listing from the store manager service
 #
-@multifunc(2)
+@multifunc('sc',2)
 def ls  (token, name, format='csv'):
     '''  Usage:  storeClient.ls (token, name)
     '''
     return client._ls (name=name, format=format, token=def_token(token))
 
-@multifunc(1)
+@multifunc('sc',1)
 def ls  (name, token=None, format='csv'):
     '''  Usage:  storeClient.ls (name)
     '''
+    print ('func ls(): name = ' + name)
     return client._ls (name=name, format=format, token=def_token(token))
 
-@multifunc(0)
+@multifunc('sc',0)
 def ls  (name='vos://', token=None, format='csv'):
     '''  Usage:  storeClient.ls ()
     '''
@@ -246,13 +247,13 @@ def ls  (name='vos://', token=None, format='csv'):
 # --------------------------------------------------------------------
 # MKDIR -- Create a directory in the store manager service
 #
-@multifunc(2)
+@multifunc('sc',2)
 def mkdir  (token, name):
     '''  Usage:  storeClient.mkdir (token, name)
     '''
     return client._mkdir (name=name, token=def_token(token))
 
-@multifunc(1)
+@multifunc('sc',1)
 def mkdir  (name, token=None):
     '''  Usage:  storeClient.mkdir (name)
     '''
@@ -262,13 +263,13 @@ def mkdir  (name, token=None):
 # --------------------------------------------------------------------
 # MV -- Move/rename a file/directory within the store manager service
 #
-@multifunc(3)
+@multifunc('sc',3)
 def mv  (token, fr, to, verbose=False):
     '''  Usage:  storeClient.mv (token, fr, to)
     '''
     return client._mv (fr=fr, to=to, token=def_token(token), verbose=verbose)
 
-@multifunc(2)
+@multifunc('sc',2)
 def mv  (fr, to, token=None, verbose=False):
     '''  Usage:  storeClient.mv (fr, to)
     '''
@@ -278,13 +279,13 @@ def mv  (fr, to, token=None, verbose=False):
 # --------------------------------------------------------------------
 # RM -- Delete a file from the store manager service
 #
-@multifunc(2)
+@multifunc('sc',2)
 def rm  (token, name, verbose=False):
     '''  Usage:  storeClient.rm (token, name)
     '''
     return client._rm (name=name, token=def_token(token), verbose=verbose)
 
-@multifunc(1)
+@multifunc('sc',1)
 def rm  (name, token=None, verbose=False):
     '''  Usage:  storeClient.rm (name)
     '''
@@ -294,13 +295,13 @@ def rm  (name, token=None, verbose=False):
 # --------------------------------------------------------------------
 # RMDIR -- Delete a directory from the store manager service
 #
-@multifunc(2)
+@multifunc('sc',2)
 def rmdir  (token, name, verbose=False):
     '''  Usage:  storeClient.rmdir (token, name)
     '''
     return client._rmdir (name=name, token=def_token(token), verbose=verbose)
 
-@multifunc(1)
+@multifunc('sc',1)
 def rmdir  (name, token=None, verbose=False):
     '''  Usage:  storeClient.rmdir (name)
     '''
@@ -310,13 +311,13 @@ def rmdir  (name, token=None, verbose=False):
 # --------------------------------------------------------------------
 # SAVEAS -- Save the string representation of a data object as a file.
 #
-@multifunc(3)
+@multifunc('sc',3)
 def saveAs  (token, data, name):
     '''  Usage:  storeClient.saveAs (token, data, name)
     '''
     return client._saveAs (data=data, name=name, token=def_token(token))
 
-@multifunc(2)
+@multifunc('sc',2)
 def saveAs  (name, data, token=None):
     '''  Usage:  storeClient.saveAs (data, name)
     '''
@@ -326,13 +327,13 @@ def saveAs  (name, data, token=None):
 # --------------------------------------------------------------------
 # TAG -- Annotate a file/directory in the store manager service
 #
-@multifunc(3)
+@multifunc('sc',3)
 def tag  (token, name, tag):
     '''  Usage:  storeClient.tag (token, name, tag)
     '''
     return client._tag (name=name, tag=tag, token=def_token(token))
 
-@multifunc(2)
+@multifunc('sc',2)
 def tag  (name, tag, token=None):
     '''  Usage:  storeClient.tag (name, tag)
     '''
@@ -342,13 +343,13 @@ def tag  (name, tag, token=None):
 # --------------------------------------------------------------------
 # LOAD/PULL -- Load a file from a remote endpoint to the store manager service
 #
-@multifunc(3)
+@multifunc('sc',3)
 def load  (token, name, endpoint):
     '''  Usage:  storeClient.load (token, name, endpoint)
     '''
     return client._load (name=name, endpoint=endpoint, token=def_token(token))
 
-@multifunc(2)
+@multifunc('sc',2)
 def load  (name, endpoint, token=None):
     '''  Usage:  storeClient.load (name, endpoint)
     '''
@@ -356,13 +357,13 @@ def load  (name, endpoint, token=None):
 
 # Aliases for load() calls.
 
-@multifunc(3)
+@multifunc('sc',3)
 def pull  (token, name, endpoint):
     '''  Usage:  storeClient.pull (token, name, endpoint)
     '''
     return client._load (name=name, endpoint=endpoint, token=def_token(token))
 
-@multifunc(2)
+@multifunc('sc',2)
 def pull  (name, endpoint, token=None):
     '''  Usage:  storeClient.pull (name, endpoint)
     '''
@@ -521,14 +522,14 @@ class storeClient (object):
     #  Utility Methods
     # -----------------------------
 
-    @multimethod(1)
+    @multimethod('sc',1)
     def list_profiles  (self, token, profile=None, format='text'):
         '''  Usage:  storeClient.list_profiles (token, ....)
         '''
         return self._list_profiles (token=def_token(token), profile=profile,
                                       format=format)
     
-    @multimethod(0)
+    @multimethod('sc',0)
     def list_profiles  (self, token=None, profile=None, format='text'):
         '''  Usage:  storeClient.list_profiles (....)
         '''
@@ -576,21 +577,21 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # GET -- Retrieve a file from the store manager service
     # --------------------------------------------------------------------
-    @multimethod(3)
+    @multimethod('sc',3)
     def get (self, token, fr, to, verbose=True, debug=False):
         '''  Usage:  storeClient.get (token, fr, to)
         '''
         return self._get (fr=fr, to=to, token=def_token(token), 
                           verbose=verbose, debug=debug)
 
-    @multimethod(2)
+    @multimethod('sc',2)
     def get (self, fr, to, token=None, verbose=True, debug=False):
         '''  Usage:  storeClient.get (fr, to)
         '''
         return self._get (fr=fr, to=to, token=def_token(token), 
                           verbose=verbose, debug=debug)
 
-    @multimethod(1)
+    @multimethod('sc',1)
     def get (self, fr, to='', token=None, verbose=True, debug=False):
         '''  Usage:  storeClient.get (fr)
         '''
@@ -649,7 +650,7 @@ class storeClient (object):
         headers = {'X-DL-AuthToken': def_token(token)}
 
         # Patch the names with the default URI prefix if needed.
-        nm = (fr if fr.startswith("vos://") else ("vos://" + fr))
+        nm = (fr if fr.count("://") > 0 else ("vos://" + fr))
     
         if debug:
             print ("get(): nm = %s" % nm)
@@ -663,7 +664,7 @@ class storeClient (object):
     
         if to != '' and to is not None:
             # Expand metacharacters to create a file list for download.
-            flist = expandFileList (token, nm, "csv", full=True)
+            flist = expandFileList (self.svc_url, token, nm, "csv", full=True)
             if debug: 
                 print ("get: flist = %s" % flist)
 
@@ -732,21 +733,21 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # PUT -- Upload a file to the store manager service
     # --------------------------------------------------------------------
-    @multimethod(3)
+    @multimethod('sc',3)
     def put (self, token, fr, to, verbose=True, debug=False):
         '''  Usage:  storeClient.put (token, fr, to)
         '''
         return self._put (fr=fr, to=to, token=def_token(token), 
                           verbose=verbose, debug=False)
 
-    @multimethod(2)
+    @multimethod('sc',2)
     def put (self, fr, to, token=None, verbose=True, debug=False):
         '''  Usage:  storeClient.put (fr, to)
         '''
         return self._put (fr=fr, to=to, token=def_token(token), 
                           verbose=verbose, debug=False)
 
-    @multimethod(1)
+    @multimethod('sc',1)
     def put (self, fr, to='vos://', token=None, verbose=True, debug=False):
         '''  Usage:  storeClient.put (fr)
         '''
@@ -784,7 +785,7 @@ class storeClient (object):
         # contents.
         if os.path.isdir (fr):
             if fr.endswith("/"):
-                dname = (to if to.startswith("vos://") else to[:-1])
+                dname = (to if to.count("://") > 0 else to[:-1])
                 self._mkdir  (token=token, name=dname)
             flist = glob.glob(fr+"/*")
         else:
@@ -802,7 +803,7 @@ class storeClient (object):
             fr_dir, fr_name = os.path.split(f)
     
             # Patch the names with the URI prefix if needed.
-            nm = (to if to.startswith("vos://") else ("vos://" + to))
+            nm = (to if to.count("://") > 0 else ("vos://" + to))
             if to.endswith("/"):
                 nm = nm + fr_name
     
@@ -849,13 +850,13 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # LOAD -- Load a file from a remote endpoint to the store manager service
     # --------------------------------------------------------------------
-    @multimethod(3)
+    @multimethod('sc',3)
     def load  (self, token, name, endpoint):
         '''  Usage:  storeClient.load (token, name, endpoint)
         '''
         return self._load (name=name, endpoint=endpoint, token=def_token(token))
 
-    @multimethod(2)
+    @multimethod('sc',2)
     def load  (self, name, endpoint, token=None):
         '''  Usage:  storeClient.load (name, endpoint)
         '''
@@ -863,13 +864,13 @@ class storeClient (object):
 
     # Aliases for load() calls.
 
-    @multimethod(3)
+    @multimethod('sc',3)
     def pull  (self, token, name, endpoint):
         '''  Usage:  storeClient.pull (token, name, endpoint)
         '''
         return self._load (name=name, endpoint=endpoint, token=def_token(token))
 
-    @multimethod(2)
+    @multimethod('sc',2)
     def pull  (self, name, endpoint, token=None):
         '''  Usage:  storeClient.pull (name, endpoint)
         '''
@@ -908,13 +909,13 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # CP -- Copy a file/directory within the store manager service
     # --------------------------------------------------------------------
-    @multimethod(3)
+    @multimethod('sc',3)
     def cp  (self, token, fr, to, verbose=False):
         '''  Usage:  storeClient.cp (token, fr, to)
         '''
         return self._cp (fr=fr, to=to, token=def_token(token), verbose=verbose)
 
-    @multimethod(2)
+    @multimethod('sc',2)
     def cp  (self, fr, to, token=None, verbose=False):
         '''  Usage:  storeClient.cp (fr, to)
         '''
@@ -948,8 +949,8 @@ class storeClient (object):
             storeClient.cp ('vos://foo', 'vos:///new/bar')
         """
         # Patch the names with the URI prefix if needed.
-        src = (fr if fr.startswith("vos://") else ("vos://" + fr))
-        dest = (to if to.startswith("vos://") else ("vos://" + to))
+        src = (fr if fr.count("://") > 0 else ("vos://" + fr))
+        dest = (to if to.count("://") > 0 else ("vos://" + to))
     
         # If the 'from' string has no metacharacters we're copying a single file,
         # otherwise expand the file list and process the matches individually.
@@ -957,7 +958,7 @@ class storeClient (object):
             r = getFromURL("/cp?from=%s&to=%s" % (src, dest), token)
             return r
         else:
-            flist = expandFileList (token, src, "csv", full=True)
+            flist = expandFileList (self.svc_url, token, src, "csv", full=True)
             nfiles = len(flist)
             fnum = 1
             resp = []
@@ -975,14 +976,14 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # LN -- Create a link to a file/directory in the store manager service
     # --------------------------------------------------------------------
-    @multimethod(3)
+    @multimethod('sc',3)
     def ln  (self, token, fr, target, verbose=False):
         '''  Usage:  storeClient.ln (token, fr, target)
         '''
         return self._ln (fr=fr, target=target, token=def_token(token),
                            verbose=verbose)
 
-    @multimethod(2)
+    @multimethod('sc',2)
     def ln  (self, fr, target, token=None, verbose=False):
         '''  Usage:  storeClient.ln (fr, target)
         '''
@@ -1027,19 +1028,19 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # LS -- Get a file/directory listing from the store manager service
     # --------------------------------------------------------------------
-    @multimethod(2)
+    @multimethod('sc',2)
     def ls  (self, token, name, format='csv'):
         '''  Usage:  storeClient.ls (token, name)
         '''
         return self._ls (name=name, format=format, token=def_token(token))
 
-    @multimethod(1)
+    @multimethod('sc',1)
     def ls  (self, name, token=None, format='csv'):
         '''  Usage:  storeClient.ls (name)
         '''
         return self._ls (name=name, format=format, token=def_token(token))
 
-    @multimethod(0)
+    @multimethod('sc',0)
     def ls  (self, name='vos://', token=None, format='csv'):
         '''  Usage:  storeClient.ls ()
         '''
@@ -1077,15 +1078,22 @@ class storeClient (object):
             bar2.fits,foo1.csv,fancyfile.dat
     
         """
-        flist = expandFileList (token, name, format, full=False)
+        if name.count('://') > 0:
+            uri = name[:name.index('://')+3]
+        else:
+            uri = 'vos://'
+
+        print ('ls() name = ' + name)
+        print ('ls() uri = ' + uri)
+        flist = expandFileList (self.svc_url, token, name, format, full=False)
         if (format == 'csv'):
             result = ",".join(flist)
+            print ('ls() csv result = ' + result)
             return (result[1:] if result.startswith(",") else result)
-    
         else:
             results = []
             for f in flist:
-                url = self.svc_url + "/ls?name=vos://%s&format=%s" % (f, format)
+                url = self.svc_url + "/ls?name=%s%s&format=%s" % (uri,f,format)
                 r = requests.get(url, headers={'X-DL-AuthToken': token})
                 results.append(r.content)
     
@@ -1095,13 +1103,13 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # MKDIR -- Create a directory in the store manager service
     # --------------------------------------------------------------------
-    @multimethod(2)
+    @multimethod('sc',2)
     def mkdir (self, token, name):
         '''  Usage:  storeClient.mkdir (token, name)
         '''
         return self._mkdir (name=name, token=def_token(token))
 
-    @multimethod(1)
+    @multimethod('sc',1)
     def mkdir (self, name, token=None):
         '''  Usage:  storeClient.mkdir (name)
         '''
@@ -1130,7 +1138,7 @@ class storeClient (object):
             # Create a directory in vospace
             storeClient.mkdir ('foo')
         """
-        nm = (name if name.startswith("vos://") else ("vos://" + name))
+        nm = (name if name.count("://") > 0 else ("vos://" + name))
         
         try:
             r = getFromURL("/mkdir?dir=%s" % nm, token)
@@ -1143,13 +1151,13 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # MV -- Move/rename a file/directory within the store manager service
     # --------------------------------------------------------------------
-    @multimethod(3)
+    @multimethod('sc',3)
     def mv  (self, token, fr, to, verbose=False):
         '''  Usage:  storeClient.mv (token, fr, to)
         '''
         return self._mv (fr=fr, to=to, token=def_token(token), verbose=verbose)
 
-    @multimethod(2)
+    @multimethod('sc',2)
     def mv  (self, fr, to, token=None, verbose=False):
         '''  Usage:  storeClient.mv (fr, to)
         '''
@@ -1185,8 +1193,8 @@ class storeClient (object):
             storeClient.mv ('foo', 'newdir')
         """
         # Patch the names with the URI prefix if needed.
-        src = (fr if fr.startswith("vos://") else ("vos://" + fr))
-        dest = (to if to.startswith("vos://") else ("vos://" + to))
+        src = (fr if fr.count("://") > 0 else ("vos://" + fr))
+        dest = (to if to.count("://") > 0 else ("vos://" + to))
     
         # If the 'from' string has no metacharacters we're copying a single file,
         # otherwise expand the file list on the and process the matches
@@ -1195,7 +1203,7 @@ class storeClient (object):
             r = getFromURL("/mv?from=%s&to=%s" % (src, dest), token)
             return r
         else:
-            flist = expandFileList (token, src, "csv", full=True)
+            flist = expandFileList (self.svc_url, token, src, "csv", full=True)
             nfiles = len(flist)
             fnum = 1
             resp = []
@@ -1213,13 +1221,13 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # RM -- Delete a file from the store manager service
     # --------------------------------------------------------------------
-    @multimethod(2)
+    @multimethod('sc',2)
     def rm  (self, token, name, verbose=False):
         '''  Usage:  storeClient.rm (token, name)
         '''
         return self._rm (name=name, token=def_token(token), verbose=verbose)
 
-    @multimethod(1)
+    @multimethod('sc',1)
     def rm  (self, name, token=None, verbose=False):
         '''  Usage:  storeClient.rm (name)
         '''
@@ -1251,7 +1259,7 @@ class storeClient (object):
         """
         
         # Patch the names with the URI prefix if needed.
-        nm = (name if name.startswith("vos://") else ("vos://" + name))
+        nm = (name if name.count("://") > 0 else ("vos://" + name))
         if nm == "vos://" or nm == "vos://tmp" or nm == "vos://public":
             return "Error: operation not permitted"
     
@@ -1262,7 +1270,7 @@ class storeClient (object):
             r = getFromURL("/rm?file=%s" % nm, token)
             return r
         else:
-            flist = expandFileList (token, nm, "csv", full=True)
+            flist = expandFileList (self.svc_url, token, nm, "csv", full=True)
             nfiles = len(flist)
             fnum = 1
             resp = []
@@ -1278,13 +1286,13 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # RMDIR -- Delete a directory from the store manager service
     # --------------------------------------------------------------------
-    @multimethod(2)
+    @multimethod('sc',2)
     def rmdir (self, token, name, verbose=False):
         '''  Usage:  storeClient.rmdir (token, name)
         '''
         return self._rmdir (name=name, token=def_token(token), verbose=verbose)
 
-    @multimethod(1)
+    @multimethod('sc',1)
     def rmdir (self, name, token=None, verbose=False):
         '''  Usage:  storeClient.rmdir (name)
         '''
@@ -1316,7 +1324,7 @@ class storeClient (object):
         """
     
         # Patch the names with the URI prefix if needed.
-        nm = (name if name.startswith("vos://") else ("vos://" + name))
+        nm = (name if name.count("://") > 0 else ("vos://" + name))
         if nm == "vos://" or nm == "vos://tmp" or nm == "vos://public":
             return "Error: operation not permitted"
     
@@ -1332,13 +1340,13 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # SAVEAS -- Save the string representation of a data object as a file.
     # --------------------------------------------------------------------
-    @multimethod(3)
+    @multimethod('sc',3)
     def saveAs (self, token, data, name):
         '''  Usage:  storeClient.saveAs (token, data, name)
         '''
         return self._saveAs (data=data, name=name, token=def_token(token))
 
-    @multimethod(2)
+    @multimethod('sc',2)
     def saveAs (self, name, data, token=None):
         '''  Usage:  storeClient.saveAs (data, name)
         '''
@@ -1384,7 +1392,7 @@ class storeClient (object):
             raise storeClientError(str(e))
     
         # Patch the names with the URI prefix if needed.
-        nm = (name if name.startswith("vos://") else ("vos://" + name))
+        nm = (name if name.count("://") > 0 else ("vos://" + name))
     
         # Put the temp file to the VOSpace.
         put (token, fr=tfd.name, to=nm, verbose=False)
@@ -1397,13 +1405,13 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # TAG -- Annotate a file/directory in the store manager service
     # --------------------------------------------------------------------
-    @multimethod(3)
+    @multimethod('sc',3)
     def tag (self, token, name, tag):
         '''  Usage:  storeClient.tag (token, name, tag)
         '''
         return self._tag (name=name, tag=tag, token=def_token(token))
 
-    @multimethod(2)
+    @multimethod('sc',2)
     def tag (self, name, tag, token=None):
         '''  Usage:  storeClient.tag (name, tag)
         '''
@@ -1456,20 +1464,28 @@ def hasmeta(s):
     return (s.find('*') >= 0) or (s.find('[') >= 0) or (s.find('?') > 0)
 
 
-def expandFileList (token, pattern, format, full=False):
+def expandFileList (svc_url, token, pattern, format, full=False):
     """ Expand a filename pattern in a VOSpace URI to a list of files.  We
         do this by getting a listing of the parent container contents from
         the service and then match the pattern on the client side.
     """
-    debug = False
+    debug = True
 
     # The URI prefix is constant whether it's included in the pattern string
     # or not.  The SM sm controls a specific instance of VOSpace so at the
     # moment the expansiom to the VOSpace URI is handled on the server.  We'll
     # prepend this to the service call as needed to ensure a correct argument
     # and give the calling routine the option of leaving it off.
-    uri = 'vos://'
-    str = (pattern[6:] if pattern.startswith('vos://') else pattern)
+    if pattern.count('://') > 0:
+        str = pattern[pattern.index('://')+3:]
+        uri = pattern[:pattern.index('://')+3]
+    else:
+        str = pattern
+        uri = 'vos://'
+
+    print ('expand() pattern = ' + pattern)
+    print ('expand() str = ' + str)
+    print ('expand() uri = ' + uri)
 
     # Extract the directory and filename/pattern from the string.
     dir, name = os.path.split(str)
@@ -1500,8 +1516,11 @@ def expandFileList (token, pattern, format, full=False):
         pstr = (name if name != '' else "*")
 
     # Make the service call to get a listing of the parent directory.
-    url = self.svc_url + "/ls?name=vos://%s&format=%s" % (dir, "csv")
+    url = svc_url + "/ls?name=%s%s&format=%s" % (uri, dir, "csv")
+    print ('expand() url = ' + url)
+    print ('expand() tok = ' + def_token(token))
     r = requests.get(url, headers={'X-DL-AuthToken': def_token(token)})
+    print ('expand() content = ' + r.content)
 
     # Filter the directory contents list using the filename pattern.
     list = []

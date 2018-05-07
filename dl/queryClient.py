@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Matthew Graham <graham@noao.edu>, Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20180321'  # yyyymmdd
+__version__ = '20180318'  # yyyymmdd
 
 
 """
@@ -133,14 +133,14 @@ def get_profile ():
 # --------------------------------------------------------------------
 # LIST_PROFILES -- List the available service profiles.
 #
-@multifunc(1)
+@multifunc('qc',1)
 def list_profiles (token, profile=None, format='text'):
     '''  Usage:  queryClient.list_profiles (token)
     '''
     return client._list_profiles (token=def_token(token), profile=profile,
                                   format=format)
 
-@multifunc(0)
+@multifunc('qc',0)
 def list_profiles (token=None, profile=None, format='text'):
     '''  Usage:  queryClient.list_profiles ()
     '''
@@ -173,7 +173,7 @@ def schema (value, format='text', profile=None):
 # --------------------------------------------------------------------
 # QUERY -- Send a query to the Query Manager service
 #
-@multifunc(2)
+@multifunc('qc',2)
 def query (token, query, adql=None, sql=None, fmt='csv', out=None, 
            async=False, **kw):
     '''  Usage:  queryClient.query (token)
@@ -181,7 +181,7 @@ def query (token, query, adql=None, sql=None, fmt='csv', out=None,
     return client._query (token=def_token(token), adql=adql, sql=query, 
                           fmt=fmt, out=out, async=async, **kw)
 
-@multifunc(1)
+@multifunc('qc',1)
 def query (optval, adql=None, sql=None, fmt='csv', out=None, async=False, **kw):
     '''  Usage:  queryClient.query (token)
     '''
@@ -194,7 +194,7 @@ def query (optval, adql=None, sql=None, fmt='csv', out=None, async=False, **kw):
         return client._query (token=def_token(optval), adql=adql, sql=sql, 
                               fmt=fmt, out=out, async=async, **kw)
 
-@multifunc(0)
+@multifunc('qc',0)
 def query (token=None, adql=None, sql=None, fmt='csv', out=None, async=False,
            **kw):
     '''  Usage:  queryClient.query ()
@@ -207,13 +207,13 @@ def query (token=None, adql=None, sql=None, fmt='csv', out=None, async=False,
 # --------------------------------------------------------------------
 # STATUS -- Get the status of an Asynchronous query
 #
-@multifunc(2)
+@multifunc('qc',2)
 def status (token, jobId):
     '''  Usage:  queryClient.status (token, jobId)
     '''
     return client._status (token=def_token(token), jobId=jobId)
 
-@multifunc(1)
+@multifunc('qc',1)
 def status (optval, jobId=None):
     '''  Usage:  queryClient.status (jobId)
                  queryClient.status (token, jobId=<id>)
@@ -225,7 +225,7 @@ def status (optval, jobId=None):
         # optval is probably a jobId
         return client._status (token=def_token(None), jobId=optval)
 
-@multifunc(0)
+@multifunc('qc',0)
 def status (token=None, jobId=None):
     '''  Usage:  queryClient.status (jobId=<str>)
     '''
@@ -235,13 +235,13 @@ def status (token=None, jobId=None):
 # --------------------------------------------------------------------
 # RESULTS -- Get the results of an Asynchronous query
 #
-@multifunc(2)
+@multifunc('qc',2)
 def results (token, jobId):
     '''  Usage:  queryClient.results (token, jobId)
     '''
     return client._results (token=def_token(token), jobId=jobId)
 
-@multifunc(1)
+@multifunc('qc',1)
 def results (optval, jobId=None):
     '''  Usage:  queryClient.results (jobId)
                  queryClient.results (token, jobId=<id>)
@@ -253,7 +253,7 @@ def results (optval, jobId=None):
         # optval is probably a jobId
         return client._results (token=def_token(None), jobId=optval)
 
-@multifunc(0)
+@multifunc('qc',0)
 def results (token=None, jobId=None):
     '''  Usage:  queryClient.results (jobId=<str>)
     '''
@@ -263,13 +263,13 @@ def results (token=None, jobId=None):
 # --------------------------------------------------------------------
 # ABORT -- Abort the specified Asynchronous job.
 #
-@multifunc(2)
+@multifunc('qc',2)
 def abort (token, jobId):
     '''  Usage:  queryClient.abort (token, jobId)
     '''
     return client._abort (token=def_token(token), jobId=jobId)
 
-@multifunc(1)
+@multifunc('qc',1)
 def abort (optval, jobId=None):
     '''  Usage:  queryClient.abort (jobId)
                  queryClient.abort (token, jobId=<id>)
@@ -281,7 +281,7 @@ def abort (optval, jobId=None):
         # optval is probably a jobId
         return client._abort (token=def_token(None), jobId=optval)
 
-@multifunc(0)
+@multifunc('qc',0)
 def abort (token=None, jobId=None):
     '''  Usage:  queryClient.abort (jobId=<str>)
     '''
@@ -296,13 +296,13 @@ def abort (token=None, jobId=None):
 # --------------------------------------------------------------------
 # LIST -- List the tables or table schema in a user's MyDB.
 #
-@multifunc(2)
+@multifunc('qc',2)
 def list (token, table):
     '''  Usage:  queryClient.list (token, table)
     '''
     return client._list (token=def_token(token), table=table)
 
-@multifunc(1)
+@multifunc('qc',1)
 def list (optval, table=None):
     '''  Usage:  queryClient.list (table)
                  queryClient.list (token, table=<id>)
@@ -314,7 +314,7 @@ def list (optval, table=None):
         # optval is likely a table
         return client._list (token=def_token(None), table=optval)
 
-@multifunc(0)
+@multifunc('qc',0)
 def list (table=None, token=None):
     '''  Usage:  queryClient.list (table=<str>)
     '''
@@ -324,13 +324,13 @@ def list (table=None, token=None):
 # --------------------------------------------------------------------
 # DROP -- Drop the named table from a user's MyDB.
 #
-@multifunc(2)
+@multifunc('qc',2)
 def drop (token, table):
     '''  Usage:  queryClient.drop (token, table)
     '''
     return client._drop (token=def_token(token), table=table)
 
-@multifunc(1)
+@multifunc('qc',1)
 def drop (optval, table=None):
     '''  Usage:  queryClient.drop (table)
                  queryClient.drop (token, table=<id>)
@@ -342,7 +342,7 @@ def drop (optval, table=None):
         # optval is likely a table
         return client._drop (token=def_token(None), table=optval)
 
-@multifunc(0)
+@multifunc('qc',0)
 def drop (table=None, token=None):
     '''  Usage:  queryClient.drop (table=<str>)
     '''
@@ -357,7 +357,7 @@ def drop (table=None, token=None):
 # --------------------------------------------------------------------
 # MYDB_LIST -- List the tables or table schema in a user's MyDB.
 #
-@multifunc(1)
+@multifunc('qc',1)
 def mydb_list (optval, table=None):
     '''  Usage:  queryClient.mydb_list (table)
                  queryClient.mydb_list (token, table=<str>)
@@ -369,16 +369,18 @@ def mydb_list (optval, table=None):
         # optval is likely a table name
         return client._mydb_list (token=def_token(None), table=optval)
 
-@multifunc(0)
+@multifunc('qc',0)
 def mydb_list (table=None, token=None):
     '''  Usage:  queryClient.mydb_list (table=<str>)
     '''
     return client._mydb_list (token=def_token(token), table=table)
 
+
 # --------------------------------------------------------------------
-# MYDB_CREATE -- Create a table in the user's MyDB
+# MYDB_CREATE -- Create a table in the user's MyDB from a local file 
+# or python data object.
 #
-@multifunc(3)
+@multifunc('qc',3)
 def mydb_create (token, table, optval, **kw):
     '''  Usage:  queryClient.mydb_create (token, table, <schema_dict>)
                  queryClient.mydb_create (token, table, <filename>)
@@ -386,7 +388,7 @@ def mydb_create (token, table, optval, **kw):
     '''
     pass
 
-@multifunc(2)
+@multifunc('qc',2)
 def mydb_create (table, optval, token=None, **kw):
     '''  Usage:  queryClient.mydb_create (table, <schema_dict>)
                  queryClient.mydb_create (table, <filename>)
@@ -395,16 +397,49 @@ def mydb_create (table, optval, token=None, **kw):
     pass
 
 # --------------------------------------------------------------------
+# MYDB_INSERT -- Insert data into a table in the user's MyDB from a local
+# file or python data object.
+#
+@multifunc('qc',3)
+def mydb_insert (token, table, optval, **kw):
+    '''  Usage:  queryClient.mydb_insert (token, table, <filename>)
+                 queryClient.mydb_insert (token, table, <data_object>)
+    '''
+    pass
+
+@multifunc('qc',2)
+def mydb_insert (table, optval, token=None, **kw):
+    '''  Usage:  queryClient.mydb_insert (table, <filename>)
+                 queryClient.mydb_insert (table, <data_object>)
+    '''
+    pass
+
+# --------------------------------------------------------------------
+# MYDB_TRUNCATE -- Truncate a table in the user's MyDB.
+#
+@multifunc('qc',3)
+def mydb_truncate (token, table):
+    '''  Usage:  queryClient.mydb_truncate (token, table)
+    '''
+    pass
+
+@multifunc('qc',2)
+def mydb_truncate (table, token=None):
+    '''  Usage:  queryClient.mydb_truncate (table)
+    '''
+    pass
+
+# --------------------------------------------------------------------
 # MYDB_INDEX -- Index a column in a user's MyDB table.
 #
-@multifunc(3)
+@multifunc('qc',3)
 def mydb_index (token, table, column):
     '''  Usage:  queryClient.mydb_index (token, table, column)
     '''
     return client._mydb_index (token=def_token(token), table=table, 
                                column=column)
 
-@multifunc(2)
+@multifunc('qc',2)
 def mydb_index (table, column, token=None):
     '''  Usage:  queryClient.mydb_index (table, colunm)
     '''
@@ -414,13 +449,13 @@ def mydb_index (table, column, token=None):
 # --------------------------------------------------------------------
 # MYDB_DROP -- Drop the named table from a user's MyDB.
 #
-@multifunc(2)
+@multifunc('qc',2)
 def mydb_drop (token, table):
     '''  Usage:  queryClient.mydb_drop (token, table)
     '''
     return client._mydb_drop (token=def_token(token), table=table)
 
-@multifunc(1)
+@multifunc('qc',1)
 def mydb_drop (table, token=None):
     '''  Usage:  queryClient.mydb_drop (table)
                  queryClient.mydb_drop (token, table=<id>)
@@ -431,14 +466,14 @@ def mydb_drop (table, token=None):
 # --------------------------------------------------------------------
 # MYDB_RENAME -- Rename a table in the user's MyDB.
 #
-@multifunc(3)
+@multifunc('qc',3)
 def mydb_rename (token, source, target):
     '''  Usage:  queryClient.mydb_rename (token, source, target)
     '''
     return client._mydb_rename (token=def_token(token), 
                                 source=source, target=target)
 
-@multifunc(2)
+@multifunc('qc',2)
 def mydb_rename (source, target, token=None):
     '''  Usage:  queryClient.mydb_rename (source, target)
     '''
@@ -448,14 +483,14 @@ def mydb_rename (source, target, token=None):
 # --------------------------------------------------------------------
 # MYDB_COPY -- Copy a table in the user's MyDB.
 #
-@multifunc(3)
+@multifunc('qc',3)
 def mydb_copy (token, source, target):
     '''  Usage:  queryClient.mydb_copy (token, source, target)
     '''
     return client._mydb_copy (token=def_token(token), 
                               source=source, target=target)
 
-@multifunc(2)
+@multifunc('qc',2)
 def mydb_copy (source, target, token=None):
     '''  Usage:  queryClient.mydb_copy (source, target)
     '''
@@ -662,14 +697,14 @@ class queryClient (object):
     #  Utility Methods
     # ###########################
 
-    @multimethod(1)
+    @multimethod('qc',1)
     def list_profiles (self, token, profile=None, format='text'):
         '''  Usage:  queryClient.client.list_profiles (token, ...)
         '''
         return self._list_profiles (token=def_token(token), profile=profile,
                              format=format)
 
-    @multimethod(0)
+    @multimethod('qc',0)
     def list_profiles (self, token=None, profile=None, format='text'):
         '''  Usage:  queryClient.client.list_profiles (...)
         '''
@@ -775,7 +810,7 @@ class queryClient (object):
     #  Query Methods
     # ###########################
 
-    @multimethod(2)
+    @multimethod('qc',2)
     def query (self, token, query, adql=None, sql=None, fmt='csv', out=None, 
                async=False, **kw):
         '''  Usage:  queryClient.query (token)
@@ -783,7 +818,7 @@ class queryClient (object):
         return self._query (token=def_token(token), adql=adql, sql=query, 
                               fmt=fmt, out=out, async=async, **kw)
 
-    @multimethod(1)
+    @multimethod('qc',1)
     def query (self, optval, adql=None, sql=None, fmt='csv', out=None,
                async=False, **kw):
         '''  Usage:  queryClient.client.query (token, ...)
@@ -797,7 +832,7 @@ class queryClient (object):
             return self._query (token=def_token(optval), adql=adql, sql=sql, 
                                   fmt=fmt, out=out, async=async, **kw)
 
-    @multimethod(0)
+    @multimethod('qc',0)
     def query (self, token=None, adql=None, sql=None, fmt='csv', out=None, 
                async=False, **kw):
         '''  Usage:  queryClient.client.query (...)
@@ -999,7 +1034,7 @@ class queryClient (object):
                 try:
                     stat = self._status (token=token, jobId=jobId)
                 except Exception as e:
-                    raise queryClientError (str(e))
+                    raise queryClientError (e.message)
                 else:
                     if tval > self.timeout_request:
                         stat = self._abort (token=token, jobId=jobId)
@@ -1043,13 +1078,13 @@ class queryClient (object):
     # Async jobs status()
     # --------------------------
 
-    @multimethod(2)
+    @multimethod('qc',2)
     def status (self, token, jobId):
         '''  Usage:  queryClient.status (token, jobID)
         '''
         return self._status (token=def_token(token), jobId=jobId)
     
-    @multimethod(1)
+    @multimethod('qc',1)
     def status (self, optval, jobId=None):
         '''  Usage:  queryClient.status (jobID)
                      queryClient.status (token, jobId=<id>)
@@ -1061,7 +1096,7 @@ class queryClient (object):
             # optval is probably a jobId
             return self._status (token=def_token(None), jobId=optval)
     
-    @multimethod(0)
+    @multimethod('qc',0)
     def status (self, token=None, jobId=None):
         '''  Usage:  queryClient.status (jobID=<str>)
         '''
@@ -1131,13 +1166,13 @@ class queryClient (object):
     # Async jobs results()
     # --------------------------
 
-    @multimethod(2)
+    @multimethod('qc',2)
     def results (self, token, jobId):
         '''  Usage:  queryClient.results (token, jobID)
         '''
         return self._results (token=def_token(token), jobId=jobId)
     
-    @multimethod(1)
+    @multimethod('qc',1)
     def results (self, optval, jobId=None):
         '''  Usage:  queryClient.results (jobID)
                      queryClient.results (token, jobId=<id>)
@@ -1149,7 +1184,7 @@ class queryClient (object):
             # optval is probably a jobId
             return self._results (token=def_token(None), jobId=optval)
     
-    @multimethod(0)
+    @multimethod('qc',0)
     def results (self, token=None, jobId=None):
         '''  Usage:  queryClient.results (jobID=<str>)
         '''
@@ -1214,13 +1249,13 @@ class queryClient (object):
     # Async jobs abort()
     # --------------------------
 
-    @multimethod(2)
+    @multimethod('qc',2)
     def abort (self, token, jobId):
         '''  Usage:  queryClient.abort (token, jobID)
         '''
         return self._abort (token=def_token(token), jobId=jobId)
     
-    @multimethod(1)
+    @multimethod('qc',1)
     def abort (self, optval, jobId=None):
         '''  Usage:  queryClient.abort (jobID)
                      queryClient.abort (token, jobId=<id>)
@@ -1232,7 +1267,7 @@ class queryClient (object):
             # optval is probably a jobId
             return self._abort (token=def_token(None), jobId=optval)
     
-    @multimethod(0)
+    @multimethod('qc',0)
     def abort (self, token=None, jobId=None):
         '''  Usage:  queryClient.abort (jobID=<str>)
         '''
@@ -1301,13 +1336,13 @@ class queryClient (object):
 
     # LIST -- List the tables or table schema in the user's MyDB.
     #
-    @multimethod(2)
+    @multimethod('qc',2)
     def list (self, token, table):
         '''  Usage:  queryClient.list (token, table)
         '''
         return self._list (token=def_token(token), table=table)
 
-    @multimethod(1)
+    @multimethod('qc',1)
     def list (self, optval, table=None):
         '''  Usage:  queryClient.list (table)
                      queryClient.list (token, table=<id>)
@@ -1319,7 +1354,7 @@ class queryClient (object):
             # optval is probably a table
             return self._list (token=def_token(None), table=optval)
 
-    @multimethod(0)
+    @multimethod('qc',0)
     def list (self, token=None, table=None):
         '''  Usage:  queryClient.list (table=<str>)
         '''
@@ -1364,13 +1399,13 @@ class queryClient (object):
     
     # DROP -- Drop the specified table from the user's MyDB
     #
-    @multimethod(2)
+    @multimethod('qc',2)
     def drop (self, token, table):
         '''  Usage:  queryClient.drop (token, table)
         '''
         return self._drop (token=def_token(token), table=table)
 
-    @multimethod(1)
+    @multimethod('qc',1)
     def drop (self, optval, table=None):
         '''  Usage:  queryClient.drop (table)
                      queryClient.drop (token, table=<id>)
@@ -1382,7 +1417,7 @@ class queryClient (object):
             # optval is probably a table
             return self._drop (token=def_token(None), table=optval)
 
-    @multimethod(0)
+    @multimethod('qc',0)
     def drop (self, token=None, table=None):
         '''  Usage:  queryClient.drop (table=<str>)
         '''
@@ -1428,7 +1463,7 @@ class queryClient (object):
     # --------------------------------------------------------------------
     # MYDB_LIST -- List the tables or table schema in a user's MyDB.
     #
-    @multimethod(1)
+    @multimethod('qc',1)
     def mydb_list (self, optval, table=None):
         '''  Usage:  queryClient.mydb_list (table)
                      queryClient.mydb_list (token, table=<str>)
@@ -1440,7 +1475,7 @@ class queryClient (object):
             # optval is probably a table
             return self._mydb_list (token=def_token(None), table=optval)
     
-    @multimethod(0)
+    @multimethod('qc',0)
     def mydb_list (self, token=None, table=None):
         '''  Usage:  queryClient.mydb_list (table=<str>)
         '''
@@ -1482,38 +1517,71 @@ class queryClient (object):
         return r.content
     
 
-
     # --------------------------------------------------------------------
-    # MYDB_CREATE -- Create a table in the user's MyDB
+    # MYDB_CREATE -- Create a table in the user's MyDB from a local file 
+    # or python data object.
     #
-    @multimethod(3)
-    def mydb_create (self, token, table, optval, **kw)
+    @multimethod('qc',3)
+    def mydb_create (self, token, table, optval, **kw):
         '''  Usage:  queryClient.mydb_create (token, table, <schema_dict>)
                      queryClient.mydb_create (token, table, <filename>)
                      queryClient.mydb_create (token, table, <data_object>)
         '''
         pass
     
-    @multimethod(2)
-    def mydb_create (self, table, optval, token=None, **kw)
+    @multimethod('qc',2)
+    def mydb_create (self, table, optval, token=None, **kw):
         '''  Usage:  queryClient.mydb_create (table, <schema_dict>)
                      queryClient.mydb_create (table, <filename>)
                      queryClient.mydb_create (table, <data_object>)
         '''
         pass
-    
+
+    # --------------------------------------------------------------------
+    # MYDB_INSERT -- Insert data into a table in the user's MyDB from a local
+    # file or python data object.
+    #
+    @multimethod('qc',3)
+    def mydb_insert (self, token, table, optval, **kw):
+        '''  Usage:  queryClient.mydb_insert (token, table, <filename>)
+                     queryClient.mydb_insert (token, table, <data_object>)
+        '''
+        pass
+
+    @multimethod('qc',2)
+    def mydb_insert (self, table, optval, token=None, **kw):
+        '''  Usage:  queryClient.mydb_insert (table, <filename>)
+                     queryClient.mydb_insert (table, <data_object>)
+        '''
+        pass
+
+    # --------------------------------------------------------------------
+    # MYDB_TRUNCATE -- Truncate a table in the user's MyDB.
+    #
+    @multimethod('qc',3)
+    def mydb_truncate (self, token, table):
+        '''  Usage:  queryClient.mydb_truncate (token, table)
+        '''
+        pass
+
+    @multimethod('qc',2)
+    def mydb_truncate (self, table, token=None):
+        '''  Usage:  queryClient.mydb_truncate (table)
+        '''
+        pass
+
     # --------------------------------------------------------------------
     # MYDB_INDEX -- Index a column in a user's MyDB table.
     #
-    @multimethod(3)
-    def mydb_index (self, token, table, column)
+    @multimethod('qc',3)
+    def mydb_index (self, token, table, column):
         '''  Usage:  queryClient.mydb_index (token, table, column)
         '''
         return self._mydb_index (token=def_token(token), table=table, 
                                    column=column)
     
-    @multimethod(2)
-    def mydb_index (self, table, column, token=None)
+    @multimethod('qc',2)
+    def mydb_index (self, table, column, token=None):
         '''  Usage:  queryClient.mydb_index (table, colunm)
         '''
         pass
@@ -1522,13 +1590,13 @@ class queryClient (object):
     # --------------------------------------------------------------------
     # MYDB_DROP -- Drop the named table from a user's MyDB.
     #
-    @multimethod(2)
+    @multimethod('qc',2)
     def mydb_drop (self, token, table):
         '''  Usage:  queryClient.mydb_drop (token, table)
         '''
         return self._mydb_drop (token=def_token(token), table=table)
     
-    @multimethod(1)
+    @multimethod('qc',1)
     def mydb_drop (self, table, token=None):
         '''  Usage:  queryClient.mydb_drop (table)
                      queryClient.mydb_drop (token, table=<id>)
@@ -1572,22 +1640,21 @@ class queryClient (object):
     # --------------------------------------------------------------------
     # MYDB_RENAME -- Rename a table in the user's MyDB.
     #
-    @multimethod(3)
-    def mydb_rename (self, token, source, target)
+    @multimethod('qc',3)
+    def mydb_rename (self, token, source, target):
         '''  Usage:  queryClient.mydb_rename (token, source, target)
         '''
         return self._mydb_rename (token=def_token(token), 
                                     source=source, target=target)
     
-    @multimethod(2)
-    def mydb_rename (self, source, target, token=None)
+    @multimethod('qc',2)
+    def mydb_rename (self, source, target, token=None):
         '''  Usage:  queryClient.mydb_rename (source, target)
         '''
         return self._mydb_rename (source=source, target=target,
                                   token=def_token(token))
     
-    def _mydb_rename (self, source=source, target=target,
-                          token=def_token(token))
+    def _mydb_rename (self, source='', target='', token=None):
         """ Rename a table in the user's MyDB to a new name
     
         Parameters
@@ -1626,22 +1693,21 @@ class queryClient (object):
     # --------------------------------------------------------------------
     # MYDB_COPY -- Copy a table in the user's MyDB.
     #
-    @multimethod(3)
-    def mydb_copy (self, token, source, target)
+    @multimethod('qc',3)
+    def mydb_copy (self, token, source, target):
         '''  Usage:  queryClient.mydb_copy (token, source, target)
         '''
         return self._mydb_copy (token=def_token(token), 
                                   source=source, target=target)
     
-    @multimethod(2)
-    def mydb_copy (self, source, target, token=None)
+    @multimethod('qc',2)
+    def mydb_copy (self, source, target, token=None):
         '''  Usage:  queryClient.mydb_copy (source, target)
         '''
         return self._mydb_copy (source=source, target=target,
                                 token=def_token(token))
     
-    def _mydb_copy (self, source=source, target=target,
-                          token=def_token(token))
+    def _mydb_copy (self, source='', target='', token=None):
         """ Copy a table in the user's MyDB to a new name
     
         Parameters

@@ -93,7 +93,7 @@ def login(user, password=None, debug=False, verbose=False):
         try:
             response = client.login(user, password, debug)
         except Exception as e:
-            response = str(e)
+            response = e.message
     return response
 
 
@@ -101,7 +101,7 @@ def isAlive(svc_url=DEF_SERVICE_URL):
     try:
         response = client.isAlive(svc_url)
     except Exception as e:
-        response = str(e)
+        response = e.message
     return response
 
 
@@ -117,7 +117,7 @@ def isValidToken(token):
         try:
             response = client.isValidToken(token)
         except Exception as e:
-            print (str(e))
+            print (e.message)
             return False
 
     return response
@@ -130,7 +130,7 @@ def isValidUser(user):
         try:
             response = client.isValidUser(user)
         except Exception as e:
-            response = str(e)
+            response = e.message
     return response
 
 
@@ -141,7 +141,7 @@ def isValidPassword(user, password):
         try:
             response = client.isValidPassword(user, password)
         except Exception as e:
-            response = str(e)
+            response = e.message
     return response
 
 
@@ -149,7 +149,7 @@ def hasAccess(user, resource):
     try:
         response = client.hasAccess(user, resource)
     except Exception as e:
-        response = str(e)
+        response = e.message
     return response
 
 
@@ -157,7 +157,7 @@ def isUserLoggedIn(user):
     try:
         response = client.isUserLoggedIn(user)
     except Exception as e:
-        response = str(e)
+        response = e.message
     return response
 
 
@@ -165,7 +165,7 @@ def isTokenLoggedIn(token):
     try:
         response = client.isTokenLoggedIn(token)
     except Exception as e:
-        response = str(e)
+        response = e.message
     return response
 
 
@@ -173,7 +173,8 @@ def logout(token):
     try:
         response = client.logout(token)
     except Exception as e:
-        response = str(e)
+        #response = e.message
+        response = e.message
     return response
 
 
@@ -181,7 +182,7 @@ def passwordReset(token, username, password):
     try:
         response = client.passwordReset(token, username, password)
     except Exception as e:
-        response = str(e)
+        response = e.message
     return response
 
 
@@ -202,8 +203,8 @@ def get_profile():
     return client.get_profile()
 
 
-def list_profiles(token, profile=None, format='text'):
-    return client.list_profiles(token, profile, format)
+#def list_profiles(token, profile=None, format='text'):
+#    return client.list_profiles(token, profile, format)
 
 
 # ###################################
@@ -384,7 +385,7 @@ class authClient (object):
 
             if r.status_code != 200:
                 return False
-	    elif resp is not None and r.text.lower()[:11] != "hello world":
+            elif resp is not None and r.text.lower()[:11] != "hello world":
                 return False
         except Exception:
             return False
@@ -444,12 +445,12 @@ class authClient (object):
             print ("top of login: self.auth_token = '%s'" %
                    str(self.auth_token))
             print ("top of login: token = ")
-            os.system('cat ' + tok_file)
+            os.system("cat " + tok_file)
 
         if password is None:
             if os.path.exists(tok_file):
                 tok_fd = open(tok_file, "r", 0)
-                o_tok = tok_fd.read(128)                # read the old token
+                o_tok = tok_fd.read(128).decode('utf-8')  # read the old token
                 tok_fd.close()
 
                 # Return a valid token, otherwise remove the file and obtain a
@@ -459,6 +460,7 @@ class authClient (object):
                     self.auth_token = o_tok
                     if self.debug:
                         print ("using old token for '%s'" % username)
+                    print ('o_tok type = ' + str(type (o_tok)))
                     return o_tok
                 else:
                     if self.debug:
@@ -476,17 +478,17 @@ class authClient (object):
         response = 'None'
         try:
             r = requests.get(url, params=query_args)
-            response = r.text
+            #response = r.text.decode('utf-8')
+            response = r.content.decode('utf-8')
 
             if self.debug:
-                print ('resp = ' + response)
-                print ('code = ' + str(r.status_code))
+                print ('%s:  resp = ' + (str(r.status_code,response)))
             if r.status_code != 200:
-                raise Exception(r.text)
+                raise Exception(response)
 
         except Exception as e:
             if self.debug:
-                print ("Raw exception msg = '%s'" + r.text)
+                print ("Raw exception msg = '%s'" + r.content)
             if self.isAlive(self.svc_url) == False:
                 raise dlAuthError("AuthManager Service not responding.")
             if self.isValidUser(username):
@@ -498,7 +500,7 @@ class authClient (object):
                 elif not self.isValidPassword(username, password):
                     raise dlAuthError("Invalid password in login()")
                 else:
-                    raise dlAuthError(str(e))
+                    raise dlAuthError(e.message)
             else:
                 raise dlAuthError("Invalid username in login()")
 
@@ -517,7 +519,7 @@ class authClient (object):
                     print ("login: token = ")
                     os.system('cat ' + tok_file)
 
-                tok_fd.write(self.auth_token)
+                tok_fd.write(self.auth_token.encode('utf-8'))
                 tok_fd.close()
 
         return self.auth_token
@@ -543,13 +545,15 @@ class authClient (object):
             headers = {'X-DL-AuthToken': token}
 
             r = requests.get(url, params=args, headers=headers)
-            response = r.text
+            #response = r.text
+            response = r.content
 
             if r.status_code != 200:
-                raise Exception(r.text)
+                #raise Exception(r.text)
+                raise Exception(r.content)
 
         except Exception as e:
-            raise dlAuthError(str(e))
+            raise dlAuthError(e.message)
         else:
             self.auth_token = None
             tok_file = self.home + '/id_token.' + self.username
@@ -592,13 +596,16 @@ class authClient (object):
             headers = {'X-DL-AuthToken': token}
 
             r = requests.get(url, params=args, headers=headers)
-            response = r.text
+            #response = r.text
+            response = r.content
 
             if r.status_code != 200:
-                raise Exception(r.text)
+                #raise Exception(r.text)
+                raise Exception(r.content)
 
         except Exception:
-            raise dlAuthError(r.text)
+            #raise dlAuthError(r.text)
+            raise dlAuthError(r.content)
         else:
             # Update the saved user token.
             print ("Updating saved user token ....")
@@ -613,7 +620,7 @@ class authClient (object):
                         print ("pwreset: writing new token for '%s'" + username)
                         print ("pwreset: response = '%s'" + response)
                         print ("pwreset: token = '%s'" + self.auth_token)
-                    tok_fd.write(self.auth_token)
+                    tok_fd.write(self.auth_token.encode('utf-8'))
                     tok_fd.close()
             else:
                 print ('pwReset response is None')
@@ -750,13 +757,16 @@ class authClient (object):
                 r = requests.get(url, headers=headers)
             else:
                 r = requests.get(url)
-            response = r.text
+            #response = r.text
+            response = r.content
 
             if r.status_code != 200:
-                raise Exception(r.text)
+                #raise Exception(r.text)
+                raise Exception(r.content)
 
         except Exception:
-            return r.text
+            #return r.text
+            return r.content
         else:
             return response
 

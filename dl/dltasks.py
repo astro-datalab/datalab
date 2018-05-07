@@ -22,7 +22,10 @@ Import via
 
 import sys
 from sys import platform
-from astropy.vo.samp import SAMPIntegratedClient
+try:
+    from astropy.samp import SAMPIntegratedClient
+except Exception:
+    from astropy.vo.samp import SAMPIntegratedClient
 import glob
 import os
 import logging
@@ -46,11 +49,11 @@ except ImportError:
 import requests             # need to standarize on one library at some point
 
 # VOSpace imports
-#import vos as vos
-#from vos.fuse import FUSE
+import vos as vos
+from vos.fuse import FUSE
 #from vos.__version__ import version
 version = "2.2.0"                  # VOS version
-#from vos.vofs import VOFS
+from vos.vofs import VOFS
 DAEMON_TIMEOUT = 60                             # Mount timeout
 CAPS_DIR = "../caps"                            # Capability directory
 
@@ -61,8 +64,9 @@ TEST_TOKEN = "dltest.99998.99998.test_access"
 
 
 # Data Lab Client interfaces
-from dl import authClient, storeClient, queryClient
-#import authClient, storeClient, queryClient
+from dl import authClient
+from dl import queryClient
+from dl import storeClient
 
 
 # Uncomment to print HTTP and response headers
@@ -655,14 +659,14 @@ class Query2 (Task):
             elif self.out.value== '' or self.out.value is None:
                 print (res)                         # Return the results
         except Exception as e:
-            if not self.async.value and str(e) is not None:
-                err = str(e)
+            if not self.async.value and e.message is not None:
+                err = e.message
                 if err.find("Time-out") > 0:
                     print ("Error: Sync query timeout, try an async query")
                 else:
-                    print (str(e))
+                    print (e.message)
             else:
-                print (str(e))
+                print (e.message)
 
 
 class QueryStatus(Task):

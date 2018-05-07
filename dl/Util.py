@@ -34,7 +34,8 @@ class MultiMethod(object):
         such that methods may be overloaded and the appropriate method is
         dispatched depending on the calling arguments.
     '''
-    def __init__(self, name):
+    def __init__(self, module, name):
+        self.module = module
         self.name = name
         self.methodmap = {}
 
@@ -44,7 +45,7 @@ class MultiMethod(object):
              we want to bind to
         '''
         # Lookup the function to call in the method map.
-        reg_name = self.name + '.' + str(len(args))
+        reg_name = self.module + '.' + self.name + '.' + str(len(args))
         function = self.methodmap.get(reg_name)
         if function is None:
             raise TypeError("No MultiMethod match found")
@@ -53,18 +54,18 @@ class MultiMethod(object):
         # return the result.
         return function(instance, *args, **kw)
 
-    def register(self, nargs, function):
+    def register(self, nargs, function, module):
         ''' Register the method based on the number of method arguments.  
             Duplicates are rejected when two method names with the same
             number of arguments are registered.  For generality, we
             construct a registry id from the method name and no. of args.
         '''
-        reg_name = function.__name__ + '.' + str(nargs)
+        reg_name = module + '.' + function.__name__ + '.' + str(nargs)
         if reg_name in self.methodmap:
             raise TypeError("duplicate registration")
         self.methodmap[reg_name] = function
 
-def multimethod(nargs):
+def multimethod(module, nargs):
     '''  Wrapper function to implement multimethod for class methods.  The
          identifying signature in this case is the number of required
          method parameters.  When methods are called, all original arguments
@@ -75,8 +76,8 @@ def multimethod(nargs):
         name = function.__name__
         mm = method_registry.get(name)
         if mm is None:
-            mm = method_registry[name] = MultiMethod(name)
-        mm.register(nargs, function)
+            mm = method_registry[name] = MultiMethod(module, name)
+        mm.register(nargs, function, module)
         mm.__lastreg__ = function
 
         # return function instead of an object - Python binds this automatically
@@ -98,7 +99,8 @@ class MultiFunction(object):
         such that functions may be overloaded and the appropriate functions
         is dispatched depending on the calling arguments.
     '''
-    def __init__(self, name):
+    def __init__(self, module, name):
+        self.module = module
         self.name = name
         self.funcmap = {}
 
@@ -106,7 +108,7 @@ class MultiFunction(object):
         '''  Call the appropriate instance of the function.
         '''
         # Lookup the function to call in the method map.
-        reg_name = self.name + '.' + str(len(args))
+        reg_name = self.module + '.' + self.name + '.' + str(len(args))
         function = self.funcmap.get(reg_name)
         if function is None:
             raise TypeError("No MultiFunction match found")
@@ -114,18 +116,18 @@ class MultiFunction(object):
         # Call the function with all original args/keywords and return result.
         return function(*args, **kw)
 
-    def register(self, nargs, function):
+    def register(self, nargs, function, module):
         ''' Register the method based on the number of method arguments.  
             Duplicates are rejected when two method names with the same
             number of arguments are registered.  For generality, we
             construct a registry id from the method name and no. of args.
         '''
-        reg_name = function.__name__ + '.' + str(nargs)
+        reg_name = module + '.' + function.__name__ + '.' + str(nargs)
         if reg_name in self.funcmap:
             raise TypeError("duplicate registration")
         self.funcmap[reg_name] = function
 
-def multifunc(nargs):
+def multifunc(module, nargs):
     '''  Wrapper function to implement multimethod for functions.  The
          identifying signature in this case is the number of required
          method parameters.  When methods are called, all original arguments
@@ -136,8 +138,8 @@ def multifunc(nargs):
         name = function.__name__
         mf = func_registry.get(name)
         if mf is None:
-            mf = func_registry[name] = MultiFunction(name)
-        mf.register(nargs, function)
+            mf = func_registry[name] = MultiFunction(module, name)
+        mf.register(nargs, function, module)
         mf.__lastreg__ = function
         return mf
     return register

@@ -1,0 +1,535 @@
+
+		     DATALAB Command-Line Tool v2.0
+		    ---------------------------------
+			  Last Updated: 3/22/18
+
+
+Current datalab v1.0 Command Summary:
+-------------------------------------
+    tasks = {   'login' : dl.Login,		# task methods
+               'logout' : dl.Logout,
+               'whoami' : dl.WhoAmI,
+               'status' : dl.Status,
+
+               'schema' : dl.Schema,		# query methods
+                'query' : dl.Query2,
+              'qstatus' : dl.QueryStatus,
+             'qresults' : dl.QueryResults,
+               'listdb' : dl.ListMyDB,
+               'dropdb' : dl.DropMyDB,
+
+                  'get' : dl.Get,		# storage methods
+                  'put' : dl.Put,
+                   'mv' : dl.Move,
+                   'cp' : dl.Copy,
+                   'rm' : dl.Delete,
+                   'ln' : dl.Link,
+                   'ls' : dl.List,
+                  'tag' : dl.Tag,
+                'mkdir' : dl.MkDir,
+                'rmdir' : dl.RmDir,
+
+             'siaquery' : dl.SiaQuery,
+             'list_query_profiles' : dl.QueryProfiles,
+             'list_storage_profiles' : dl.StorageProfiles
+            }   
+
+
+New datalab v2.0 Command Summary:
+---------------------------------
+    tasks = {           			// USER COMMANDS
+                'login' : dl.Login,		# login to DL / switch user
+               'logout' : dl.Logout		# logout of DL
+               'whoami' : dl.WhoAmI,		# print default user
+               'status' : dl.Status,		# summarize login status
+*	         'init' : dl.Init,		# initialize config file
+*	        'reset' : dl.Reset,		# reset user record field
+*	   'userRecord' : dl.UserRecord,	# print user record
+*	        'stats' : dl.Stats,		# print usage statistics
+*	  'set_default' : dl.SetDefault,	# set config file default
+*	  'get_default' : dl.GetDefault,	# get config file default
+*	         'ping' : dl.Ping,		# ping a DL service
+
+                        			// QUERY COMMANDS
+               'schema' : dl.Schema,		# print table schema
+                'query' : dl.Query,		# query the database
+              'qstatus' : dl.QueryStatus,	# get ASync query status
+             'qresults' : dl.QueryResults,	# get ASync query results
+*	       'qabort' : dl.QueryAbort,	# abort ASync query job
+
+*	   'coneSearch' : dl.ConeSearch,	# Catalog Cone Search
+*	  'imageSearch' : dl.ImageSearch,	# Image Search
+
+                        			// MYDB COMMANDS
+*	    'mydb_list' : dl.MyDB_List,		# list MyDB table schema
+*	    'mydb_drop' : dl.MyDB_Drop,		# drop MyDB table
+*	  'mydb_create' : dl.MyDB_Create,	# create MyDB table from file
+*	  'mydb_insert' : dl.MyDB_Insert,	# insert into MyDB table
+*	'mydb_truncate' : dl.MyDB_Truncate,	# truncate MyDB table
+*	   'mydb_index' : dl.MyDB_Index,	# index MyDB table column
+*	  'mydb_rename' : dl.MyDB_Rename,	# rename a MyDB table
+*	    'mydb_copy' : dl.MyDB_Copy,		# copy a MyDB table
+
+                        			// STORAGE COMMANDS
+*	        'mount' : dl.Mount,		# mount a VOSpace
+*	      'unmount' : dl.Unmount,		# unmount a VOSpace
+*	   'capability' : dl.Capability,	# add/remove/list capability
+*	     'property' : dl.Property,		# add/del container property
+*	         'pull' : dl.Pull,		# pull remote URL to VOSpace
+                  'get' : dl.Get,		# get a file from VOSpace
+                  'put' : dl.Put,		# put a file in VOSpace
+                   'mv' : dl.Move,		# move/rename a VOSpace file/dir
+                   'cp' : dl.Copy,		# copy a VOSpace file/dir
+                   'rm' : dl.Delete,		# delete a VOSpace file
+                   'ln' : dl.Link,		# create a VOSpace link
+                   'ls' : dl.List,		# list contents of VOSpace
+                  'tag' : dl.Tag,		# tag (annotate) a VOSpace node
+                'mkdir' : dl.MkDir,		# create a VOSpace container
+                'rmdir' : dl.RmDir		# remove a VOSpace container
+            }
+  * New command in v2.0
+
+
+General Notes:
+---------------------------
+    - All commands to pass X-DL-AuthToken / X-DL-OriginIP / X-DL-OriginHost
+	in request header
+    - Accept file lists/templates where reasonable
+    - A URL should be accepted in place of a local filename
+
+    - Suppress astropy samp warning
+    - schema output should be sorted alphabetically
+
+    - Standard options on all commands:
+	--debug					# enable debug output
+	--verbose				# enable verbose output
+	--warning				# enable warning output
+
+	--user=<user>				# execute as <user>
+
+
+
+Data Lab Config File:
+---------------------------
+
+The task config file is stored as $HOME/.datalab/dl.conf and has the
+following structure:
+
+    [datalab]
+    created = 2016-09-22 06:08:55		# date config created
+
+    [login]
+    status = loggedin				# login status
+    user = datalab				# default user
+    authtoken = <token>				# default user auth token
+
+    [vospace]					# VOSpace config params
+    mount = {}					# no mounted spaces example
+    mount = { 'default' : '/tmp/vospace',	# multiple mounts example
+              'datalab' : '/tmp/datalab',	# ... datalab mounted space
+              'sdss' : '/tmp/sdss' }		# ... public vospace
+
+    [auth]
+    profile = default
+    svc_url = http://datalab.noao.edu/auth
+
+    [query]
+    profile = default
+    svc_url = http://datalab.noao.edu/query
+    sync_timeout = 120
+    async_timeout = 86400
+
+    [store]
+    profile = default
+    svc_url = http://datalab.noao.edu/store
+
+
+    # User section:
+    #    - one section for each active user
+    #    - token is passed if # a command uses the '--user' option. 
+    #    - section is removed when a user is logged out.
+    #    - default token is replaced when a new 'login' is issued to reset
+    #      the default user
+    [anonymous]					
+    authtoken = anonymous.0.0.anon_access
+
+
+
+Format Conversion:
+---------------------------
+
+  File-based formats:
+      csv		Comma-separated values
+      fits		FITS BINTABLE
+      votable		VOTable
+      sextractor	SExtractor format table
+
+  Python object formats:
+      numpy		NumPY table
+      astropy		AstroPY table
+      pandas		Pandas data frame
+
+  HDF5 support can be considered later
+
+
+User Commands:
+---------------------------
+	// Login as the specified user.  If already logged in as a user,
+	// specifying a different user will switch the default identity 
+	// but leave both users active.  The '-m' flag will mount the
+	// user VOSpace at the specified directory [Note that although
+	// multiple user spaces can be mounted simultaneously, the app-
+	// ropriate '--user' flag must be used with each when operating
+	// on those spaces if the default user doesn't have group perms
+	datalab login <user>
+	    [ -p <passwd> | --password=<passwd> ]
+	    [ -m <dir> | --mount=<dir> ]
+
+	// Log out the default user identity
+	datalab logout
+	    [ -a | --all ]			# logout all active identities
+	    [ -u <user> | --user=<user> ]	# logout specific identity
+
+	// Initialize the $HOME/.datalab/dl.conf config file.  All active
+	// identities will be logged out, all spaces unmounted.
+	datalab init
+
+	// Print the current default user identity
+	datalab whoami
+
+	// Reset a value in the Data Lab user record.
+	datalab reset
+	    [ -e <email> | --email=<email> ]		# change email address
+	    [ -n <name> | --name=<name> ]		# change user name
+	    [ -p <passwd> | --password=<passwd> ]	# change password
+
+	// Mount the specified user's vospace.  The <user> may be a public
+	// space (e.g. 'sdss', 'des_dr1', etc)
+	datalab mount [<user> ] [<dir> ]
+	    [ -m <dir> | --mount=<dir> ]		# mount point
+	    [ -u <user> | --user=<user> ]		# user name
+
+	// Unmount the specified vospace.
+	datalab unmount <dir>
+	    [ -a | --all ]				# unmount all spaces
+
+	// Print the Data Lab user record.  If the '--user' flag is given,
+	// a valid id token must already be available (i.e. you have already
+	// logged in through that account.
+	datalab userRecord
+	    [ -v | --verbose ]				# verbose output
+	    [ -u <user> | --user=<user> ]		# specific user record
+
+	// Print the user's current Data Lab login/mount status.
+	datalab status [<user> ]
+	    [ -v | --verbose ]				# verbose output
+	    [ -u <user> | --user=<user> ]		# specific user status
+
+	// Print statistics about Data Lab usage (login times, space
+	// used, quotas, etc).  If the '--user' flag is given, a valid
+	// id token must already be available (i.e. you have already
+	// logged in through that account.
+	datalab stats [<user> ]
+	    [ -v | --verbose ]				# verbose output
+	    [ -u <user> | --user=<user> ]		# specific user stats
+
+
+
+Common Service Commands:
+---------------------------
+    def isAlive (svc_url=DEF_SERVICE_URL, timeout=2)
+
+	// if no options given, all svcs pinged
+	datalab ping [ 'query' | 'store' | 'auth' | 'res' | 'tap' | 'vospace' ]
+
+    def set_svc_url (svc_url)
+    def get_svc_url ()
+    def set_profile (profile)
+    def get_profile ()
+    def list_profiles (token, profile=None, format='text')
+    def list_profiles (token=None, profile=None, format='text')
+    def set_timeout_request (nsec)
+    def get_timeout_request ()
+
+	// Updates default values in 'dl.conf' file.  These are used
+	// with each query if not overwritten by command options.  Values
+	// are stored in the 'dl.conf' file.
+	datalab set_default [opts]
+	    [ --query_profile=<prof> ]		# set default QM profile
+	    [ --query_svc_url=<url> ]		# set QM service url
+	    [ --store_profile=<prof> ]		# set default SM profile
+	    [ --store_svc_url=<url> ]		# set SM service url
+	    [ --sync_timeout=<nsec> ]		# set sync query timeout req
+	    [ --async_timeout=<nsec> ]		# set async query timeout req
+
+	datalab get_default [opts]
+	    [ --all ]				# print all defaults
+	    [ --auth_profile ]			# print default AM profile
+	    [ --auth_svc_url ]			# print AM service url
+	    [ --query_profile ]			# print default QM profile
+	    [ --query_svc_url ]			# print QM service url
+	    [ --store_profile ]			# print default SM profile
+	    [ --store_svc_url> ]		# print SM service url
+	    [ --sync_timeout ]			# print sync query timeout req
+	    [ --async_timeout ]			# print async query timeout req
+
+
+Query Commands:
+---------------------------
+    def schema (value, format='text', profile=None)
+
+	// Print database schema, table or column information
+	datalab schema [opts]
+	datalab schema [schema] [opts]
+	datalab schema [schema.table] [opts]
+	datalab schema [schema.table.column] [opts]
+	    [ -f <fmt> | --format=<fmt> ] 	# output format
+		<fmt>  = 'text' | 'json'
+	    [ --svc_url=<url> ]			# override service url
+	    [ --profile=<prof> ]		# override service profile
+
+    def query (query,adql=None,sql=None,fmt='csv',out=None,async=False,**kw)
+
+        // Query the database
+	datalab query <query> [opts]
+	datalab query [opts]
+	    [ -a | --async]			# set sync mode (convenience)
+	    [ -s | --sync]			# set async mode (convenience)
+	    [ -m <mode> | --mode=<mode> ]	# set query mode
+		mod = 'sync' | 'async'
+	    [ -f <fmt> | --format=<fmt> ] 	# requested output format
+		fmt  = 'csv' | 'text' | ....
+	    [ -o <fname> | --out=<fname> ]	# output file name
+	    [ -O <omode> | --omode=<omode> ]	# output mode (default: 'out')
+		count	return nrows and ncols
+		out	return results directly
+		none	return nothing (used for testing)
+		meta	return table metadata (colname, type, etc)
+		samp	broadcast table via SAMP (auto-connect)
+	    [ -q <query> | --query=<query> ]	# query string
+
+	    [ --profile=<prof> ]		# override service profile
+	    [ --svc_url=<url> ]			# override service url
+	    [ --poll_time=<nsec> ]		# async poll time
+	    [ --timeout=<nsec> ]		# requested timeout (seconds)
+	    [ --wait]				# wait for async completion
+
+    def status (jobId)
+        // Get async jobs status. If ERROR status, prints message
+	datalab qstatus 			# status of all running jobs
+	datalab qstatus jobid			# print specific job status
+	    [ --profile=<prof> ]		# override service profile
+	    [ --svc_url=<url> ]			# override service url
+
+    def results (jobId)
+        // Get async job results, print or save to file
+	datalab qresults jobid			# list specific job status
+	    [ -o <fname> | --out=<fname> ]	# output file name
+	    [ --profile=<prof> ]		# override service profile
+	    [ --svc_url=<url> ]			# override service url
+
+    def abort (jobId)
+	// Abort async jobs
+	datalab qabort 				# abort all async jobs
+	datalab qabort jobid			# abort specified async job
+	    [ --profile=<prof> ]		# override service profile
+	    [ --svc_url=<url> ]			# override service url
+
+    // Deprecated commands
+    def list [table]
+	datalab list [table]			# see mydb_list
+    def drop table
+	datalab drop table			# see mydb_drop
+
+
+    # -------------------------------
+    #  General / VO Queries
+    # -------------------------------
+    def coneSearch (resource, object, size)
+    def coneSearch (resource, ra, dec, size)
+
+        // SCS (Catalog Cone Search)
+	datalab coneSearch list			# list available DL services
+	datalab coneSearch <resource> <object> <size> [opts]
+	datalab coneSearch <resource> <ra> <dec> <size> [opts]
+	    [ --resource=<res> ]		# resource name
+	    [ --object=<object> ]		# object name (resolved)
+	    [ --ra=<ra> ]			# RA (dec. deg)
+	    [ --dec=<dec> ]			# Dec (dec. deg)
+	    [ --size=<sz> ]			# search radius (dec. deg)
+	    [ -f <fmt> | --format=<fmt> ] 	# requested output format
+		fmt  = 'csv' | 'text' | 'raw'
+	    [ -o <fname> | --out=<fname> ]	# output file name
+	    [ -O <omode> | --omode=<omode> ]	# output mode (default: 'out')
+		count	return nrows and ncols
+		out	return results directly
+		none	return nothing (used for testing)
+		meta	return table metadata (colname, type, etc)
+		samp	broadcast table via SAMP (auto-connect)
+	    [ --profile=<prof> ]		# override service profile
+	    [ --svc_url=<url> ]			# override service url
+	    [ --timeout=<nsec> ]		# requested timeout (seconds)
+
+    def imageSearch (collection, object, size)
+    def imageSearch (collection, ra, dec, size)
+        // SIA (Image Search)
+	datalab imageSearch list		# list available DL services
+	datalab imageSearch <collection> <object> <size> [opts]
+	datalab imageSearch <collection> <ra> <dec> <size> [opts]
+	    [ --collection=<col> ]		# image collection
+	    [ --object=<object> ]		# object name (resolved)
+	    [ --ra=<ra> ]			# RA (dec. deg)
+	    [ --dec=<dec> ]			# Dec (dec. deg)
+	    [ --size=<sz> ]			# search radius (dec. deg)
+
+	    [ --meta ]				# get query result metadata only
+	    [ --get ]				# download image
+	    [ --best ]				# select 'best' image
+	    [ --preview ]			# generate preview image
+	    [ --maxrec=<N> ]			# get at most <N> images
+	    [ --filter=<filt> ]			# filter by bandpass
+	    [ --prodtype=<prod> ]		# filter by PRODTYPE
+		all | image | image1 | wtmap | expmap | dqmask
+	    [ --proctype=<proc> ]		# filter by PROCTYPE
+		all | raw | resamples | stacked | install
+
+
+    //  MyDB Commands:.
+    //
+    //  All functions accept the following options:
+    //
+    //    [ --profile=<prof> ]			# override service profile
+    //    [ --svc_url=<url> ]			# override service url
+
+    def mydb_list (table)
+	// List tables or table-schema is a user's MyDB
+	datalab mydb_list 			# list all mydb tables
+	datalab mydb_list [table]		# list schema of specific table
+
+    def mydb_drop (table, token=None)
+	// Drop a table from a user's MyDB
+	datalab mydb_drop table			# list schema of specific table
+	    [ --all]				# drop all tables
+	    [ --verify=True]			# verify before drop?
+
+    def mydb_create (table, optval, token=None, **kw)
+	// Create a MyDB table from a local file
+	datalab mydb_create table filename	
+	    [ -t <table> | --table=<table> ] 	# name of table to create
+	    [ -f <fmt> | --format=<fmt> ] 	# input file format
+		fmt  = csv | fits | votable
+
+    def mydb_insert (table, optval, token=None, **kw)
+	// Insert data into a MyDB table from a local file. Table schema
+        // must match, table must already exist.
+	datalab mydb_insert table filename	
+	    [ -t <table> | --table=<table> ] 	# name of table to create
+	    [ -f <fmt> | --format=<fmt> ] 	# input file format
+		fmt  = csv | fits | votable
+
+    def mydb_truncate (table, optval, token=None, **kw)
+        // Truncate the named table in MyDB
+	datalab mydb_truncate table
+
+    def mydb_index (table, column, token=None)
+        // Index a column in a MyDB table
+	datalab mydb_index table column
+
+    def mydb_rename (source, target, token=None)
+        // Rename a table in the MyDB
+	datalab mydb_rename old_table new_table
+
+    def mydb_copy (source, target, token=None)
+        // Copy a table in the MyDB
+	datalab mydb_copy old_table new_table
+
+
+Storage Commands:
+---------------------------
+
+     def addCapability (node, capability)
+     def delCapability (node, capability)
+     def listCapability (node)
+	// Add / Remove a Capability to/from a Container node in VOSpace.
+	datalab capability <node> [<opts>] 
+	    [ -l | --list ] 			    # list capabilities on Node
+	    [ -a <cap> | --add=<cap> ]		    # add capability
+		cap = tableIngester | taskRunner
+	    [ -r <cap> | --remove=<cap> ]	    # remove capability
+		cap = tableIngester | taskRunner
+
+     def setProperty (node, property, value)
+	// Set access permissions on a Node in VOSpace.  If the node is a
+	// Container, the '-r' flag may be used to set the same property on
+	// all child nodes.
+	datalab property ispublic=True|False <node>
+	datalab property groupread=True|False <node>
+	datalab property groupwrite=True|False <node>
+	    [ -r | --recursive ]		# recursive listing
+
+
+    def get  (fr, to, token=None, verbose=True, debug=False):
+    def get (fr, to='', token=None, verbose=True, debug=False):
+	// Get a file or files from the VOSpace
+	datalab get <remote>			# Get all to CWD, same name
+	datalab get <remote> <local>		# Get file to local name
+	    [ -nb | --notebook ]		# get from notebook storage
+
+    def put  (fr, to, token=None, verbose=True, debug=False):
+    def put  (fr, to='vos://', token=None, verbose=True, debug=False):
+	// Get a file or files from the VOSpace
+	datalab put <remote>			# put to vos:// root, same name
+	datalab put <local> <remote>		# put to remote path
+	    [ -nb | --notebook ]		# put to notebook storage
+
+    def ls  (name, token=None, format='csv'):
+	// List the contents of a VOSpace directory.  A long listing will
+	// return one node/container per line. Results sorted alphabetically
+	datalab ls <path>
+	    [ -l | --long ] 			# long-listing
+	    [ -r | --recursive ]		# recursive listing
+	    [ -f | --fmt=<fmt> ]		# result format
+		fmt = 'ascii' | 'csv' | 'raw'
+
+    def cp  (fr, to, token=None, verbose=False):
+	// Copy a file or files in the VOSpace. If <src> is a directory the
+	// '-r' flag must be used explicitly. If <src> is a filename template,
+        //  <dest> must be a directory path.
+	datalab cp <src> <dest>
+	    [ -r | --recursive ]		# recursively copy dirs
+
+    def ln  (fr, target, token=None, verbose=False):
+	// Link a file in the VOSpace.  If <src> is a directory the
+	// '-r' flag must be used explicitly; <dest> may be a directory path.
+	datalab ln <target> <link>
+
+    def mkdir  (name, token=None):
+	// Create a directory in the VOSpace
+	datalab mkdir <dir>
+
+    def mv  (fr, to, token=None, verbose=False):
+	// Move a file or files in the VOSpace.
+	datalab mv <src> <dest>			# put to vos:// root, same name
+	    [ -r | --recursive ]		# recursively copy dirs
+
+    def rm  (name, token=None, verbose=False):
+	// Remove a file or files from the VOSpace container.
+	datalab rm <fname>
+	datalab rm <template>
+	    [ -r | --recursive ]		# recursively delete dirs
+
+    def rmdir  (name, token=None, verbose=False):
+	// Remove an empty container from the VOSpace.
+	datalab rmdir <path>
+	datalab rmdir <template>
+
+    def tag  (name, tag, token=None):
+	// Tag (i.e. annotate) a node in the VOSpace
+	datalab tag <path> <tag>
+
+    def pull  (name, endpoint, token=None):
+	// Pull a file from a remote endpoint to the VOSpace or notebook dir.
+	datalab pull <name> <url>
+	    [ -nb | --notebook ]		# put to notebook storage
+
+

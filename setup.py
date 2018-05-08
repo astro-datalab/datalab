@@ -2,7 +2,8 @@
 from distutils.core import setup
 import sys
 import os
-#from vos.__version__ import version
+from dl.__version__ import version as dl_version
+#from vos.__version__ import vos_version
 
 #if sys.version_info[0] > 2:
 #    print 'The vos package is only compatible with Python version 2.n'
@@ -30,7 +31,7 @@ def my_test_suite():
     return test_suite
 
 setup(name="datalab-client",
-      version="2.2.1dev",
+      version=dl_version,
       url="https://github.noao.edu/noao-datalab/datalab-client",
       description="Tools for interacting with NOAO Data Lab.",
       author="M.J. Graham, M.J. Fitzpatrick, D.L. Nidever, R. Nikutta",

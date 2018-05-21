@@ -175,32 +175,36 @@ def schema (value, format='text', profile=None):
 #
 @multifunc('qc',2)
 def query (token, query, adql=None, sql=None, fmt='csv', out=None, 
-           async=False, **kw):
+           async=False, profile='default', **kw):
     '''  Usage:  queryClient.query (token)
     '''
     return client._query (token=def_token(token), adql=adql, sql=query, 
-                          fmt=fmt, out=out, async=async, **kw)
+                          fmt=fmt, out=out, async=async, 
+                          profile=profile, **kw)
 
 @multifunc('qc',1)
-def query (optval, adql=None, sql=None, fmt='csv', out=None, async=False, **kw):
+def query (optval, adql=None, sql=None, fmt='csv', out=None, async=False, 
+           token=None, profile='default', **kw):
     '''  Usage:  queryClient.query (token)
     '''
     if optval is not None and optval.lower()[:6] == 'select':
         # optval looks like a query string
         return client._query (token=def_token(None), adql=adql, sql=optval, 
-                              fmt=fmt, out=out, async=async, **kw)
+                              fmt=fmt, out=out, async=async, 
+                              profile=profile, **kw)
     else:
         # optval is (probably) a token
         return client._query (token=def_token(optval), adql=adql, sql=sql, 
-                              fmt=fmt, out=out, async=async, **kw)
+                              fmt=fmt, out=out, async=async, 
+                              profile=profile, **kw)
 
 @multifunc('qc',0)
 def query (token=None, adql=None, sql=None, fmt='csv', out=None, async=False,
-           **kw):
+           profile='default', **kw):
     '''  Usage:  queryClient.query ()
     '''
-    return client._query(token=def_token(token), adql=adql, sql=sql, fmt=fmt,
-                         out=out, async=async, **kw)
+    return client._query (token=def_token(token), adql=adql, sql=sql, fmt=fmt,
+                          out=out, async=async, profile=profile, **kw)
 
 
 
@@ -236,28 +240,58 @@ def status (token=None, jobId=None):
 # RESULTS -- Get the results of an Asynchronous query
 #
 @multifunc('qc',2)
-def results (token, jobId):
+def results (token, jobId, delete=True):
     '''  Usage:  queryClient.results (token, jobId)
     '''
-    return client._results (token=def_token(token), jobId=jobId)
+    return client._results (token=def_token(token), jobId=jobId, delete=True)
 
 @multifunc('qc',1)
-def results (optval, jobId=None):
+def results (optval, jobId=None, delete=True):
     '''  Usage:  queryClient.results (jobId)
                  queryClient.results (token, jobId=<id>)
     '''
     if optval is not None and len(optval.split('.')) >= 4:
         # optval looks like a token
-        return client._results (token=def_token(optval), jobId=jobId)
+        return client._results (token=def_token(optval), jobId=jobId,
+                                delete=delete)
     else:
         # optval is probably a jobId
-        return client._results (token=def_token(None), jobId=optval)
+        return client._results (token=def_token(None), jobId=optval,
+                                delete=delete)
 
 @multifunc('qc',0)
-def results (token=None, jobId=None):
+def results (token=None, jobId=None, delete=True):
     '''  Usage:  queryClient.results (jobId=<str>)
     '''
-    return client._results (token=def_token(token), jobId=jobId)
+    return client._results (token=def_token(token), jobId=jobId, delete=True)
+
+
+# --------------------------------------------------------------------
+# ERROR -- Get the error message of a failed Asynchronous query
+#
+@multifunc('qc',2)
+def error (token, jobId):
+    '''  Usage:  queryClient.error (token, jobId)
+    '''
+    return client._error (token=def_token(token), jobId=jobId)
+
+@multifunc('qc',1)
+def error (optval, jobId=None):
+    '''  Usage:  queryClient.error (jobId)
+                 queryClient.error (token, jobId=<id>)
+    '''
+    if optval is not None and len(optval.split('.')) >= 4:
+        # optval looks like a token
+        return client._error (token=def_token(optval), jobId=jobId)
+    else:
+        # optval is probably a jobId
+        return client._error (token=def_token(None), jobId=optval)
+
+@multifunc('qc',0)
+def error (token=None, jobId=None):
+    '''  Usage:  queryClient.error (jobId=<str>)
+    '''
+    return client._error (token=def_token(token), jobId=jobId)
 
 
 # --------------------------------------------------------------------
@@ -812,36 +846,40 @@ class queryClient (object):
 
     @multimethod('qc',2)
     def query (self, token, query, adql=None, sql=None, fmt='csv', out=None, 
-               async=False, **kw):
+               async=False, profile='default', **kw):
         '''  Usage:  queryClient.query (token)
         '''
         return self._query (token=def_token(token), adql=adql, sql=query, 
-                              fmt=fmt, out=out, async=async, **kw)
+                            fmt=fmt, out=out, async=async, 
+                            profile=profile, **kw)
 
     @multimethod('qc',1)
     def query (self, optval, adql=None, sql=None, fmt='csv', out=None,
-               async=False, **kw):
+               async=False, token=None, profile='default', **kw):
         '''  Usage:  queryClient.client.query (token, ...)
         '''
         if optval is not None and optval.lower()[:6] == 'select':
             # optval looks like a query string
             return self._query (token=def_token(None), adql=adql, sql=optval, 
-                                  fmt=fmt, out=out, async=async, **kw)
+                                fmt=fmt, out=out, async=async, 
+                                profile=profile, **kw)
         else:
             # optval is (probably) a token
             return self._query (token=def_token(optval), adql=adql, sql=sql, 
-                                  fmt=fmt, out=out, async=async, **kw)
+                                fmt=fmt, out=out, async=async, 
+                                profile=profile, **kw)
 
     @multimethod('qc',0)
     def query (self, token=None, adql=None, sql=None, fmt='csv', out=None, 
-               async=False, **kw):
+               async=False, profile='default', **kw):
         '''  Usage:  queryClient.client.query (...)
         '''
         return self._query (token=def_token(token), adql=adql, sql=sql,
-                              fmt=fmt, out=out, async=async, **kw)
+                            fmt=fmt, out=out, async=async, 
+                            profile=profile, **kw)
 
     def _query (self, token=None, adql=None, sql=None, fmt='csv', out=None, 
-              async=False, **kw):
+              async=False, profile='default', **kw):
         """ Send an SQL or ADQL query to the database or TAP service.
     
         Parameters
@@ -1013,7 +1051,9 @@ class queryClient (object):
         else:
             raise queryClientError("No query specified")
     
-        if self.svc_profile != "default":        # append the service profile
+        if profile != "default":        	# append the service profile
+            dburl += "&profile=%s" % profile
+        else:
             dburl += "&profile=%s" % self.svc_profile
     
         # Make the service call.
@@ -1052,6 +1092,11 @@ class queryClient (object):
                 raise queryClientError ('Query timeout exceeded')
             elif stat not in ['COMPLETED','ERROR']:
                 resp = stat
+            elif stat == 'ERROR':
+		# Retrieve Async error.
+                if verbose:
+                    print ('Retrieving error')
+                resp = self._error (token=token, jobId=jobId).lower()
             elif stat == 'COMPLETED':
 		# Retrieve Async results.  A save to vos/mydb is handled below.
                 if verbose:
@@ -1167,30 +1212,34 @@ class queryClient (object):
     # --------------------------
 
     @multimethod('qc',2)
-    def results (self, token, jobId):
+    def results (self, token, jobId, delete=True):
         '''  Usage:  queryClient.results (token, jobID)
         '''
-        return self._results (token=def_token(token), jobId=jobId)
+        return self._results (token=def_token(token), jobId=jobId,
+                              delete=delete)
     
     @multimethod('qc',1)
-    def results (self, optval, jobId=None):
+    def results (self, optval, jobId=None, delete=True):
         '''  Usage:  queryClient.results (jobID)
                      queryClient.results (token, jobId=<id>)
         '''
         if optval is not None and len(optval.split('.')) >= 4:
             # optval looks like a token
-            return self._results (token=def_token(optval), jobId=jobId)
+            return self._results (token=def_token(optval), jobId=jobId,
+                                  delete=delete)
         else:
             # optval is probably a jobId
-            return self._results (token=def_token(None), jobId=optval)
+            return self._results (token=def_token(None), jobId=optval,
+                                  delete=delete)
     
     @multimethod('qc',0)
-    def results (self, token=None, jobId=None):
+    def results (self, token=None, jobId=None, delete=True):
         '''  Usage:  queryClient.results (jobID=<str>)
         '''
-        return self._results (token=def_token(token), jobId=jobId)
+        return self._results (token=def_token(token), jobId=jobId,
+                              delete=delete)
     
-    def _results(self, token=None, jobId=None):
+    def _results(self, token=None, jobId=None, delete=True):
         """Retrieve the results of an asynchronous query, once completed.
     
         Parameters
@@ -1235,13 +1284,93 @@ class queryClient (object):
         headers = {'Content-Type': 'text/ascii',
                    'X-DL-AuthToken': def_token(token)}  # application/x-sql
 
-        #dburl = '%s/tap/async/%s/results/result' % (DAL_SERVICE_URL, jobId)
-        dburl = '%s/results?jobid=%s' % (self.svc_url, jobId)
+        dburl = '%s/results?jobid=%s&delete=%s' % (self.svc_url, jobId, delete)
         if self.svc_profile != "default":
             dburl += "&profile=%s" % self.svc_profile
 
         r = requests.get (dburl, headers=headers)
 
+        return r.content
+    
+
+    # --------------------------
+    # Async jobs error()
+    # --------------------------
+
+    @multimethod('qc',2)
+    def error (self, token, jobId):
+        '''  Usage:  queryClient.error (token, jobID)
+        '''
+        return self._error (token=def_token(token), jobId=jobId)
+    
+    @multimethod('qc',1)
+    def error (self, optval, jobId=None):
+        '''  Usage:  queryClient.error (jobID)
+                     queryClient.error (token, jobId=<id>)
+        '''
+        if optval is not None and len(optval.split('.')) >= 4:
+            # optval looks like a token
+            return self._error (token=def_token(optval), jobId=jobId)
+        else:
+            # optval is probably a jobId
+            return self._error (token=def_token(None), jobId=optval)
+    
+    @multimethod('qc',0)
+    def error (self, token=None, jobId=None):
+        '''  Usage:  queryClient.error (jobID=<str>)
+        '''
+        return self._error (token=def_token(token), jobId=jobId)
+    
+    def _error(self, token=None, jobId=None):
+        """Retrieve the error of an asynchronous query, once completed.
+    
+        Parameters
+        ----------
+        token : str
+            Authentication token (see function :func:`auth.login()`)
+    
+        jobId : str
+            The jobId returned when issuing an asynchronous query via
+            :func:`queryClient.query()` with ``async=True``.
+    
+        Returns
+        -------
+        error : str
+    
+        Example
+        -------
+        .. code-block:: python
+    
+            # issue an async query (here a tiny one just for this example)
+            query = 'select ra,dec from gaia_dr1.gaia_source limit 3'
+            jobId = queryClient.query(token, adql=query, fmt='csv', async=True)
+    
+            # ensure job completes...then check status and retrieve error
+            time.sleep(4)
+            if queryClient.status(token, jobId) == 'ERROR':
+                error = queryClient.error(token,jobId)
+                print type(error)
+                print error
+    
+        This prints
+    
+        .. code::
+    
+            <type 'str'>
+            ra,dec
+            301.37502633933002,44.4946851014515588
+            301.371102372343785,44.4953207577355698
+            301.385106974224186,44.4963443903961604
+        """
+    
+        headers = {'Content-Type': 'text/ascii',
+                   'X-DL-AuthToken': def_token(token)}  # application/x-sql
+
+        dburl = '%s/error?jobid=%s' % (self.svc_url, jobId)
+        if self.svc_profile != "default":
+            dburl += "&profile=%s" % self.svc_profile
+
+        r = requests.get (dburl, headers=headers)
         return r.content
     
 

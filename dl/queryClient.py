@@ -134,11 +134,17 @@ def get_profile ():
 # LIST_PROFILES -- List the available service profiles.
 #
 @multifunc('qc',1)
-def list_profiles (token, profile=None, format='text'):
+def list_profiles (optval, token=None, profile=None, format='text'):
     '''  Usage:  queryClient.list_profiles (token)
     '''
-    return client._list_profiles (token=def_token(token), profile=profile,
-                                  format=format)
+    if optval is not None and len(optval.split('.')) >= 4:
+        # optval looks like a token
+        return client._list_profiles (token=def_token(optval), profile=profile,
+                                      format=format)
+    else:
+        # optval looks like a profile name
+        return client._list_profiles (token=def_token(token), profile=optval,
+                                      format=format)
 
 @multifunc('qc',0)
 def list_profiles (token=None, profile=None, format='text'):
@@ -162,8 +168,13 @@ def get_timeout_request ():
 # --------------------------------------------------------------------
 # SCHEMA -- Return information about a data service schema value.
 #
+@multifunc('qc',1)
 def schema (value, format='text', profile=None):
-    return client.schema (value, format=format, profile=profile)
+    return client.schema (value=value, format=format, profile=profile)
+
+@multifunc('qc',0)
+def schema (value='', format='text', profile=None):
+    return client.schema (value=value, format=format, profile=profile)
 
 
 # -----------------------------
@@ -732,11 +743,17 @@ class queryClient (object):
     # ###########################
 
     @multimethod('qc',1)
-    def list_profiles (self, token, profile=None, format='text'):
+    def list_profiles (self, optval, token=None, profile=None, format='text'):
         '''  Usage:  queryClient.client.list_profiles (token, ...)
         '''
-        return self._list_profiles (token=def_token(token), profile=profile,
-                             format=format)
+        if optval is not None and len(optval.split('.')) >= 4:
+            # optval looks like a token
+            return self._list_profiles (token=def_token(optval),
+                                        profile=profile, format=format)
+        else:
+            # optval looks like a token
+            return self._list_profiles (token=def_token(token), profile=optval,
+                                        format=format)
 
     @multimethod('qc',0)
     def list_profiles (self, token=None, profile=None, format='text'):
@@ -789,7 +806,21 @@ class queryClient (object):
 
         return profiles
     
-    def schema (self, value, profile=None, **kw):
+
+    @multimethod('qc',1)
+    def schema (self, value, format='text', profile=None):
+        '''  Usage:  queryClient.schema ([value])
+        '''
+        return self._schema (value=value, format=format, profile=profile)
+
+    @multimethod('qc',0)
+    def schema (self, value='', format='text', profile=None):
+        '''  Usage:  queryClient.schema ([value])
+        '''
+        return self._schema (value=value, format=format, profile=profile)
+
+
+    def _schema (self, value='', format='text', profile=None, **kw):
         """ Return information about a data service schema.
     
         Parameters

@@ -1,0 +1,17 @@
+#!/bin/csh -x
+#
+#  profiles --
+
+set debug    = 'debug=False'
+set verb    = 'verbose=False'
+set warn    = 'warning=False'
+set opts    = "$debug $verb $warn"
+
+datalab profiles help
+datalab profiles -help
+datalab profiles --help
+
+datalab profiles $opts
+datalab profiles format=csv $opts
+datalab profiles format=text $opts
+datalab profiles profile=IRSA $opts

@@ -1,0 +1,28 @@
+#!/bin/csh -fx
+#
+#  ls --
+
+set debug	= 'debug=False'
+set verb	= 'verbose=False'
+set warn	= 'warning=False'
+set opts	= "$debug $verb $warn"
+
+datalab ls help			# standard help option
+datalab ls -help
+datalab ls --help
+
+datalab login user=zztest password=Datalab0
+
+foreach fmt (csv long short json stat raw)
+    echo 'Format: ' $fmt
+    datalab ls format=$fmt $opts
+    datalab ls name='' format=$fmt $opts
+    datalab ls name='/' format=$fmt $opts
+    datalab ls name='/public' format=$fmt $opts
+    datalab ls name='vos://' format=$fmt $opts
+    datalab ls name='vos://t*' format=$fmt $opts
+    datalab ls name='vos://public' format=$fmt $opts
+    datalab ls name='vos:///public' format=$fmt $opts
+end
+
+datalab logout

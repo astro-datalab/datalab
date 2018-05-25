@@ -155,11 +155,12 @@ TOK_DEBUG	= False
 #  doesn't exist, default to the anonymous token.
 #
 def readTokenFile (tok_file):
+    if TOK_DEBUG: print ('readTokenFile: ' + tok_file)
     if not os.path.exists(tok_file):
         if TOK_DEBUG: print ('returning ANON_TOKEN')
         return ANON_TOKEN 			# FIXME -- print a warning?
     else:
-        tok_fd = open(tok_file, "r", 0)
+        tok_fd = open(tok_file, "r")
         user_tok = tok_fd.read(128).strip('\n') # read the old token
         tok_fd.close()
         if TOK_DEBUG: print ('returning user_tok: ' + user_tok)

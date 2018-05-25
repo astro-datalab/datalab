@@ -1,0 +1,5 @@
+
+    This directory contains 'datalab' command scripts that can be used to
+test individual commands, i.e. one file per command each containing multiple
+tests.  Filenames correspond to the command being tested, files with a ".out"
+suffix are reference responses to be used for comparison.

@@ -1,0 +1,25 @@
+#!/bin/csh -x
+#
+#  schema --
+
+set debug	= 'debug=False'
+set verb	= 'verbose=False'
+set warn	= 'warning=False'
+set opts	= "$debug $verb $warn"
+
+datalab schema help			# standard help option
+datalab schema -help
+datalab schema --help
+
+datalab schema $opts
+datalab schema val=usno $opts
+datalab schema val=usno.a2 $opts
+datalab schema val=usno.a2.raj2000 $opts
+
+# Note that external TAP services don't generally return table/column details
+# In this test we must note that Vizier rate-limits queries so we need to
+# add a sleep to avoid the rate-limit error.
+datalab schema profile=Vizier
+sleep 1
+datalab schema val=vbig profile=Vizier
+

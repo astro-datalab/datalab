@@ -14,6 +14,7 @@ __version__ = '20180321'  # yyyymmdd
 
 import requests
 import os
+import socket
 
 
 # The URL of the ResManager service to contact.  This may be changed by
@@ -25,6 +26,13 @@ DEF_SERVICE_URL = "https://datalab.noao.edu/res"
 # machines and services used by the ResManager on the server.
 
 DEF_SERVICE_PROFILE = "default"
+
+# Allow the service URL for dev/test systems to override the default.
+THIS_HOST = socket.gethostname()
+if THIS_HOST[:5] == 'dldev':
+    DEF_SERVICE_URL = "http://dldev.datalab.noao.edu/res"
+elif THIS_HOST[:6] == 'dltest':
+    DEF_SERVICE_URL = "http://dltest.datalab.noao.edu/res"
 
 
 # API debug flag.
@@ -103,7 +111,7 @@ def set_svc_url (svc_url):
     return client.set_svc_url (svc_url)
 
 def get_svc_url ():
-    return client.set_svc_url ()
+    return client.get_svc_url ()
 
 def set_profile (profile):
     return client.set_profile (profile)

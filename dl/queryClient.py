@@ -39,6 +39,11 @@ else:						# use distribution copy
     from dl.Util import multimethod
     from dl.Util import def_token
 
+# Turn off some annoying astropy warnings
+import warnings
+from astropy.utils.exceptions import AstropyWarning
+warnings.simplefilter('ignore', AstropyWarning)
+
 
 
 # ####################################
@@ -800,7 +805,7 @@ class queryClient (object):
         dburl += "format=%s" % format
 
         r = requests.get (dburl, headers=headers)
-        profiles = r.content
+        profiles = r.text
         if '{' in profiles:
             profiles = json.loads(profiles)
 
@@ -1141,7 +1146,7 @@ class queryClient (object):
             if out[:7] == 'file://':
                 out = out[7:]
             if ':' not in out or out[:out.index(':')] not in ['vos', 'mydb']:
-                file = open (out, 'wb', 0)
+                file = open (out, 'wb')
                 file.write (resp)
                 file.close ()
             return "OK"

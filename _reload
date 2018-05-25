@@ -1,0 +1,21 @@
+#!/bin/csh -f
+
+datalab logout				# logout of DL
+#fusermount -u /tmp/vos			# force unmount of VOSpace
+
+echo y > /tmp/_y
+echo y >> /tmp/_y
+/data0/sw/anaconda2/bin/pip uninstall datalab-client < /tmp/_y	# uninstall package
+/data0/sw/anaconda3/bin/pip uninstall datalab-client < /tmp/_y	# uninstall package
+/bin/rm -rf ~/vos_			# remove cache dir
+
+# Re-install and log in
+/data0/sw/anaconda2/bin/python setup.py install
+/data0/sw/anaconda3/bin/python setup.py install
+#datalab login mount=/tmp/vos --user=fitz --password=Datalab1
+datalab login --user=fitz --password=Datalab1
+
+sudo service uwsgi restart
+sleep 3
+/opt/services/_check
+

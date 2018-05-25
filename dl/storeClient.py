@@ -37,6 +37,11 @@ else:                                           # use distribution copy
     from dl.Util import multimethod
     from dl.Util import def_token
 
+# Turn off some annoying astropy warnings
+import warnings
+from astropy.utils.exceptions import AstropyWarning
+warnings.simplefilter('ignore', AstropyWarning)
+
 
 
 #####################################
@@ -236,11 +241,17 @@ def put  (fr, to, token=None, verbose=True, debug=False):
                         verbose=verbose, debug=debug)
 
 @multifunc('sc',1)
-def put  (fr, to='vos://', token=None, verbose=True, debug=False):
+def put  (optval, fr='', to='vos://', token=None, verbose=True, debug=False):
     '''  Usage:  storeClient.put (fr)
     '''
-    return client._put (fr=fr, to=to, token=def_token(token),
-                        verbose=verbose, debug=debug)
+    if optval is not None and len(optval.split('.')) >= 4:
+        # optval looks like a token
+        return client._put (fr=fr, to=to, token=def_token(optval),
+                            verbose=verbose, debug=debug)
+    else:
+        # optval looks like source name
+        return client._put (fr=optval, to=to, token=def_token(token),
+                            verbose=verbose, debug=debug)
 
 
 # --------------------------------------------------------------------
@@ -1025,11 +1036,18 @@ class storeClient (object):
                           verbose=verbose, debug=False)
 
     @multimethod('sc',1)
-    def put (self, fr, to='vos://', token=None, verbose=True, debug=False):
+    def put (self, optval, fr='', to='vos://', token=None, verbose=True,
+             debug=False):
         '''  Usage:  storeClient.put (fr)
         '''
-        return self._put (fr=fr, to=to, token=def_token(token), 
-                          verbose=verbose, debug=False)
+        if optval is not None and len(optval.split('.')) >= 4:
+            # optval looks like a token
+            return self._put (fr=fr, to=to, token=def_token(optval), 
+                              verbose=verbose, debug=False)
+        else:
+            # optval looks like a source name
+            return self._put (fr=optval, to=to, token=def_token(token), 
+                              verbose=verbose, debug=False)
 
     def _put (self, token=None, fr='', to='vos://', verbose=True, debug=False):
         """ Upload a file to the store manager service

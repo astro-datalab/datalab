@@ -8,11 +8,11 @@
 from __future__ import print_function
 
 __authors__ = 'Matthew Graham <graham@noao.edu>, Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20180321'  # yyyymmdd
+__version__ = '20180521'  # yyyymmdd
 
 
 """ 
-    Command-line tass for the NOAO Data Lab
+    Command-line task for the NOAO Data Lab
 """
 
 from dl import dltasks as dl
@@ -46,14 +46,18 @@ def parseArgs (task, args):
 
     if any(x in args for x in ['--help', '--h', '-h', 'help', '-help']):
         # Print task help and exist
-        print ("The '%s' task takes the following parameters:" % task.name)
+        print ("\nThe '%s' task takes the following parameters:\n" % task.tname)
         for par in task.params:
             opt = getattr (task, par)
             name = opt.display and opt.display or par
             if opt.required:
-                print ("  %s - %s [required]" % (name, opt.description))
+                print ("  %12s - %s [required]" % (name, opt.description))
             else:
-                print ("  %s - %s [optional]" % (name, opt.description))
+                if name == ' ':
+                    print ("  ")
+                else:
+                    print ("  %12s - %s [optional]" % (name, opt.description))
+        print (" ")
         sys.exit (0)
 
     else:
@@ -96,45 +100,78 @@ if __name__ == "__main__":
     # Initialize the 'datalab' object.
     datalab = None
 
+    #print ('DEV DATALAB')
+
     # Supported sub-tasks. Method to call is a Class defined in 'dl/dltasks.py'
-    tasks = {   'login' : dl.Login,
-               'logout' : dl.Logout,
-               'schema' : dl.Schema,
-               'whoami' : dl.WhoAmI,
-               'status' : dl.Status,
-                'query' : dl.Query2,
-              'qstatus' : dl.QueryStatus,
-             'qresults' : dl.QueryResults,
+    tasks = {    # User Commands \
+                'login' : dl.Login,             # login to DL / switch user
+               'logout' : dl.Logout,            # logout of DL
+               'whoami' : dl.WhoAmI,            # print default user
+               'status' : dl.Status,            # summarize login status
+             'profiles' : dl.QueryProfiles,	# list query profiles
+             'svc_urls' : dl.SvcURLs,		# list service URLs
+#                'init' : dl.Init,              # initialize config file
+#               'reset' : dl.Reset,             # reset user record field
+#          'userRecord' : dl.UserRecord,        # print user record
+#               'stats' : dl.Stats,             # print usage statistics
+#         'set_default' : dl.SetDefault,        # set config file default
+#         'get_default' : dl.GetDefault,        # get config file default
+#                'ping' : dl.Ping,              # ping a DL service
+\
+ 		 # Query Commands \
+               'schema' : dl.Schema,            # print table schema
+                'query' : dl.Query2,            # query the database
+              'qstatus' : dl.QueryStatus,       # get ASync query status
+             'qresults' : dl.QueryResults,      # get ASync query results
+#               'qabort' : dl.QueryAbort,        # abort ASync query job*
+#           'coneSearch' : dl.ConeSearch,        # Catalog Cone Search*
+#          'imageSearch' : dl.ImageSearch,       # Image Search*
+\
+ 		  # MyDB commands \
                'listdb' : dl.ListMyDB,
                'dropdb' : dl.DropMyDB,
-                  'put' : dl.Put,
-                  'get' : dl.Get,
-                   'mv' : dl.Move,
-                   'cp' : dl.Copy,
-                   'rm' : dl.Delete,
-                   'ln' : dl.Link,
-                   'ls' : dl.List,
-                  'tag' : dl.Tag,
-                'mkdir' : dl.MkDir,
-                'rmdir' : dl.RmDir,
-             'siaquery' : dl.SiaQuery,
-             'list_query_profiles' : dl.QueryProfiles,
-             'list_storage_profiles' : dl.StorageProfiles
+#           'mydb_list' : dl.MyDB_List,         # list MyDB table schema*
+#           'mydb_drop' : dl.MyDB_Drop,         # drop MyDB table*
+#         'mydb_create' : dl.MyDB_Create,       # create MyDB table from file*
+#         'mydb_insert' : dl.MyDB_Insert,       # insert into MyDB table*
+#       'mydb_truncate' : dl.MyDB_Truncate,     # truncate MyDB table*
+#          'mydb_index' : dl.MyDB_Index,        # index MyDB table column*
+#         'mydb_rename' : dl.MyDB_Rename,       # rename a MyDB table*
+#           'mydb_copy' : dl.MyDB_Copy,         # copy a MyDB table*
+\
+ 		 # Storage commands \
+#               'mount' : dl.Mount,             # mount a VOSpace*
+#             'unmount' : dl.Unmount,           # unmount a VOSpace*
+#          'capability' : dl.Capability,        # add/remove/list capability*
+#            'property' : dl.Property,          # add/del container property*
+#                'pull' : dl.Pull,              # pull remote URL to VOSpace*
+                  'get' : dl.Get,               # get a file from VOSpace
+                  'put' : dl.Put,               # put a file in VOSpace
+                   'mv' : dl.Move,              # move/rename a VOSpace file/dir
+                   'cp' : dl.Copy,              # copy a VOSpace file/dir
+                   'rm' : dl.Delete,            # delete a VOSpace file
+                   'ln' : dl.Link,              # create a VOSpace link
+                   'ls' : dl.List,              # list contents of VOSpace
+                  'tag' : dl.Tag,               # tag (annotate) a VOSpace node
+                'mkdir' : dl.MkDir,             # create a VOSpace container
+                'rmdir' : dl.RmDir              # remove a VOSpace container
              }
 
     # List tasks
-    if len(sys.argv) == 1 or "help" in sys.argv[1]:
+    #if len(sys.argv) == 1 or "help" in sys.argv[1]:
+    help_opts = ['--help', '--h', '-h', 'help', '-help']:
+    if len(sys.argv) == 1 or sys.argv[1] in help_opts:
         print ("\nUsage:\n\n    % datalab <task> [task_options]\n")
         print ("where <task> is one of:\n")
         for task in sorted(tasks):
             print ('    %15s - %s' % (task, tasks[task](datalab).description))
-        print(' ')
+        print (' ')
 
     # Parse arguments
     elif sys.argv[1] in tasks:
         datalab = dl.DataLab()
         task = tasks[sys.argv[1]](datalab)
-        opt = parseArgs(task, sys.argv)
+        opt = parseArgs (task, sys.argv)
         resp = task.run()
         if resp is not None:
             print (resp)

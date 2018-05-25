@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# DATALAB.PY -- Task routines for the 'datalab' command-line client.
+# DLTASKS.PY -- Task routines for the 'datalab' command-line client.
 #
 
 from __future__ import print_function
@@ -19,6 +19,7 @@ Import via
     from dl import datalab
 """
 
+#print ('DLTASKS DEV')
 
 import sys
 from sys import platform
@@ -34,6 +35,13 @@ from subprocess import Popen, PIPE
 from time import gmtime, strftime, sleep
 import httplib2
 from optparse import Values
+
+# raw_input() was renamed input() in python3
+try:
+    _raw_input = raw_input
+except NameError:
+    raw_input = input
+
 try:
     import ConfigParser                         # Python 2
     from urllib import quote_plus               # Python 2
@@ -52,7 +60,7 @@ import requests             # need to standarize on one library at some point
 import vos as vos
 from vos.fuse import FUSE
 #from vos.__version__ import version
-version = "2.2.0"                  # VOS version
+version = "2.2.0"                  		# VOS version
 from vos.vofs import VOFS
 DAEMON_TIMEOUT = 60                             # Mount timeout
 CAPS_DIR = "../caps"                            # Capability directory
@@ -67,22 +75,23 @@ TEST_TOKEN = "dltest.99998.99998.test_access"
 from dl import authClient
 from dl import queryClient
 from dl import storeClient
+from dl import resClient
 
 
 # Uncomment to print HTTP and response headers
 httplib2.debuglevel = 0
 HTTPConnection.debuglevel = 0
 
-TEST = False
+TEST = True
 
 if TEST:
     AM_URL = "http://dldev.datalab.noao.edu/auth"       # Auth Manager
     SM_URL = "http://dldev.datalab.noao.edu/storage"    # Storage Manager
     QM_URL = "http://dldev.datalab.noao.edu/query"      # Query Manager
 else:
-    AM_URL = "http://dlsvcs.datalab.noao.edu/auth"      # Auth Manager
-    SM_URL = "http://dlsvcs.datalab.noao.edu/storage"   # Storage Manager
-    QM_URL = "http://dlsvcs.datalab.noao.edu/query"     # Query Manager
+    AM_URL = "https://datalab.noao.edu/auth"      	# Auth Manager
+    SM_URL = "https://datalab.noao.edu/storage"   	# Storage Manager
+    QM_URL = "https://datalab.noao.edu/query"     	# Query Manager
 
 
 
@@ -152,8 +161,22 @@ class DataLab:
             self.config.set('login', 'status', 'loggedout')
             self.config.set('login', 'user', '')
             self.config.set('login', 'authtoken', '')
+
+            self.config.add_section('auth')
+            self.config.set('auth', 'profile', 'default')
+            self.config.set('auth', 'svc_url', AM_URL)
+
+            self.config.add_section('query')
+            self.config.set('query', 'profile', 'default')
+            self.config.set('query', 'svc_url', QM_URL)
+
+            self.config.add_section('storage')
+            self.config.set('storage', 'profile', 'default')
+            self.config.set('storage', 'svc_url', SM_URL)
+
             self.config.add_section('vospace')
             self.config.set('vospace', 'mount', '')
+
             self._write()
         else:
             self.config.read('%s/dl.conf' % self.home)
@@ -191,19 +214,10 @@ class Task:
     def __init__(self, datalab, name, description):
         self.dl = datalab
         self.name = name
+        self.tname = name
         self.description = description
         self.logger = None
         self.params = []
-
-        self.addOption("verbose", 
-            Option( "verbose", "", "print verbose level log messages",
-                    default=False))
-        self.addOption("debug", 
-            Option("debug", "", "print debug log level messages",
-                    default=False))
-        self.addOption("warning", 
-            Option( "warning", "", "print warning level log messages",
-                    default=False))
 
     def run(self):
         pass
@@ -218,6 +232,19 @@ class Task:
         # Set the default value if provided.
         if option.default is not None:
             self.setOption(name, option.default)
+
+
+    def addStdOptions(self):
+        self.addOption(" ", Option( " ", "", " ", default=False))
+        self.addOption("verbose", 
+            Option( "verbose", "", "print verbose level log messages",
+                    default=False))
+        self.addOption("debug", 
+            Option("debug", "", "print debug log level messages",
+                    default=False))
+        self.addOption("warning", 
+            Option( "warning", "", "print warning level log messages",
+                    default=False))
 
 
     def addLogger(self, logLevel, logFile):
@@ -316,6 +343,98 @@ class Task:
 
 
 ################################################
+#  Print Current Service URLs Tasks
+################################################
+
+class SvcURLs(Task):
+    '''
+        Print the current service URLS in use.
+    '''
+    def __init__(self, datalab):
+        Task.__init__(self, datalab, 'svc_urls', 'Print service URLs in use')
+        self.addStdOptions()
+
+    def run(self):
+        print ('      Auth Mgr:  ' + authClient.get_svc_url())
+        print ('     Query Mgr:  ' + queryClient.get_svc_url())
+        print ('   Storage Mgr:  ' + storeClient.get_svc_url())
+        print ('  Resource Mgr:  ' + resClient.get_svc_url())
+
+ 
+
+################################################
+#  Initialize Data Lab config information
+################################################
+
+class Init(Task):
+    '''
+        Print the current service URLS in use.
+    '''
+    def __init__(self, datalab):
+        Task.__init__(self, datalab, 'init', 'Initialize the Data Lab config')
+        self.addOption("verify", 
+                Option("verify", False, "Verify actions?", required=False))
+        self.addStdOptions()
+
+        self.home = '%s/.datalab' % os.path.expanduser('~')
+        self.datalab = datalab
+
+    def run(self):
+        ''' Initialize the Data Lab configuration.
+        '''
+        # TODO -- Logout any existing users ....
+        if self.verify.value:
+            answer = raw_input("Logout existing users (Y/N)? (default: Y): ")
+            if answer == '' or answer is None or answer.lower()[:1] == 'y':
+                if self.verbose.value == True:
+                    print ('Removing %s ....' % self.home)
+        logout_task = tasks['logout'](self.datalab)
+        logout_task.run()
+
+        # Check that $HOME/.datalab exists
+        if self.verify.value:
+            answer = raw_input("Delete $HOME/.datalab (Y/N)? (default: Y): ")
+            if answer == '' or answer is None or answer.lower()[:1] == 'y':
+                if self.verbose.value == True:
+                    print ('Removing %s ....' % self.home)
+                shutil.rmtree(self.home)
+        if not os.path.exists(self.home):
+            os.makedirs(self.home)
+
+        # See if datalab conf file exists
+        self.config = ConfigParser.RawConfigParser(allow_no_value=True)
+        if not os.path.exists('%s/dl.conf' % self.home):
+            if self.verbose.value == True:
+                print ('Initializing %s ....' % self.home)
+            self.config.add_section('datalab')
+            self.config.set('datalab', 'created', strftime(
+                '%Y-%m-%d %H:%M:%S', gmtime()))
+            self.config.add_section('login')
+            self.config.set('login', 'status', 'loggedout')
+            self.config.set('login', 'user', '')
+            self.config.set('login', 'authtoken', '')
+
+            self.config.add_section('auth')
+            self.config.set('auth', 'profile', 'default')
+            self.config.set('auth', 'svc_url', AM_URL)
+
+            self.config.add_section('query')
+            self.config.set('query', 'profile', 'default')
+            self.config.set('query', 'svc_url', QM_URL)
+
+            self.config.add_section('storage')
+            self.config.set('storage', 'profile', 'default')
+            self.config.set('storage', 'svc_url', SM_URL)
+
+            self.config.add_section('vospace')
+            self.config.set('vospace', 'mount', '')
+            self._write()
+        else:
+            self.config.read('%s/dl.conf' % self.home)
+
+
+
+################################################
 #  Account Login Tasks
 ################################################
 
@@ -333,6 +452,7 @@ class Login(Task):
                         required=True))
         self.addOption("mount", 
                 Option("mount", "", "Mountpoint of remote Virtual Storage"))
+        self.addStdOptions()
         if self.dl is not None:
             self.status = self.dl.get("login", "status")
 
@@ -404,7 +524,7 @@ class Login(Task):
 
 
     def login(self):
-        ''' Log-in to the Data Lab.
+        ''' Login to the Data Lab.
         '''
         try:
             self.token = self.dl.get(self.user.value,'authtoken')
@@ -424,8 +544,10 @@ class Login(Task):
             self.dl.save("login", "authtoken", '')
             self.dl.save(self.user.value, "authtoken", self.token)
             self.login_error = self.token
+            print ('login error: tok = ' + self.token)
             return False
         else:
+            print ('login success: tok = ' + self.token)
             self.login_error = None
             return True
 
@@ -438,6 +560,7 @@ class Logout(Task):
         Task.__init__(self, datalab, 'logout', 'Logout of the Data Lab')
         self.addOption("unmount", Option(
             "unmount", "", "Mount point of remote Virtual Storage"))
+        self.addStdOptions()
         if self.dl is not None:
             self.status = self.dl.get("login", "status")
 
@@ -451,7 +574,7 @@ class Logout(Task):
             res = authClient.logout (token)
             if res != "OK":
                 print ("Error: %s" % res)
-                sys.exit (-1)
+                #sys.exit (-1)
             if self.unmount.value != "":
                 print ("Unmounting remote space")
                 cmd = "umount %s" % self.unmount.value
@@ -471,6 +594,7 @@ class Status(Task):
     '''
     def __init__(self, datalab):
         Task.__init__(self, datalab, "status", "Report on the user status")
+        self.addStdOptions()
 
     def run(self):
         status = self.dl.get("login", "status")
@@ -494,6 +618,7 @@ class WhoAmI(Task):
     '''
     def __init__(self, datalab):
         Task.__init__(self, datalab, 'whoami', 'Print the current active user')
+        self.addStdOptions()
 
     def run(self):
         print (getUserName(self))
@@ -513,16 +638,18 @@ class Schema(Task):
         self.addOption("val", 
             Option("val", "", "Value to list ([[<schema>][.<table>][.<col>]])",
                 required=False, default=None))
-        self.addOption("format", 
-            Option("format", "", "Output format (csv|text|json)",
-                required=False, default=None))
         self.addOption("profile", 
             Option("profile", "", "Service profile", required=False,
                 default="default"))
+        self.addStdOptions()
+
+        # NOT YET IMPLEMENTED
+        #self.addOption("format",                 
+        #    Option("format", "", "Output format (csv|text|json)",
+        #        required=False, default=None))
 
     def run(self):
-        print (queryClient.schema (value=self.val.value,
-                                  format=self.format.value,
+        print (queryClient.schema (value=self.val.value, format='text',
                                   profile=self.profile.value))
 
 
@@ -547,6 +674,7 @@ class AddCapability(Task):
         self.addOption("listcap", 
             Option("listcap", "", "List available capabilities",
                     default=False))
+        self.addStdOptions()
         self.capsdir = CAPS_DIR
 
     def run(self):
@@ -575,6 +703,7 @@ class ListCapability(Task):
     def __init__(self, datalab):
         Task.__init__(self, datalab, 'listcapability',
                       'List the capabilities supported by this Virtual Storage')
+        self.addStdOptions()
         self.capsdir = CAPS_DIR
 
     def run(self):
@@ -617,6 +746,7 @@ class Query2 (Task):
         self.addOption("timeout", 
             Option("timeout", "", "Requested query timeout",
                 required=False, default="120"))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken (self)
@@ -632,13 +762,13 @@ class Query2 (Task):
                 print ("Error: At least one of 'adql' or 'sql' is required.")
                 sys.exit (-1)
             elif os.path.exists (self.sql.value):
-                with open (self.sql.value, "r", 0) as fd:
+                with open (self.sql.value, "r") as fd:
                     sql = fd.read (os.path.getsize(self.sql.value)+1)
                 fd.close()
             else:
                 sql = self.sql.value
         elif os.path.exists (self.adql.value):
-            with open (self.adql.value, "r", 0) as fd:
+            with open (self.adql.value, "r") as fd:
                 adql = fd.read (os.path.getsize(self.adql.value)+1)
                 fd.close()
         else:
@@ -677,6 +807,7 @@ class QueryStatus(Task):
         Task.__init__(self, datalab, 'qstatus', 'Get an async query job status')
         self.addOption("jobId", Option("jobId", "",
                         "Query Job ID", required=True))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
@@ -691,6 +822,7 @@ class QueryResults(Task):
         Task.__init__(self, datalab, 'qresults', 'Get the async query results')
         self.addOption("jobId", Option("jobId", "",
                         "Query Job ID", required=True))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
@@ -705,6 +837,7 @@ class QueryStatus(Task):
         Task.__init__(self, datalab, 'qstatus', 'Get an async query job status')
         self.addOption("jobId", Option("jobId", "",
                         "Query Job ID", required=True))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
@@ -719,6 +852,7 @@ class ListMyDB(Task):
         Task.__init__(self, datalab, 'listdb', 'List the user MyDB tables')
         self.addOption("table", Option("table", "",
                         "Table name", required=False))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
@@ -738,6 +872,7 @@ class DropMyDB(Task):
         Task.__init__(self, datalab, 'dropdb', 'Drop a user MyDB table')
         self.addOption("table", 
             Option("table", "", "Table name", required=False))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
@@ -752,7 +887,7 @@ class QueryProfiles(Task):
         List the available Query Manager profiles.
     '''
     def __init__(self, datalab):
-        Task.__init__(self, datalab, 'list_query_profiles', 
+        Task.__init__(self, datalab, 'profiles', 
             'List the available Query Manager profiles')
         self.addOption("profile", 
             Option("profile", "", "Profile to list", required=False,
@@ -760,9 +895,14 @@ class QueryProfiles(Task):
         self.addOption("format", 
             Option("format", "", "Output format (csv|text)",
                 required=False, default='text'))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
+        if self.debug.value:
+            print (self.__dict__)
+        if self.format.value == 'text':
+            print ('\nQuery Manager Profiles:\n-----------------------')
         print (str(queryClient.list_profiles (token, 
                 profile=self.profile.value, format=self.format.value)))
 
@@ -797,6 +937,7 @@ class Query(Task):
             Option("addArgs", "", 
                 "Additional arguments to pass to the query service", 
                 required=False))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
@@ -826,12 +967,12 @@ class Query(Task):
         elif self.sql.value != '':
             sql = open(self.sql.value).read()
             dburl = '%s/query?ofmt=%s&out=%s' % \
-                        (url, self.ofmt.value, self.out.value)
+                        (url, self.fmt.value, self.out.value)
             resp, content = h.request(dburl, 'POST', body=sql, headers=headers)
         else:
             query = quote_plus(self.adql.value)
             dburl = '%s/query?adql=%s&ofmt=%s&out=%s' % (
-                url, query, self.ofmt.value, self.out.value)
+                url, query, self.fmt.value, self.out.value)
             resp, content = h.request(dburl, 'GET', headers=headers)
         output = self.out.value
         if output != '':
@@ -886,6 +1027,7 @@ class LaunchJob(Task):
             Option("args", "", 
                 "list of key-value arguments to submit to remote task",
                  required=False))
+        self.addStdOptions()
 
     def run(self):
         job = self.cmd.value
@@ -924,30 +1066,34 @@ class Mountvofs(Task):
         self.addOption("foreground", 
             Option("foreground", "", 
                 "Mount the filesystem as a foreground operation",
-                default=False))
+                default=True))
         self.addOption("cache_limit", 
             Option("cache_limit", "", 
                 "Limit on local diskspace to use for file caching (in MB)", 
-                default=50 * 2 ** (10 + 10 + 10)))
+                default=0 * 2 ** (10 + 10 + 10)))
+                #default=50 * 2 ** (10 + 10 + 10)))
         self.addOption("cache_dir", 
             Option("cache_dir", "", "Local directory to use for file caching",
                 default=None))
         self.addOption("readonly", 
             Option("readonly", "", "Mount as read-only", default=False))
         self.addOption("cache_nodes", 
-            Option("cache_nodes", "", "Cache dataNode Properties"))
+            Option("cache_nodes", "", "Cache dataNode Properties",
+                   default=True)) 
         self.addOption("allow_other", 
             Option("allow_other", "", 
-                "Allow all users access to this mountpoint"))
+                "Allow all users access to this mountpoint", default=True))
         self.addOption("max_flush_threads", 
             Option("max_flush_threads", "",
                 "Limit on number of flush (upload) threads", default=10))
         self.addOption("secure_get", 
-            Option("secure_get", "", "use HTTPS instead of HTTP"))
+            Option("secure_get", "", "use HTTPS instead of HTTP",default=False))
         self.addOption("nothreads", 
             Option("nothreads", "",
                 "Only run in a single thread, causes some blocking.",
-                default=None))
+                default=True))
+                #default=None))
+        self.addStdOptions()
 
     def run(self):
         #    readonly = False
@@ -963,7 +1109,9 @@ class Mountvofs(Task):
             os.makedirs(mount)
         opt = parseSelf(self)
         conn = vos.Connection(vospace_token=token)
+
         if platform == "darwin":
+            print ("mounting darwin fuse....")
             fuse = FUSE(VOFS(root, self.cache_dir.value, opt,
                              conn=conn, cache_limit=self.cache_limit.value,
                              cache_nodes=self.cache_nodes.value,
@@ -981,6 +1129,8 @@ class Mountvofs(Task):
                         noappledouble=True,
                         foreground=self.foreground.value)
         else:
+          try:
+            print ("mounting linux fuse....")
             fuse = FUSE(VOFS(root, self.cache_dir.value, opt,
                              conn=conn, cache_limit=self.cache_limit.value,
                              cache_nodes=self.cache_nodes.value,
@@ -992,6 +1142,11 @@ class Mountvofs(Task):
                         readonly=self.readonly.value,
                         allow_other=self.allow_other.value,
                         foreground=self.foreground.value)
+            print ("done mounting linux fuse....")
+          except Exception as e:
+            print ("FUSE MOUNT EXCEPTION: " + e.message)
+
+        print ("fuse = " + str(fuse))
         if not fuse:
             self.dl.save('vospace', 'mount', '')
 
@@ -1005,13 +1160,14 @@ class List(Task):
         List files in Data Lab
     '''
     def __init__(self, datalab):
-        Task.__init__(self, datalab, 'list', 'list a location in Data Lab')
+        Task.__init__(self, datalab, 'ls', 'list a location in Data Lab')
         self.addOption("name", 
             Option("name", "", "Location in Data Lab to list",
                 required=False, default="vos://", display="name"))
         self.addOption("format", 
             Option("format", "", "Format for listing (ascii|csv|raw)",
                 required=False, default="csv"))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
@@ -1034,6 +1190,7 @@ class Get(Task):
         self.addOption("verbose", 
             Option("verbose", "", "Verbose output?", required=False,
                 default=True))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
@@ -1056,6 +1213,7 @@ class Put(Task):
         self.addOption("verbose", 
             Option("verbose", "", "Verbose output?", required=False,
                 default=True))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
@@ -1078,6 +1236,7 @@ class Move(Task):
         self.addOption("verbose", 
             Option("verbose", "", "Verbose output?", required=False,
                 default=True))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
@@ -1100,6 +1259,7 @@ class Copy(Task):
         self.addOption("verbose", 
             Option("verbose", "", "Verbose output?", required=False,
                 default=True))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
@@ -1119,6 +1279,7 @@ class Delete(Task):
         self.addOption("verbose", 
             Option("verbose", "", "Verbose output?", required=False,
                 default=True))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
@@ -1130,13 +1291,14 @@ class Link(Task):
         Link a file in Data Lab
     '''
     def __init__(self, datalab):
-        Task.__init__(self, datalab, 'link', 'link a file in Data Lab')
+        Task.__init__(self, datalab, 'ln', 'link a file in Data Lab')
         self.addOption("fr", 
             Option("fr", "", "Location in Data Lab to link from",
                 required=True, default="vos://"))
         self.addOption("to", 
             Option("to", "", "Location in Data Lab to link to",
                 required=True, default="vos://"))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
@@ -1155,6 +1317,7 @@ class Tag(Task):
         self.addOption("tag", 
             Option("tag", "", "Tag to add to file", required=True, 
                 default=""))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
@@ -1170,6 +1333,7 @@ class MkDir(Task):
         self.addOption("name", 
             Option("name", "", "Directory in Data Lab to create",
                 required=True, default=""))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
@@ -1185,6 +1349,7 @@ class RmDir(Task):
         self.addOption("name", 
             Option("name", "", "Directory in Data Lab to delete",
                 required=True, default=""))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
@@ -1201,6 +1366,7 @@ class Resolve(Task):
         self.addOption("name", 
             Option("name", "", "Short form identifier", required=True,
                 default="vos://"))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
@@ -1221,6 +1387,7 @@ class StorageProfiles(Task):
         self.addOption("format", 
             Option("format", "", "Output format (csv|text)",
                 required=False, default='text'))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
@@ -1242,6 +1409,7 @@ class Broadcast(Task):
             Option("mtype", "", "SAMP message type", required=True))
         self.addOption("pars", 
             Option("pars", "", "Message parameters", required=True))
+        self.addStdOptions()
 
     def run(self):
         client = self.getSampClient()
@@ -1262,6 +1430,7 @@ class Launch(Task):
         self.addOption("dir", 
             Option("dir", "", "directory in Data Lab to delete",
                 required=True, default="vos://"))
+        self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
@@ -1314,6 +1483,7 @@ class SiaQuery(Task):
             Option("input", "", "Input filename", required=False))
         self.addOption("search", 
             Option("search", "", "Search radius", required=False, default=0.5))
+        self.addStdOptions()
 
     def getUID(self):
         ''' Get the UID for this user

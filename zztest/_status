@@ -1,0 +1,15 @@
+#!/bin/csh -f
+#
+#  status --
+
+set debug	= 'debug=False'
+set verb	= 'verbose=False'
+set warn	= 'warning=False'
+set opts	= "$debug $verb $warn"
+
+datalab status help			# standard help option
+datalab status -help
+datalab status --help
+
+datalab status $opts
+

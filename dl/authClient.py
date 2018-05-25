@@ -30,6 +30,11 @@ except ImportError:
     from urllib.parse import urlencode                # Python 3
     from urllib.request import urlopen, Request       # Python 3
 
+# Turn off some annoying astropy warnings
+import warnings
+from astropy.utils.exceptions import AstropyWarning
+warnings.simplefilter('ignore', AstropyWarning)   
+
 
 # Pre-defined authentication tokens. These are fixed strings that provide
 # limited access to Data Lab services, this access is controlled on the
@@ -102,7 +107,7 @@ def isAlive(svc_url=DEF_SERVICE_URL):
         response = client.isAlive(svc_url)
     except Exception as e:
         response = e.message
-    return response
+    return (True if response.lower() == 'true' else False)
 
 
 def isValidToken(token):
@@ -120,7 +125,7 @@ def isValidToken(token):
             print (e.message)
             return False
 
-    return response
+    return (True if response.lower() == 'true' else False)
 
 
 def isValidUser(user):
@@ -131,7 +136,7 @@ def isValidUser(user):
             response = client.isValidUser(user)
         except Exception as e:
             response = e.message
-    return response
+    return (True if response.lower() == 'true' else False)
 
 
 def isValidPassword(user, password):
@@ -142,7 +147,7 @@ def isValidPassword(user, password):
             response = client.isValidPassword(user, password)
         except Exception as e:
             response = e.message
-    return response
+    return (True if response.lower() == 'true' else False)
 
 
 def hasAccess(user, resource):
@@ -150,7 +155,7 @@ def hasAccess(user, resource):
         response = client.hasAccess(user, resource)
     except Exception as e:
         response = e.message
-    return response
+    return (True if response.lower() == 'true' else False)
 
 
 def isUserLoggedIn(user):
@@ -158,7 +163,7 @@ def isUserLoggedIn(user):
         response = client.isUserLoggedIn(user)
     except Exception as e:
         response = e.message
-    return response
+    return (True if response.lower() == 'true' else False)
 
 
 def isTokenLoggedIn(token):
@@ -166,7 +171,7 @@ def isTokenLoggedIn(token):
         response = client.isTokenLoggedIn(token)
     except Exception as e:
         response = e.message
-    return response
+    return (True if response.lower() == 'true' else False)
 
 
 def logout(token):
@@ -449,7 +454,7 @@ class authClient (object):
 
         if password is None:
             if os.path.exists(tok_file):
-                tok_fd = open(tok_file, "r", 0)
+                tok_fd = open(tok_file, "r")
                 o_tok = tok_fd.read(128).decode('utf-8')  # read the old token
                 tok_fd.close()
 
@@ -511,7 +516,7 @@ class authClient (object):
         # Save the token.
         if os.access(self.home, os.W_OK):
             tok_file = '%s/id_token.%s' % (self.home, username)
-            with open(tok_file, 'wb', 0) as tok_fd:
+            with open(tok_file, 'wb') as tok_fd:
                 if self.debug:
                     print ("login: writing new token for '%s'" % username)
                     print ("login: self.auth_token = '%s'" %
@@ -615,7 +620,7 @@ class authClient (object):
                 if os.path.exists(tok_file):
                     print ("pwreset: removing token file " + tok_file)
                     os.remove(tok_file)
-                with open(tok_file, 'wb', 0) as tok_fd:
+                with open(tok_file, 'wb') as tok_fd:
                     if self.debug:
                         print ("pwreset: writing new token for '%s'" + username)
                         print ("pwreset: response = '%s'" + response)

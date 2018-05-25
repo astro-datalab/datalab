@@ -159,7 +159,7 @@ if __name__ == "__main__":
 
     # List tasks
     #if len(sys.argv) == 1 or "help" in sys.argv[1]:
-    help_opts = ['--help', '--h', '-h', 'help', '-help']:
+    help_opts = ['--help', '--h', '-h', 'help', '-help']
     if len(sys.argv) == 1 or sys.argv[1] in help_opts:
         print ("\nUsage:\n\n    % datalab <task> [task_options]\n")
         print ("where <task> is one of:\n")

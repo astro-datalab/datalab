@@ -871,7 +871,7 @@ class queryClient (object):
             resp = r.text
             return resp
         except Exception:
-            raise ("Error getting schema: " + value)
+            raise queryClientError("Error getting schema: " + value)
 
         return resp
     

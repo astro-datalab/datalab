@@ -116,7 +116,13 @@ def convert(inp,outfmt='pandas',verbose=False,**kwargs):
         ('votable'     , ('votable', 'Astropy VOtable',                 parse_single_table))
     ])
 
-    b = BytesIO(inp.encode())
+    if isinstance(inp,bytes):
+        b = BytesIO(inp)
+    elif isinstance(inp,str):
+        b = BytesIO(inp.encode())
+    else:
+        raise TypeError('Input must be of bytes or str type.')
+        
     output = mapping[outfmt][2](b,**kwargs)
 
     if isinstance(output,bytes):

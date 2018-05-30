@@ -154,7 +154,7 @@ def multifunc(module, nargs):
 # =========================================================================
 # Globals
 ANON_TOKEN	= 'anonymous.0.0.anon_access'
-TOK_DEBUG	= True
+TOK_DEBUG	= False
 
 #  READTOKENFILE -- Read the contents of the named token file.  If it 
 #  doesn't exist, default to the anonymous token.

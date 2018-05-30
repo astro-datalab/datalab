@@ -222,6 +222,13 @@ def get (optval, fr='', to='', token=None, verbose=True, debug=False):
         return client._get (fr=optval, to=to, token=def_token(token), 
                             verbose=verbose, debug=debug)
 
+@multifunc('sc',0)
+def get  (token=None, fr='', to='', verbose=True, debug=False):
+    '''  Usage:  storeClient.get (token, fr, to)
+    '''
+    return client._get (fr=fr, to=to, token=def_token(token),
+                        verbose=verbose, debug=debug)
+
 
 # --------------------------------------------------------------------
 # PUT -- Upload a file (or files) to the Store Manager service
@@ -252,6 +259,13 @@ def put  (optval, fr='', to='vos://', token=None, verbose=True, debug=False):
         # optval looks like source name
         return client._put (fr=optval, to=to, token=def_token(token),
                             verbose=verbose, debug=debug)
+
+@multifunc('sc',0)
+def put  (fr='', to='vos://', token=None, verbose=True, debug=False):
+    '''  Usage:  storeClient.put (fr='',to='')
+    '''
+    return client._put (fr=fr, to=to, token=def_token(token),
+                        verbose=verbose, debug=debug)
 
 
 # --------------------------------------------------------------------
@@ -883,6 +897,13 @@ class storeClient (object):
             return self._get (fr=optval, to=to, token=def_token(token), 
                               verbose=verbose, debug=debug)
 
+    @multimethod('sc',0)
+    def get (self, fr='', to='', token=None, verbose=True, debug=False):
+        '''  Usage:  storeClient.get (token, fr, to)
+        '''
+        return self._get (fr=fr, to=to, token=def_token(token), 
+                          verbose=verbose, debug=debug)
+
     def _get (self, token=None, fr='', to='', verbose=True, debug=False):
         """ Retrieve a file from the store manager service
 
@@ -1048,6 +1069,13 @@ class storeClient (object):
             # optval looks like a source name
             return self._put (fr=optval, to=to, token=def_token(token), 
                               verbose=verbose, debug=False)
+
+    @multimethod('sc',0)
+    def put  (self,fr='', to='vos://', token=None, verbose=True, debug=False):
+        '''  Usage:  storeClient.put (fr='',to='')
+        '''
+        return self._put (fr=fr, to=to, token=def_token(token),
+                          verbose=verbose, debug=debug)
 
     def _put (self, token=None, fr='', to='vos://', verbose=True, debug=False):
         """ Upload a file to the store manager service
@@ -1415,9 +1443,9 @@ class storeClient (object):
 
         try:
             uri = (name if name.count('://') > 0 else 'vos://' + name)
-            url = self.svc_url + "/ls?name=%s&format=%s&verbose=%s" % \
-                                 (uri, format, verbose)
-            r = requests.get(url, headers={'X-DL-AuthToken': token})
+            r = getFromURL(self.svc_url, 
+                           "/ls?name=%s&format=%s&verbose=%s" % \
+                           (uri, format, verbose), def_token(token))
         except Exception as e:
             raise Exception (r.content)
         return (r.content)
@@ -1921,13 +1949,16 @@ def expandFileList (svc_url, token, pattern, format, full=False):
 
 # Get from a URL
 def getFromURL (svc_url, path, token):
+    debug = False
     try:
+        if debug:
+            print ("url: %s" % (("%s%s" % (svc_url, path))))
+            print ("token -  %s %s" % (token,def_token(token)))
         resp = requests.get("%s%s" % (svc_url, path), 
                             headers = {"X-DL-AuthToken": def_token (token)})
     except Exception as e:
         raise storeClientError(e.message)
     return resp
-
 
 
 

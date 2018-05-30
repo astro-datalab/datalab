@@ -22,6 +22,11 @@ Import via
 
 import os
 
+try:
+    import ConfigParser                         # Python 2
+except ImportError:
+    import configparser as ConfigParser         # Python 3
+
 
 # =========================================================================
 #  MULTIMETHOD -- An object class to manage class methods.
@@ -149,7 +154,7 @@ def multifunc(module, nargs):
 # =========================================================================
 # Globals
 ANON_TOKEN	= 'anonymous.0.0.anon_access'
-TOK_DEBUG	= False
+TOK_DEBUG	= True
 
 #  READTOKENFILE -- Read the contents of the named token file.  If it 
 #  doesn't exist, default to the anonymous token.
@@ -181,15 +186,34 @@ def def_token(tok):
     '''
     home = '%s/.datalab' % os.path.expanduser('~')
     if tok is None or tok == '':
-        # No token supplied, check for a logged-in user token.
-        tok_file = ('%s/id_token.%s' % (home, os.getlogin()))
-        if not os.path.exists(home) or not os.path.exists(tok_file):
-            if TOK_DEBUG: print ('returning ANON_TOKEN')
-            return ANON_TOKEN
+
+        # Read the $HOME/.datalab/dl.conf file
+        config = ConfigParser.RawConfigParser(allow_no_value=True)
+        if os.path.exists('%s/dl.conf' % home):
+            config.read('%s/dl.conf' % home)
+            _status = config.get('login','status')
+            if _status == 'loggedin':
+                # Return the currently logged-in user.
+                _user = config.get('login','user')
+                tok_file = ('%s/id_token.%s' % (home, _user))
+                if TOK_DEBUG: print ('returning loggedin user: %s' % tok_file)
+                return readTokenFile(tok_file)
+            else:
+                # Nobody logged in so return 'anonymous'
+                if TOK_DEBUG: print ('returning ANON_TOKEN')
+                return ANON_TOKEN
+
         else:
-            return readTokenFile(tok_file)
+            # No token supplied, not logged-in, check for a logged-in user token.
+            tok_file = ('%s/id_token.%s' % (home, os.getlogin()))
+            if TOK_DEBUG: print ('tok_file: %s' % tok_file)
+            if not os.path.exists(home) or not os.path.exists(tok_file):
+                if TOK_DEBUG: print ('returning ANON_TOKEN')
+                return ANON_TOKEN
+            else:
+                return readTokenFile(tok_file)
     else:
-        # Check for a plan user name or valid token.  If we're given a
+        # Check for a plane user name or valid token.  If we're given a
         # token just return it.  If it may be a user name, look for a token
         # id file and return that, otherwise we're just anonymous.
         if len(tok.split('.')) >= 4:			# looks like a token

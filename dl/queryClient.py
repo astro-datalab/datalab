@@ -29,6 +29,7 @@ import socket
 import json
 import time
 import os
+from io import BytesIO
 
 if os.path.isfile ('./Util.py'):		# use local dev copy
     from Util import multifunc
@@ -871,7 +872,7 @@ class queryClient (object):
             resp = r.text
             return resp
         except Exception:
-            raise ("Error getting schema: " + value)
+            raise queryClientError("Error getting schema: " + value)
 
         return resp
     
@@ -1152,7 +1153,12 @@ class queryClient (object):
             return "OK"
         else:
             # Otherwise, simply return the result of the query.
-            return resp
+            if isinstance(resp,bytes):
+                return str(resp.decode())
+            elif isinstance(resp,str):
+                return str(resp)
+            else:
+                raise TypeError('Result must be of bytes or str type.')
     
     
     # --------------------------

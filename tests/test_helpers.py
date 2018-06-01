@@ -8,6 +8,47 @@ import astropy
 import numpy
 import pandas
 
+
+skipMock = False
+try:
+    from unittest.mock import call, patch, mock_open, MagicMock, DEFAULT
+except ImportError:
+    # Python 2
+    skipMock = True
+
+
+class TestHelpersUtilsVOSpace(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    @unittest.skipIf(skipMock, "Skipping test that requires unittest.mock.")
+    def test_path(self):
+        """Test case where name is a string.
+        """
+        with patch('dl.helpers.utils.get_readable_fileobj') as get:
+            with utils.vospace_readable_fileobj('/foo/bar', 'fake.token') as fileobj:
+                    foo = fileobj.read()
+        get.assert_called_with('/foo/bar')
+        with patch('dl.helpers.utils.get_readable_fileobj') as get:
+            with vospace_readable_fileobj('/foo/bar', 'fake.token', 
+                                          encoding='binary') as fileobj:
+                foo = fileobj.read()
+        get.assert_called_with('/foo/bar', encoding='binary')
+
+
+    @unittest.skipIf(skipMock, "Skipping test that requires unittest.mock.")
+    def test_path(self):
+        """Test case where name is a VOSpace path.
+        """
+        with patch('dl.helpers.utils.get_readable_fileobj') as get:
+            with patch('dl.helpers.utils.storeClient') as store:
+                store.get.return_value = b'Hello'
+                with vospace_readable_fileobj('/foo/bar', 'fake.token') as fileobj:
+                    foo = fileobj.read()
+        store.get.assert_called_with('fake.token', fr='vos://foo/bar', to='')
+
+
 class TestHelpersUtilsResolve(unittest.TestCase):
 
     def setUp(self):
@@ -29,7 +70,7 @@ class TestHelpersUtilsResolve(unittest.TestCase):
 class TestHelpersUtilsConvert(unittest.TestCase):
 
     def setUp(self):
-        
+
         # minimal csv table example
         self.csvtable =\
 """ra,dec,mag_auto_i
@@ -57,7 +98,7 @@ xsi:noNamespaceSchemaLocation="xmlns:http://www.ivoa.net/xml/VOTable-1.2.xsd" ve
 </TABLE>
 </RESOURCE>
 </VOTABLE>"""
-        
+
         # testing int(floats) for accuracy reasons
         self.intval = 23
 
@@ -70,7 +111,7 @@ xsi:noNamespaceSchemaLocation="xmlns:http://www.ivoa.net/xml/VOTable-1.2.xsd" ve
         """Result of convert() to array should be a numpy array"""
         res = utils.convert(self.csvtable,'array')
         self.assertIsInstance(res,numpy.ndarray)
-        
+
     def test_array_value(self):
         """Result of convert() to array should have res[0,2] == 23.168003"""
         res = utils.convert(self.csvtable,'array')
@@ -85,7 +126,7 @@ xsi:noNamespaceSchemaLocation="xmlns:http://www.ivoa.net/xml/VOTable-1.2.xsd" ve
         """Result of convert() to structarray should have res['mag_auto_i'][0] == 23.168003"""
         res = utils.convert(self.csvtable,'structarray')
         self.assertEqual(int(res['mag_auto_i'][0]),self.intval)
-        
+
     def test_is_pandas_dataframe(self):
         """Result of convert() to pandas should be a numpy array"""
         res = utils.convert(self.csvtable,'pandas')
@@ -95,7 +136,7 @@ xsi:noNamespaceSchemaLocation="xmlns:http://www.ivoa.net/xml/VOTable-1.2.xsd" ve
         """Result of convert() to pandas should have res['mag_auto_i'][0] == 23.168003"""
         res = utils.convert(self.csvtable,'pandas')
         self.assertEqual(int(res['mag_auto_i'][0]),self.intval)
-        
+
     def test_is_astropy_table(self):
         """Result of convert() to table should be an astropy table.Table"""
         res = utils.convert(self.csvtable,'table')
@@ -105,7 +146,7 @@ xsi:noNamespaceSchemaLocation="xmlns:http://www.ivoa.net/xml/VOTable-1.2.xsd" ve
         """Result of convert() to table should have res['mag_auto_i'][0] == 23.168003"""
         res = utils.convert(self.csvtable,'table')
         self.assertEqual(int(res['mag_auto_i'][0]),self.intval)
-        
+
     def test_is_votable(self):
         """Result of convert() to votable should be a votable"""
         res = utils.convert(self.votable,'votable')
@@ -115,6 +156,6 @@ xsi:noNamespaceSchemaLocation="xmlns:http://www.ivoa.net/xml/VOTable-1.2.xsd" ve
         """Result of convert() to votable should have res['mag_auto_i'][0] == 23.168003"""
         res = utils.convert(self.votable,'votable')
         self.assertEqual(int(res.array['mag_auto_i'][0]),self.intval)
-        
+
 if __name__ == '__main()__':
     unittest.main()

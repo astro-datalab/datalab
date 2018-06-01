@@ -9,7 +9,8 @@ __version__ = '20180129' # yyyymmdd
 # std lib
 from functools import partial
 from io import BytesIO
-    
+from contextlib import contextmanager
+
 try:
     input = raw_input # use 'input' function in both Python 2 and 3
 except NameError:
@@ -22,8 +23,11 @@ from pandas import read_csv
 from astropy.table import Table
 from astropy.io.votable import parse_single_table
 from astropy.coordinates import SkyCoord, name_resolve
+from astropy.utils.data import get_readable_fileobj
+from astropy.extern.six import BytesIO, string_types
 import astropy.units as u
 
+from .. import storeClient
 
 def resolve(name=None):
 
@@ -43,10 +47,10 @@ def resolve(name=None):
         different coordinate system, e.g. sc.galactic.b, etc.
 
     """
-    
+
     if name is None:
         name = input("Object name (+ENTER): ")
-    
+
     try:
         coords = name_resolve.get_icrs_coordinates(name)
     except Exception as e:
@@ -76,7 +80,7 @@ def convert(inp,outfmt='pandas',verbose=False,**kwargs):
           structarray - Numpy structured array (also called record array)
           table - Astropy Table
           votable - Astropy VOtable
-    
+
         For outfmt='votable', the input string must be an
         XML-formatted string. For all other values, as CSV-formatted
         string.
@@ -103,7 +107,7 @@ def convert(inp,outfmt='pandas',verbose=False,**kwargs):
        df = convert(inp,'pandas',na_values='Infinity') # na_values is a kwarg; adds 'Infinity' to list of values converter to np.inf
 
     """
-    
+
     # map outfmt container types to a tuple:
     # (:func:`queryClient.query()` fmt-value, descriptive title,
     # processing function for the result string)
@@ -122,12 +126,12 @@ def convert(inp,outfmt='pandas',verbose=False,**kwargs):
         b = BytesIO(inp.encode())
     else:
         raise TypeError('Input must be of bytes or str type.')
-        
+
     output = mapping[outfmt][2](b,**kwargs)
 
     if isinstance(output,bytes):
         output = output.decode()
-    
+
     if verbose:
         print("Returning %s" % mapping[outfmt][1])
 
@@ -188,3 +192,47 @@ def normalizeCoordinates(x,y,frame_in='icrs',units_in='deg',frame_out=None,wrap_
     yout = getattr(c,mapping[frame][1]).radian
 
     return xout, yout
+
+
+@contextmanager
+def vospace_readable_fileobj(name_or_obj, token=None, **kwargs):
+    """Read data from VOSpace or some other place.
+
+    Notes
+    -----
+    Most of the heavy lifting is done with
+    :func:`~astropy.io.data.get_readable_fileobj`.  Any additional keywords
+    passed to this function will get passed directly to that function.
+
+    Parameters
+    ----------
+    name_or_obj : :class:`str` or file-like object
+        The filename of the file to access (if given as a string), or
+        the file-like object to access.
+
+        If a file-like object, it must be opened in binary mode.
+
+    token : :class:`str`
+        A token granting access to VOSpace.
+
+    Returns
+    -------
+    file
+        A readable file-like object.
+    """
+    fileobj = name_or_obj
+    close_fileobj = False
+    if (isinstance(name_or_obj, string_types) and
+        name_or_obj.startswith('vos:') and
+        token is not None):
+        #
+        # VOSpace call
+        #
+        fileobj = BytesIO(storeClient.get(token, fr=name_or_obj, to=''))
+        close_fileobj = True
+    with get_readable_fileobj(fileobj, **kwargs) as f:
+        try:
+            yield f
+        finally:
+            if close_fileobj:
+                fileobj.close()

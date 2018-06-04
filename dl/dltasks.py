@@ -789,14 +789,14 @@ class Query2 (Task):
             elif self.out.value== '' or self.out.value is None:
                 print (res)                         # Return the results
         except Exception as e:
-            if not self.async.value and e.message is not None:
-                err = e.message
+            if not self.async.value and str(e) is not None:
+                err = str(e)
                 if err.find("Time-out") > 0:
                     print ("Error: Sync query timeout, try an async query")
                 else:
-                    print (e.message)
+                    print (str(e))
             else:
-                print (e.message)
+                print (str(e))
 
 
 class QueryStatus(Task):
@@ -1144,7 +1144,7 @@ class Mountvofs(Task):
                         foreground=self.foreground.value)
             print ("done mounting linux fuse....")
           except Exception as e:
-            print ("FUSE MOUNT EXCEPTION: " + e.message)
+            print ("FUSE MOUNT EXCEPTION: " + str(e))
 
         print ("fuse = " + str(fuse))
         if not fuse:

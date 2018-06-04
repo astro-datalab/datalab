@@ -665,7 +665,7 @@ class VOFS(Operations):
                 self.cache.renameFile(src, dest)
                 return 0
             return -1
-        except Exception, e:
+        except Exception as e:
             logger.error("%s" % str(e))
             import re
             if re.search('NodeLocked', str(e)) is not None:

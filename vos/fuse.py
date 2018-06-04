@@ -407,7 +407,7 @@ class FUSE(object):
             return func(*args, **kwargs) or 0
         except OSError, e:
             return -(e.errno or EFAULT)
-        except Exception, e2:
+        except Exception as e2:
             logging.error("%s %s" % (str(e2), traceback.format_exc()))
             print_exc()
             return -EFAULT

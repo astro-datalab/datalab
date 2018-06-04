@@ -11,6 +11,7 @@ from functools import partial
 from io import BytesIO
 from contextlib import contextmanager
     
+
 try:
     input = raw_input # use 'input' function in both Python 2 and 3
 except NameError:
@@ -81,7 +82,7 @@ def convert(inp,outfmt='pandas',verbose=False,**kwargs):
           structarray - Numpy structured array (also called record array)
           table - Astropy Table
           votable - Astropy VOtable
-    
+
         For outfmt='votable', the input string must be an
         XML-formatted string. For all other values, as CSV-formatted
         string.

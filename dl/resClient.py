@@ -14,7 +14,6 @@ __version__ = '20180321'  # yyyymmdd
 
 import requests
 import os
-import socket
 
 
 # The URL of the ResManager service to contact.  This may be changed by
@@ -26,13 +25,6 @@ DEF_SERVICE_URL = "https://datalab.noao.edu/res"
 # machines and services used by the ResManager on the server.
 
 DEF_SERVICE_PROFILE = "default"
-
-# Allow the service URL for dev/test systems to override the default.
-THIS_HOST = socket.gethostname()
-if THIS_HOST[:5] == 'dldev':
-    DEF_SERVICE_URL = "http://dldev.datalab.noao.edu/res"
-elif THIS_HOST[:6] == 'dltest':
-    DEF_SERVICE_URL = "http://dltest.datalab.noao.edu/res"
 
 
 # API debug flag.
@@ -55,7 +47,7 @@ def createUser (username, password, email, name, institute):
     try:
         resp = client.createUser (username, password, email, name, institute)
     except dlResError as e:
-        resp = str (e.message)
+        resp = str (e)
 
     return resp
 
@@ -111,7 +103,7 @@ def set_svc_url (svc_url):
     return client.set_svc_url (svc_url)
 
 def get_svc_url ():
-    return client.get_svc_url ()
+    return client.set_svc_url ()
 
 def set_profile (profile):
     return client.set_profile (profile)
@@ -314,7 +306,7 @@ class resClient (object):
 
         except Exception as e:
             raise dlResError ("Error creating user '" + 
-                  username + "' : " + e.message)
+                  username + "' : " + str(e))
         else:
             pass
 
@@ -363,7 +355,7 @@ class resClient (object):
                 raise Exception (r.text)
 
         except Exception as e:
-            raise dlResError (e.message)
+            raise dlResError (str(e))
 
         return response
 
@@ -380,7 +372,7 @@ class resClient (object):
             resp = self.svcGet (token, url)
             print (resp)
         except Exception as e:
-            raise Exception (e.message)
+            raise Exception (str(e))
         else:
             # Service call was successful.
             print ("passwordReset:  success, removing local token file")
@@ -405,7 +397,7 @@ class resClient (object):
                 raise Exception (r.text)
 
         except Exception as e:
-            raise Exception (e.message)
+            raise Exception (str(e))
 
 
     def listFields (self):
@@ -416,7 +408,7 @@ class resClient (object):
         try:
             return (self.svcGet (self.auth_token, url))
         except Exception as e:
-            raise Exception (e.message)
+            raise Exception (str(e))
 
         pass
 
@@ -428,7 +420,7 @@ class resClient (object):
         try:
             return (self.svcGet (token, url))
         except Exception as e:
-            raise Exception (e.message)
+            raise Exception (str(e))
 
 
     def disapproveUser (self, token, user):
@@ -439,7 +431,7 @@ class resClient (object):
         try:
             return (self.svcGet (token, url))
         except Exception as e:
-            raise Exception (e.message)
+            raise Exception (str(e))
 
 
     def userRecord (self, token, user, value, format):
@@ -454,7 +446,7 @@ class resClient (object):
         try:
             resp = self.svcGet (token, url)
         except Exception as e:
-            raise Exception (e.message)
+            raise Exception (str(e))
         else:
             return resp
 
@@ -469,7 +461,7 @@ class resClient (object):
         try:
             resp = self.svcGet (token, url)
         except Exception as e:
-            raise Exception (e.message)
+            raise Exception (str(e))
         else:
             return resp
 
@@ -485,7 +477,7 @@ class resClient (object):
         try:
             resp = self.svcGet (token, url)
         except Exception as e:
-            raise Exception (e.message)
+            raise Exception (str(e))
         else:
             return resp
 

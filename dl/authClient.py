@@ -22,18 +22,26 @@ Import via
 import requests
 import socket
 import os
+import sys
+from time import gmtime, strftime
 
 try:
-    from urllib import urlencode                      # Python 2
-    from urllib2 import urlopen, Request              # Python 2
+    from urllib import urlencode                # Python 2
+    from urllib2 import urlopen, Request        # Python 2
+    import ConfigParser                         # Python 2
 except ImportError:
-    from urllib.parse import urlencode                # Python 3
-    from urllib.request import urlopen, Request       # Python 3
+    from urllib.parse import urlencode          # Python 3
+    from urllib.request import urlopen, Request # Python 3
+    import configparser as ConfigParser         # Python 3
+
 
 # Turn off some annoying astropy warnings
 import warnings
 from astropy.utils.exceptions import AstropyWarning
 warnings.simplefilter('ignore', AstropyWarning)   
+
+is_py3 = sys.version_info.major == 3
+
 
 
 # Pre-defined authentication tokens. These are fixed strings that provide
@@ -56,13 +64,19 @@ DEF_USERS = {'anonymous': ANON_TOKEN,
 # passing a new URL into the set_svc_url() method before beginning.
 
 DEF_SERVICE_URL = "https://datalab.noao.edu/auth"
+SM_SERVICE_URL  = "https://datalab.noao.edu/storage"
+QM_SERVICE_URL  = "https://datalab.noao.edu/query"
 
 # Allow the service URL for dev/test systems to override the default.
 THIS_HOST = socket.gethostname()
 if THIS_HOST[:5] == 'dldev':
     DEF_SERVICE_URL = "http://dldev.datalab.noao.edu/auth"
+    SM_SERVICE_URL  = "http://dldev.datalab.noao.edu/storage"
+    QM_SERVICE_URL  = "http://dldev.datalab.noao.edu/query"
 elif THIS_HOST[:6] == 'dltest':
     DEF_SERVICE_URL = "http://dltest.datalab.noao.edu/auth"
+    SM_SERVICE_URL  = "http://dltest.datalab.noao.edu/storage"
+    QM_SERVICE_URL  = "http://dltest.datalab.noao.edu/query"
 
 
 # The requested authentication "profile".  A profile refers to the specific
@@ -96,17 +110,20 @@ def login(user, password=None, debug=False, verbose=False):
         return DEF_USERS[user]
     else:
         try:
-            response = client.login(user, password, debug)
+            response = ac_client.login(user, password, debug)
         except Exception as e:
-            response = e.message
+            response = str(e)
     return response
 
 
+def whoAmI():
+    pass
+
 def isAlive(svc_url=DEF_SERVICE_URL):
     try:
-        response = client.isAlive(svc_url)
+        response = ac_client.isAlive(svc_url)
     except Exception as e:
-        response = e.message
+        response = str(e)
     return (True if response.lower() == 'true' else False)
 
 
@@ -120,11 +137,10 @@ def isValidToken(token):
         return True
     else:
         try:
-            response = client.isValidToken(token)
+            response = ac_client.isValidToken(token)
         except Exception as e:
-            print (e.message)
+            print (str(e))
             return False
-
     return (True if response.lower() == 'true' else False)
 
 
@@ -133,9 +149,9 @@ def isValidUser(user):
         return True
     else:
         try:
-            response = client.isValidUser(user)
+            response = ac_client.isValidUser(user)
         except Exception as e:
-            response = e.message
+            response = str(e)
     return (True if response.lower() == 'true' else False)
 
 
@@ -144,72 +160,71 @@ def isValidPassword(user, password):
         return True
     else:
         try:
-            response = client.isValidPassword(user, password)
+            response = ac_client.isValidPassword(user, password)
         except Exception as e:
-            response = e.message
+            response = str(e)
     return (True if response.lower() == 'true' else False)
 
 
 def hasAccess(user, resource):
     try:
-        response = client.hasAccess(user, resource)
+        response = ac_client.hasAccess(user, resource)
     except Exception as e:
-        response = e.message
+        response = str(e)
     return (True if response.lower() == 'true' else False)
 
 
 def isUserLoggedIn(user):
     try:
-        response = client.isUserLoggedIn(user)
+        response = ac_client.isUserLoggedIn(user)
     except Exception as e:
-        response = e.message
+        response = str(e)
     return (True if response.lower() == 'true' else False)
 
 
 def isTokenLoggedIn(token):
     try:
-        response = client.isTokenLoggedIn(token)
+        response = ac_client.isTokenLoggedIn(token)
     except Exception as e:
-        response = e.message
+        response = str(e)
     return (True if response.lower() == 'true' else False)
 
 
 def logout(token):
     try:
-        response = client.logout(token)
+        response = ac_client.logout(token)
     except Exception as e:
-        #response = e.message
-        response = e.message
+        response = str(e)
     return response
 
 
 def passwordReset(token, username, password):
     try:
-        response = client.passwordReset(token, username, password)
+        response = ac_client.passwordReset(token, username, password)
     except Exception as e:
-        response = e.message
+        response = str(e)
     return response
 
 
 # Standard Service Methods
 def set_svc_url(svc_url):
-    return client.set_svc_url(svc_url)
+    return ac_client.set_svc_url(svc_url)
 
 
 def get_svc_url():
-    return client.get_svc_url()
+    return ac_client.get_svc_url()
 
 
 def set_profile(profile):
-    return client.set_profile(profile)
+    return ac_client.set_profile(profile)
 
 
 def get_profile():
-    return client.get_profile()
+    return ac_client.get_profile()
 
 
 #def list_profiles(token, profile=None, format='text'):
-#    return client.list_profiles(token, profile, format)
+#    return ac_client.list_profiles(token, profile, format)
 
 
 # ###################################
@@ -247,8 +262,62 @@ class authClient (object):
 
         # Get the $HOME/.datalab directory.
         self.home = '%s/.datalab' % os.path.expanduser('~')
+        self.loadConfig()                       # load config file
 
         self.debug = DEBUG                      # interface debug flag
+
+    def loadConfig (self):
+        # Read the $HOME/.datalab/dl.conf file
+        self.config = ConfigParser.RawConfigParser(allow_no_value=True)
+        if os.path.exists('%s/dl.conf' % self.home):
+            self.config.read('%s/dl.conf' % self.home)
+        else:
+            self.config.add_section('datalab')
+            self.config.set('datalab', 'created', strftime(
+                '%Y-%m-%d %H:%M:%S', gmtime()))
+            self.config.add_section('login')
+            self.config.set('login', 'status', 'loggedout')
+            self.config.set('login', 'user', '')
+            self.config.set('login', 'authtoken', '')
+
+            self.config.add_section('auth')
+            self.config.set('auth', 'profile', 'default')
+            self.config.set('auth', 'svc_url', DEF_SERVICE_URL)
+
+            self.config.add_section('query')
+            self.config.set('query', 'profile', 'default')
+            self.config.set('query', 'svc_url', QM_SERVICE_URL)
+
+            self.config.add_section('storage')
+            self.config.set('storage', 'profile', 'default')
+            self.config.set('storage', 'svc_url', SM_SERVICE_URL)
+
+            self.config.add_section('vospace')
+            self.config.set('vospace', 'mount', '')
+
+            self.writeConfig()
+            pass
+
+    def setConfig (self, section, param, value):
+        ''' Set a value and save the configuration file.
+        '''
+        if not self.config.has_section (section):
+            self.config.add_section (section)
+        self.config.set (section, param, value)
+        self.writeConfig ()
+
+    def getConfig (self, section, param):
+        ''' Get a value from the configuration file.
+        '''
+        return self.config.get (section, param)
+
+    def writeConfig (self):
+        ''' Write out the configuration file to disk.
+        '''
+        with open ('%s/dl.conf' % self.home, 'w') as configfile:
+            self.config.write (configfile)
+
+
 
     def set_svc_url(self, svc_url):
         """ Set the URL of the Authentication Service to be used.
@@ -270,7 +339,7 @@ class authClient (object):
             authClient.set_svc_url ("http://localhost:7001/")
         """
 
-        self.svc_url = svc_url
+        self.svc_url = acToString(svc_url)
 
     def get_svc_url(self):
         """ Return the currently-used Authentication Service URL.
@@ -292,7 +361,7 @@ class authClient (object):
             service_url = authClient.get_svc_url ()
         """
 
-        return self.svc_url
+        return acToString(self.svc_url)
 
     def set_profile(self, profile):
         """ Set the requested service profile.
@@ -314,7 +383,7 @@ class authClient (object):
             token = authClient.client.set_profile ("dev")
         """
 
-        self.svc_profile = profile
+        self.svc_profile = acToString(profile)
 
     def get_profile(self):
         """ Get the requested service profile.
@@ -336,7 +405,7 @@ class authClient (object):
             profile = authClient.client.get_profile ()
         """
 
-        return self.svc_profile
+        return acToString(self.svc_profile)
 
     def list_profiles(self, token, profile=None, format='text'):
         """ List the service profiles which can be accessed by the user.
@@ -455,7 +524,7 @@ class authClient (object):
         if password is None:
             if os.path.exists(tok_file):
                 tok_fd = open(tok_file, "r")
-                o_tok = tok_fd.read(128).decode('utf-8')  # read the old token
+                o_tok = acToString(tok_fd.read(128))  # read the old token
                 tok_fd.close()
 
                 # Return a valid token, otherwise remove the file and obtain a
@@ -466,7 +535,7 @@ class authClient (object):
                     if self.debug:
                         print ("using old token for '%s'" % username)
                     print ('o_tok type = ' + str(type (o_tok)))
-                    return o_tok
+                    return acToString(o_tok)
                 else:
                     if self.debug:
                         print ("removing invalid token file '%s'" % tok_file)
@@ -483,17 +552,16 @@ class authClient (object):
         response = 'None'
         try:
             r = requests.get(url, params=query_args)
-            #response = r.text.decode('utf-8')
-            response = r.content.decode('utf-8')
+            response = acToString(r.content)
 
             if self.debug:
-                print ('%s:  resp = ' + (str(r.status_code,response)))
+                print ("%s:  resp = '%s'" % (str(r.status_code),response))
             if r.status_code != 200:
                 raise Exception(response)
 
         except Exception as e:
             if self.debug:
-                print ("Raw exception msg = '%s'" + r.content)
+                print ("Raw exception msg = '%s'" % acToString(r.content))
             if self.isAlive(self.svc_url) == False:
                 raise dlAuthError("AuthManager Service not responding.")
             if self.isValidUser(username):
@@ -505,7 +573,7 @@ class authClient (object):
                 elif not self.isValidPassword(username, password):
                     raise dlAuthError("Invalid password in login()")
                 else:
-                    raise dlAuthError(e.message)
+                    raise dlAuthError(str(e))
             else:
                 raise dlAuthError("Invalid username in login()")
 
@@ -513,7 +581,7 @@ class authClient (object):
             self.auth_token = response
             self.username = username
 
-        # Save the token.
+        # Save the token and config file.
         if os.access(self.home, os.W_OK):
             tok_file = '%s/id_token.%s' % (self.home, username)
             with open(tok_file, 'wb') as tok_fd:
@@ -524,10 +592,15 @@ class authClient (object):
                     print ("login: token = ")
                     os.system('cat ' + tok_file)
 
-                tok_fd.write(self.auth_token.encode('utf-8'))
+                tok_fd.write(acToString(self.auth_token))
                 tok_fd.close()
 
-        return self.auth_token
+            self.config.set('login', 'status', 'loggedin')
+            self.config.set('login', 'user', username)
+            self.config.set('login', 'authtoken', self.auth_token)
+            self.writeConfig ()
+
+        return acToString(self.auth_token)
 
     def logout(self, token):
         """ Log the user out of the Data Lab.
@@ -550,20 +623,30 @@ class authClient (object):
             headers = {'X-DL-AuthToken': token}
 
             r = requests.get(url, params=args, headers=headers)
-            #response = r.text
-            response = r.content
+            response = acToString(r.content)
 
             if r.status_code != 200:
-                #raise Exception(r.text)
-                raise Exception(r.content)
+                raise Exception(response)
 
         except Exception as e:
-            raise dlAuthError(e.message)
+            raise dlAuthError(str(e))
         else:
             self.auth_token = None
             tok_file = self.home + '/id_token.' + self.username
             if os.path.exists(tok_file):
                 os.remove(tok_file)
+
+            # Update the config file.
+            if os.access(self.home, os.W_OK):
+                tok_file = '%s/id_token.%s' % (self.home, username)
+                with open(tok_file, 'wb') as tok_fd:
+                    tok_fd.write(acToString(self.auth_token))
+                    tok_fd.close()
+
+            self.config.set('login', 'status', 'loggedout')
+            self.config.set('login', 'user', '')
+            self.config.set('login', 'authtoken', '')
+            self.writeConfig ()
 
         return response
 
@@ -601,8 +684,7 @@ class authClient (object):
             headers = {'X-DL-AuthToken': token}
 
             r = requests.get(url, params=args, headers=headers)
-            #response = r.text
-            response = r.content
+            response = acToString(r.content)
 
             if r.status_code != 200:
                 #raise Exception(r.text)
@@ -625,7 +707,7 @@ class authClient (object):
                         print ("pwreset: writing new token for '%s'" + username)
                         print ("pwreset: response = '%s'" + response)
                         print ("pwreset: token = '%s'" + self.auth_token)
-                    tok_fd.write(self.auth_token.encode('utf-8'))
+                    tok_fd.write(acToString(self.auth_token))
                     tok_fd.close()
             else:
                 print ('pwReset response is None')
@@ -664,7 +746,7 @@ class authClient (object):
         # Save the value before returning so we can print it in debug mode.
         isValid = self.retBoolValue(url)
         if self.debug:
-            print ("isValidToken: valid = " + isValid)
+            print ("isValidToken: valid = " + str(isValid))
 
         return isValid
 
@@ -762,18 +844,38 @@ class authClient (object):
                 r = requests.get(url, headers=headers)
             else:
                 r = requests.get(url)
-            #response = r.text
-            response = r.content
+            response = acToString(r.content)
 
             if r.status_code != 200:
-                #raise Exception(r.text)
                 raise Exception(r.content)
 
         except Exception:
-            #return r.text
-            return r.content
+            return acToString(r.content)
         else:
             return response
+
+    # Get default tracking headers,
+    def getHeaders (self, token):
+        tok = def_token(token)
+        user, uid, gid, hash = tok.strip().split('.', 3)
+        hdrs = {'Content-Type': 'text/ascii',
+                'X-DL-ClientVersion': __version__,
+                'X-DL-OriginIP': self.hostip,
+                'X-DL-OriginHost': self.hostname,
+                'X-DL-User': user,
+                'X-DL-AuthToken': tok}                  # application/x-sql
+        return hdrs
+
+    # Get something from a URL.  Return a 'response' object
+    def getFromURL (self, svc_url, path, token):
+        try:
+            hdrs = self.qc_getHeaders (token)
+            resp = requests.get("%s%s" % (svc_url, path), headers=hdrs)
+
+        except Exception as e:
+            raise queryClientError(str(e))
+        return resp
+
 
 
 # ###################################
@@ -784,4 +886,28 @@ def getClient():
     return authClient()
 
 
-client = getClient()
+ac_client = getClient()
+
+
+
+
+# ####################################################################
+#  Py2/Py3 Compatability Utilities
+# ####################################################################
+
+def acToString(s):
+    """ acToString -- Force a return value to be type 'string' for all
+                      Python versions.
+    """
+    if is_py3:
+        if isinstance(s,bytes):
+            strval = str(s.decode())
+        elif isinstance(s,str):
+            strval = s
+    else:
+        if isinstance(s,bytes) or isinstance(s,unicode):
+            strval = str(s)
+        else:
+            strval = s
+
+    return strval

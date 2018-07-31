@@ -12,8 +12,7 @@ echo y >> /tmp/_y
 # Re-install and log in
 /data0/sw/anaconda2/bin/python setup.py install
 /data0/sw/anaconda3/bin/python setup.py install
-#datalab login mount=/tmp/vos --user=fitz --password=Datalab1
-datalab login --user=fitz --password=Datalab1
+datalab login --user=fitz --password=${password}
 
 sudo service uwsgi restart
 sleep 3

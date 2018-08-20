@@ -590,7 +590,7 @@ class authClient (object):
         # Save the token and config file.
         if os.access(self.home, os.W_OK):
             tok_file = '%s/id_token.%s' % (self.home, username)
-            with open(tok_file, 'wb') as tok_fd:
+            with open(tok_file, 'w') as tok_fd:
                 if self.debug:
                     print ("login: writing new token for '%s'" % username)
                     print ("login: self.auth_token = '%s'" %
@@ -645,7 +645,7 @@ class authClient (object):
             # Update the config file.
             if os.access(self.home, os.W_OK):
                 tok_file = '%s/id_token.%s' % (self.home, username)
-                with open(tok_file, 'wb') as tok_fd:
+                with open(tok_file, 'w') as tok_fd:
                     tok_fd.write(acToString(self.auth_token))
                     tok_fd.close()
 
@@ -708,7 +708,7 @@ class authClient (object):
                 if os.path.exists(tok_file):
                     print ("pwreset: removing token file " + tok_file)
                     os.remove(tok_file)
-                with open(tok_file, 'wb') as tok_fd:
+                with open(tok_file, 'w') as tok_fd:
                     if self.debug:
                         print ("pwreset: writing new token for '%s'" + username)
                         print ("pwreset: response = '%s'" + response)

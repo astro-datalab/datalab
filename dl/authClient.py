@@ -262,6 +262,9 @@ class authClient (object):
 
         # Get the $HOME/.datalab directory.
         self.home = '%s/.datalab' % os.path.expanduser('~')
+        if not os.path.exists('%s' % self.home):
+            os.makedirs (self.home)
+            
         self.loadConfig()                       # load config file
 
         self.debug = DEBUG                      # interface debug flag
@@ -269,9 +272,9 @@ class authClient (object):
     def loadConfig (self):
         # Read the $HOME/.datalab/dl.conf file
         self.config = ConfigParser.RawConfigParser(allow_no_value=True)
-        if os.path.exists('%s/dl.conf' % self.home):
-            self.config.read('%s/dl.conf' % self.home)
-        else:
+
+        # If the config file doesn't exist yet, create a default.
+        if not os.path.exists('%s/dl.conf' % self.home):
             self.config.add_section('datalab')
             self.config.set('datalab', 'created', strftime(
                 '%Y-%m-%d %H:%M:%S', gmtime()))
@@ -296,7 +299,10 @@ class authClient (object):
             self.config.set('vospace', 'mount', '')
 
             self.writeConfig()
-            pass
+
+        # Read back the config file.
+        self.config.read('%s/dl.conf' % self.home)
+
 
     def setConfig (self, section, param, value):
         ''' Set a value and save the configuration file.

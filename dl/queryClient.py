@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Matthew Graham <graham@noao.edu>, Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20180318'  # yyyymmdd
+__version__ = '20180824'  # yyyymmdd
 
 
 """
@@ -24,13 +24,21 @@ try:
     from urllib import quote_plus               # Python 2
 except ImportError:
     from urllib.parse import quote_plus         # Python 3
-#from io import StringIO			# Python 2/3 compatible
+try:
+    from cStringIO import StringIO
+except:
+    from io import StringIO			# Python 2/3 compatible
 import socket
 import json
 import time
 import os
 import sys
+import re
+import collections
+import ast, csv
+import pandas
 from io import BytesIO
+from tempfile import NamedTemporaryFile
 
 from dl.helpers.utils import convert
 if os.path.isfile ('./Util.py'):		# use local dev copy
@@ -100,7 +108,6 @@ class queryClientError(Exception):
         return self.message
 
 
-
 # ####################################################################
 #  Module Functions
 # ####################################################################
@@ -110,6 +117,7 @@ class queryClientError(Exception):
 #
 def isAlive (svc_url=DEF_SERVICE_URL, timeout=2):
     return qc_client.isAlive (svc_url=svc_url, timeout=timeout)
+
 
 # --------------------------------------------------------------------
 # SET_SVC_URL -- Set the Query Manager ServiceURL to call.
@@ -436,38 +444,57 @@ def mydb_list (table=None, token=None):
 # or python data object.
 #
 @multifunc('qc',3)
-def mydb_create (token, table, optval, **kw):
-    '''  Usage:  queryClient.mydb_create (token, table, <schema_dict>)
-                 queryClient.mydb_create (token, table, <filename>)
-                 queryClient.mydb_create (token, table, <data_object>)
-    '''
-    pass
+def mydb_create (token, table, schema, **kw):
+    """  Usage:  queryClient.mydb_create (token, table, <schema_dict>)
+    """
+    return qc_client._mydb_create (token=def_token(None), table=table,
+                              schema=schema, **kw)
 
 @multifunc('qc',2)
-def mydb_create (table, optval, token=None, **kw):
+def mydb_create (table, schema, token=None, **kw):
     '''  Usage:  queryClient.mydb_create (table, <schema_dict>)
-                 queryClient.mydb_create (table, <filename>)
-                 queryClient.mydb_create (table, <data_object>)
     '''
-    pass
+    return qc_client._mydb_create (token=def_token(None), table=table,
+                              schema=schema, **kw)
 
-# --------------------------------------------------------------------
+#--------------------------------------------------------------------
 # MYDB_INSERT -- Insert data into a table in the user's MyDB from a local
 # file or python data object.
 #
 @multifunc('qc',3)
-def mydb_insert (token, table, optval, **kw):
+def mydb_insert (token, table, data, **kw):
     '''  Usage:  queryClient.mydb_insert (token, table, <filename>)
                  queryClient.mydb_insert (token, table, <data_object>)
     '''
-    pass
+    return qc_client._mydb_insert (token=def_token(token), table=table,
+                                   data=data, **kw)
 
 @multifunc('qc',2)
-def mydb_insert (table, optval, token=None, **kw):
+def mydb_insert (table, data, token=None, **kw):
     '''  Usage:  queryClient.mydb_insert (table, <filename>)
                  queryClient.mydb_insert (table, <data_object>)
     '''
-    pass
+    return qc_client._mydb_insert (token=def_token(token), table=table,
+                                   data=data, **kw)
+
+
+# --------------------------------------------------------------------
+# MYDB_IMPORT -- Import a file or Python object to a MyDB table.
+#
+@multifunc('qc',3)
+def mydb_import (token, table, data, **kw):
+    '''  Usage:  queryClient.mydb_import (token, table, data)
+    '''
+    return qc_client._mydb_import (token=def_token(token), table=table,
+                                   data=data, **kw)
+
+@multifunc('qc',2)
+def mydb_import (table, data, token=None, **kw):
+    '''  Usage:  queryClient.mydb_import (table, data)
+    '''
+    return qc_client._mydb_import (token=def_token(token), table=table,
+                                   data=data, **kw)
+
 
 # --------------------------------------------------------------------
 # MYDB_TRUNCATE -- Truncate a table in the user's MyDB.
@@ -476,13 +503,13 @@ def mydb_insert (table, optval, token=None, **kw):
 def mydb_truncate (token, table):
     '''  Usage:  queryClient.mydb_truncate (token, table)
     '''
-    pass
+    return qc_client._mydb_truncate (token=def_token(token), table=table)
 
 @multifunc('qc',2)
 def mydb_truncate (table, token=None):
     '''  Usage:  queryClient.mydb_truncate (table)
     '''
-    pass
+    return qc_client._mydb_truncate (token=def_token(token), table=table)
 
 # --------------------------------------------------------------------
 # MYDB_INDEX -- Index a column in a user's MyDB table.
@@ -515,7 +542,7 @@ def mydb_drop (table, token=None):
     '''  Usage:  queryClient.mydb_drop (table)
                  queryClient.mydb_drop (token, table=<id>)
     '''
-    return qc_client._mydb_drop (token=def_token(optval), table=table)
+    return qc_client._mydb_drop (token=def_token(token), table=table)
 
 
 # --------------------------------------------------------------------
@@ -918,7 +945,7 @@ class queryClient (object):
                             fmt=fmt, out=out, async=async, 
                             profile=profile, **kw)
 
-    def _query (self, token=None, adql=None, sql=None, fmt='csv', out=None, 
+    def _query (self, token=None, adql=None, sql=None, fmt='csv', out=None,
               async=False, profile='default', **kw):
         """ Send an SQL or ADQL query to the database or TAP service.
 
@@ -1676,42 +1703,266 @@ class queryClient (object):
 
 
     # --------------------------------------------------------------------
-    # MYDB_CREATE -- Create a table in the user's MyDB from a local file 
-    # or python data object.
+    # MYDB_CREATE -- Copy a table in the user's MyDB.
     #
     @multimethod('qc',3)
-    def mydb_create (self, token, table, optval, **kw):
+    def mydb_create (self, token, table, schema, **kw):
         '''  Usage:  queryClient.mydb_create (token, table, <schema_dict>)
-                     queryClient.mydb_create (token, table, <filename>)
-                     queryClient.mydb_create (token, table, <data_object>)
         '''
-        pass
+        return self._mydb_create (token=def_token(None), table=table,
+                                  schema=schema, **kw)
 
     @multimethod('qc',2)
-    def mydb_create (self, table, optval, token=None, **kw):
+    def mydb_create (self, table, schema, token=None, **kw):
         '''  Usage:  queryClient.mydb_create (table, <schema_dict>)
-                     queryClient.mydb_create (table, <filename>)
-                     queryClient.mydb_create (table, <data_object>)
         '''
-        pass
+        return self._mydb_create (token=def_token(None), table=table,
+                                  schema=schema, **kw)
+
+    def _mydb_create(self, token, table, schema, **kw):
+        """ Create a table in the user's MyDB
+
+        Parameters
+        ----------
+        token : str
+            Authentication token (see function :func:`authClient.login()`)
+
+        table: str
+            The name of the table to create
+
+        schema: str or dict
+            The schema is CSV text containing the name of the column and
+            it's PostgreSQL data type.  If set as a 'str' type it is either
+            a CSV string, or the name of a file containing the CSV.  If passed
+            as a 'dict' type, it is a dictionary object where keys are the 
+            column names and values are the data types.
+
+        drop: bool   (optional)
+            Drop any existing table of the same name before creating new one.
+
+        Returns
+        -------
+
+        Example
+        -------
+        .. code-block:: python
+
+            # Create table in MyDB named 'foo' with columns defined by
+            # the file 'schema.txt'.  The schema file contains:
+            #
+            #     id,text
+            #     ra,double precision
+            #     dec,double precision
+            #
+            queryClient.mydb_create ('foo', 'schema.txt')
+        """
+
+        # Set the request headers.
+        headers = self.getHeaders (token)
+        headers['Content'] = 'text/ascii'
+
+        params = { 'table' : table}
+        dburl = '%s/create' % (self.svc_url)
+
+        drop = 'True'		# drop table if exists
+        if 'drop' in kw:
+            drop = kw['drop']
+        params['drop'] = str(drop)
+
+        # Schema can be a dictionary, a CSV string, or the name of a file.
+        if isinstance (schema,str):
+            if os.path.exists (schema):
+                with open(schema, 'rb') as f:
+                    s = f.read()
+                params['schema'] = s
+            else:
+                params['schema'] = schema
+
+        elif isinstance (schema,collections.OrderedDict):
+            # We can't use a regular 'dict' object because the key ordered isn't
+            # guaranteed to be preserved, but allow OrderedDict.
+            s = ''
+            for i in schema:
+               s += i + ',' + schema[i] + '\n'
+            params['schema'] = s
+
+        r = requests.post (dburl, params=params, headers=headers)
+
+        if self.debug: print (r.text)
+        if r.content[:5].lower() == 'error':
+            raise queryClientError (qcToString(r.content))
+        else:
+            return 'OK'
+
 
     # --------------------------------------------------------------------
     # MYDB_INSERT -- Insert data into a table in the user's MyDB from a local
     # file or python data object.
     #
     @multimethod('qc',3)
-    def mydb_insert (self, token, table, optval, **kw):
+    def mydb_insert (self, token, table, data, **kw):
         '''  Usage:  queryClient.mydb_insert (token, table, <filename>)
                      queryClient.mydb_insert (token, table, <data_object>)
         '''
-        pass
+        return self._mydb_insert (token=def_token(token), table=table,
+                                  data=data, **kw)
 
     @multimethod('qc',2)
-    def mydb_insert (self, table, optval, token=None, **kw):
+    def mydb_insert (self, table, data, token=None, **kw):
         '''  Usage:  queryClient.mydb_insert (table, <filename>)
                      queryClient.mydb_insert (table, <data_object>)
         '''
-        pass
+        return self._mydb_insert (token=def_token(token), table=table,
+                                  data=data, **kw)
+
+    def _mydb_insert(self, token=None, table=None, data=None, **kw):
+        """ Insert data into a table in the user's MyDB
+
+        Parameters
+        ----------
+        token : str
+            Authentication token (see function :func:`authClient.login()`)
+
+        table: str
+            The name of the table to append
+
+        data: str or data object
+            The schema is CSV text containing the name of the column and
+            it's PostgreSQL data type.  If set as a 'str' type it is either
+            a CSV string, or the name of a file containing the CSV data. If
+            passed as a tabular data object, it is converted to CSV and sent
+            to the service.
+
+        csv_header: bool	[OPTIONAL]
+            If True, then the CSV data object contains a CSV header line, i.e.
+            the first line is a row of column names.  Otherwise, no column
+            names are assumed and the column order must match the table schema.
+
+        Returns
+        -------
+
+        Example
+        -------
+        .. code-block:: python
+
+            # Insert data into a MyDB table named 'foo'.
+            queryClient.mydb_insert ('foo', 'data.csv')
+        """
+
+        # Get optional parameters.
+        csv_header = True
+        if 'csv_header' in kw:         # set when CSV data contains col headers
+            csv_header = kw['csv_header']
+
+        # Set up the request headers and initialize.
+        headers = self.getHeaders (token)
+        dburl = '%s/ingest' % (self.svc_url)
+
+        # Data can be the name of a CSV file or a python tablular object that
+        # can be converted.
+        if isinstance (data, str):
+            if os.path.exists (data):
+                # Upload the file to the staging area.
+                data_name = os.path.basename (data)
+                self.chunked_upload (token, data, data)
+
+                params = { 'table' : table, 
+                           'filename' : data_name,
+                           'csv_header' : str(csv_header) }
+                r = requests.post (dburl, params=params, headers=headers)
+
+            else:
+                tmp_file = NamedTemporaryFile(delete=True, dir='./').name
+                with open(tmp_file, 'wb', 0) as f:
+                    f.write(data)
+                f.close()
+                tmp_name = os.path.basename (tmp_file)
+                # Upload the file to the staging area.
+                self.chunked_upload(token, tmp_file, tmp_name)
+
+                params = { 'table' : table, 
+                           'filename' : tmp_name,
+                           'csv_header' : csv_header }
+                r = requests.post (dburl, params=params, headers=headers)
+        else:
+            pass
+
+        print('response text: ' + str(r.text))
+        if self.debug: print(r.text)
+        if r.content[:5].lower() == 'error':
+            raise queryClientError (qcToString(r.content))
+        else:
+            return 'OK'
+
+
+    # --------------------------------------------------------------------
+    # MYDB_IMPORT -- Import a file or Python object to a MyDB table.
+    #
+    @multimethod('qc',3)
+    def mydb_import (self, token, table, data, **kw):
+        '''  Usage:  queryClient.mydb_import (token, table, data)
+        '''
+        return self._mydb_import (token=def_token(token), table=table,
+                                  data=data, **kw)
+
+    @multimethod('qc',2)
+    def mydb_import (self, table, data, token=None, **kw):
+        '''  Usage:  queryClient.mydb_import (table, data)
+        '''
+        return self._mydb_import (token=def_token(token), table=table,
+                                  data=data, **kw)
+
+    def _mydb_import (self, token=None, table=None, data=None, **kw):
+        """ Import data into a table in the user's MyDB
+
+        Parameters
+        ----------
+        token : str
+            Authentication token (see function :func:`authClient.login()`)
+
+        table: str
+            The name of the table to be loaded
+
+        data: str or data object
+            The data file or python object to be loaded.  The 'data' value
+            may be one of the following types:
+
+                filename	    A CSV file of data 
+                string		    A string containing CSV data 
+                Pandas DataFrame    A Pandas DataFrame object
+                    :                   :        :       :
+            
+            Additional object types can be added provided the data can be
+            converted to a CSV format.
+
+        schema: str	[OPTIONAL]
+            If set, this is a filename or string containing a schema for the
+            data table to be created.  A schema contains a comma-delimited row
+            for each column containing the column name and it's Postgres data
+            type.  If not set, the schema is determined automatically from 
+            the data.
+
+        Returns
+        -------
+            schema	A string containing the table schema
+            data_obj	The CSV data to be imported (possibly converted)
+
+        Example
+        -------
+        .. code-block:: python
+
+            # Import data into a MyDB table named 'foo' from file 'data.csv'.
+            schema, data = queryClient.mydb_import ('foo', 'data.csv')
+        """
+
+        if 'schema' in kw:
+            schema = kw['schema']
+        else:
+            schema, data_to_load = self.getSchema (data)
+
+        self._mydb_create (token, table, schema, **kw)
+        self._mydb_insert (token, table, data_to_load, **kw)
+
 
     # --------------------------------------------------------------------
     # MYDB_TRUNCATE -- Truncate a table in the user's MyDB.
@@ -1720,13 +1971,17 @@ class queryClient (object):
     def mydb_truncate (self, token, table):
         '''  Usage:  queryClient.mydb_truncate (token, table)
         '''
-        pass
+        return self._mydb_truncate (token=def_token(token), table=table)
 
     @multimethod('qc',2)
     def mydb_truncate (self, table, token=None):
         '''  Usage:  queryClient.mydb_truncate (table)
         '''
+        return self._mydb_truncate (token=def_token(token), table=table)
+
+    def _mydb_truncate (self, token=None, table=None):
         pass
+
 
     # --------------------------------------------------------------------
     # MYDB_INDEX -- Index a column in a user's MyDB table.
@@ -1743,6 +1998,8 @@ class queryClient (object):
         '''
         pass
 
+
+
     # --------------------------------------------------------------------
     # MYDB_DROP -- Drop the named table from a user's MyDB.
     #
@@ -1757,7 +2014,7 @@ class queryClient (object):
         '''  Usage:  queryClient.mydb_drop (table)
                      queryClient.mydb_drop (token, table=<id>)
         '''
-        return self._mydb_drop (token=def_token(optval), table=table)
+        return self._mydb_drop (token=def_token(token), table=table)
 
     def _mydb_drop (self, token=None, table=None):
         """ Drop the specified table from the user's MyDB
@@ -1836,7 +2093,7 @@ class queryClient (object):
 
         headers = self.getHeaders (token)
 
-        dburl = '%s/copy?rename=%s&target=%s' % (self.svc_url, source, target)
+        dburl = '%s/rename?source=%s&target=%s' % (self.svc_url, source, target)
 
         r = requests.get (dburl, headers=headers)
         if r.content[:5].lower() == 'error':
@@ -1897,6 +2154,22 @@ class queryClient (object):
             return 'OK'
 
 
+    @staticmethod
+    def pretty_print_POST(req):
+        """
+        At this point it is completely built and ready
+        to be fired; it is "prepared".
+
+        However pay attention at the formatting used in
+        this function because it is programmed to be pretty
+        printed and may differ from the actual request.
+        """
+        print('{}\n{}\n{}\n\n{}'.format(
+            '-----------START-----------',
+            req.method + ' ' + req.url,
+            '\n'.join('{}: {}'.format(k, v) for k, v in req.headers.items()),
+            req.body,
+        ))
 
 
     # ############################################
@@ -1979,7 +2252,7 @@ class queryClient (object):
     def getHeaders (self, token):
         tok = def_token(token)
         user, uid, gid, hash = tok.strip().split('.', 3)
-        hdrs = {'Content-Type': 'text/ascii',
+        hdrs = {#'Content-Type': 'text/ascii',
                 'X-DL-ClientVersion': __version__,
                 'X-DL-OriginIP': self.hostip,
                 'X-DL-OriginHost': self.hostname,
@@ -1997,6 +2270,103 @@ class queryClient (object):
         except Exception as e:
             raise queryClientError(str(e))
         return resp
+
+
+    def chunked_upload (self, token, local_file, remote_file):
+        """ A streaming file uploader.
+        """
+
+        debug = False
+        CHUNK_SIZE = 4 * 1024 * 1024                   # 16MB chunks
+        url = '%s/xfer' % (self.svc_url)
+
+        # Get the size of the file to be transferred.
+        fsize = os.stat(local_file).st_size
+        nchunks = fsize / CHUNK_SIZE + 1
+        with open(local_file, 'rb', 0) as f:
+            try:
+                nsent = 0
+                while nsent < fsize:
+                    data = f.read(CHUNK_SIZE)
+                    requests.post (url, data,
+                        headers={'Content-type': 'application/octet-stream',
+                                 'X-DL-FileName': remote_file,
+                                 'X-DL-AuthToken': token})
+                    nsent += len(data)
+            except Exception as e:
+                raise queryClientError ('Upload error: ' + str(e))
+
+    # Lexically scan a value to determine the datatype.
+    def dataType (self, val, current_type):
+        try:
+            # Evaluates numbers to an appropriate type, and strings an error
+            t = ast.literal_eval(val)
+        except ValueError:
+            return 'text'
+        except SyntaxError:
+            return 'text'
+        if type(t) in [int, long, float]:
+           if (type(t) in [int, long]) and current_type not in ['float', 'varchar']:
+               # Use smallest possible int type
+               if (-32768 < t < 32767) and current_type not in ['int', 'bigint']:
+                   return 'smallint'
+               elif (-2147483648 < t < 2147483647) and current_type not in ['bigint']:
+                   return 'int'
+               else:
+                   return 'bigint'
+           if type(t) is float and current_type not in ['varchar']:
+               return ('float' if len(val) < 6 else 'double precision')
+        else:
+            return 'text'
+
+    # Generate a schema for mydb_create() from a CSV file or data object.
+    def getSchema (self, data):
+        data_obj = data
+        if isinstance (data, str):
+            # If a file, assume it is CSV
+            if os.path.exists (data):
+                reader = csv.reader(open(data, 'r'))
+            else:
+                print (data)
+                reader = csv.reader(StringIO(data))
+        elif isinstance (data, pandas.core.frame.DataFrame):
+            data_obj = data.to_csv(index=False)
+            print (data_obj)
+            reader = csv.reader(StringIO(data_obj))
+        else:
+            print ('Unsupported data format')
+            return '', data
+
+        longest, headers, type_list = [], [], []
+        nrows = 10
+        for row in reader:
+            if len(headers) == 0:		# First row of CSV
+                headers = row
+                for col in row:
+                    longest.append(0)
+                    type_list.append('')
+            else:
+                for i in range(len(row)):
+                    if type_list[i] == 'varchar' or row[i] == 'NA':
+                        # NA is the csv null value
+                        pass
+                    else:
+                        var_type = self.dataType(row[i], type_list[i])
+                        type_list[i] = var_type
+                if len(row[i]) > longest[i]:
+                    longest[i] = len(row[i])
+            if nrows == 0:			# Only read first 10 rows
+                break
+            nrows = nrows - 1
+
+        schema = ''
+        for i in range(len(headers)):
+            if type_list[i] == 'text':
+                schema += '{},text\n'.format(headers[i].lower())
+            else:
+                schema += '{},{}\n'.format(headers[i].lower(), type_list[i])
+
+        return schema, data_obj
 
 
 

@@ -106,6 +106,7 @@ DEBUG 	= os.path.isfile ('/tmp/AM_DEBUG')
 # will return the user-id token.
 
 def login(user, password=None, debug=False, verbose=False):
+    response = 'OK'
     if user in list(DEF_USERS.keys()):
         return DEF_USERS[user]
     else:
@@ -238,7 +239,7 @@ class dlAuthError (Exception):
     def __init__(self, message):
         self.message = message
 
-    def __str__(self, message):
+    def __str__(self):
         return self.message
 
 
@@ -534,7 +535,6 @@ class authClient (object):
                     self.auth_token = o_tok
                     if self.debug:
                         print ("using old token for '%s'" % username)
-                    print ('o_tok type = ' + str(type (o_tok)))
                     return acToString(o_tok)
                 else:
                     if self.debug:

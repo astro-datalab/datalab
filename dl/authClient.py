@@ -263,9 +263,6 @@ class authClient (object):
 
         # Get the $HOME/.datalab directory.
         self.home = '%s/.datalab' % os.path.expanduser('~')
-        if not os.path.exists('%s' % self.home):
-            os.makedirs (self.home)
-            
         self.loadConfig()                       # load config file
 
         self.debug = DEBUG                      # interface debug flag
@@ -273,9 +270,9 @@ class authClient (object):
     def loadConfig (self):
         # Read the $HOME/.datalab/dl.conf file
         self.config = ConfigParser.RawConfigParser(allow_no_value=True)
-
-        # If the config file doesn't exist yet, create a default.
-        if not os.path.exists('%s/dl.conf' % self.home):
+        if os.path.exists('%s/dl.conf' % self.home):
+            self.config.read('%s/dl.conf' % self.home)
+        else:
             self.config.add_section('datalab')
             self.config.set('datalab', 'created', strftime(
                 '%Y-%m-%d %H:%M:%S', gmtime()))
@@ -300,10 +297,7 @@ class authClient (object):
             self.config.set('vospace', 'mount', '')
 
             self.writeConfig()
-
-        # Read back the config file.
-        self.config.read('%s/dl.conf' % self.home)
-
+            pass
 
     def setConfig (self, section, param, value):
         ''' Set a value and save the configuration file.
@@ -590,7 +584,7 @@ class authClient (object):
         # Save the token and config file.
         if os.access(self.home, os.W_OK):
             tok_file = '%s/id_token.%s' % (self.home, username)
-            with open(tok_file, 'w') as tok_fd:
+            with open(tok_file, 'wb') as tok_fd:
                 if self.debug:
                     print ("login: writing new token for '%s'" % username)
                     print ("login: self.auth_token = '%s'" %
@@ -645,7 +639,7 @@ class authClient (object):
             # Update the config file.
             if os.access(self.home, os.W_OK):
                 tok_file = '%s/id_token.%s' % (self.home, username)
-                with open(tok_file, 'w') as tok_fd:
+                with open(tok_file, 'wb') as tok_fd:
                     tok_fd.write(acToString(self.auth_token))
                     tok_fd.close()
 
@@ -708,7 +702,7 @@ class authClient (object):
                 if os.path.exists(tok_file):
                     print ("pwreset: removing token file " + tok_file)
                     os.remove(tok_file)
-                with open(tok_file, 'w') as tok_fd:
+                with open(tok_file, 'wb') as tok_fd:
                     if self.debug:
                         print ("pwreset: writing new token for '%s'" + username)
                         print ("pwreset: response = '%s'" + response)

@@ -1764,7 +1764,10 @@ class queryClient (object):
         params = { 'table' : table}
         dburl = '%s/create' % (self.svc_url)
 
-        drop = 'True'		# drop table if exists
+        drop = True			# drop table if exists
+        verbose = False			# verbose output
+        if 'verbose' in kw:
+            verbose = kw['verbose']
         if 'drop' in kw:
             drop = kw['drop']
         params['drop'] = str(drop)
@@ -1772,7 +1775,7 @@ class queryClient (object):
         # Schema can be a dictionary, a CSV string, or the name of a file.
         if isinstance (schema,str):
             if os.path.exists (schema):
-                with open(schema, 'rb') as f:
+                with open(schema, 'r') as f:
                     s = f.read()
                 params['schema'] = s
             else:
@@ -1788,7 +1791,6 @@ class queryClient (object):
 
         r = requests.post (dburl, params=params, headers=headers)
 
-        if self.debug: print (r.text)
         if r.content[:5].lower() == 'error':
             raise queryClientError (qcToString(r.content))
         else:
@@ -1854,6 +1856,10 @@ class queryClient (object):
         if 'csv_header' in kw:         # set when CSV data contains col headers
             csv_header = kw['csv_header']
 
+        verbose = False			# verbose output
+        if 'verbose' in kw:
+            verbose = kw['verbose']
+
         # Set up the request headers and initialize.
         headers = self.getHeaders (token)
         dburl = '%s/ingest' % (self.svc_url)
@@ -1873,7 +1879,7 @@ class queryClient (object):
 
             else:
                 tmp_file = NamedTemporaryFile(delete=True, dir='./').name
-                with open(tmp_file, 'wb', 0) as f:
+                with open(tmp_file, 'w') as f:
                     f.write(data)
                 f.close()
                 tmp_name = os.path.basename (tmp_file)
@@ -1887,7 +1893,8 @@ class queryClient (object):
         else:
             pass
 
-        print('response text: ' + str(r.text))
+        if verbose:
+            print (str(r.text))
         if self.debug: print(r.text)
         if r.content[:5].lower() == 'error':
             raise queryClientError (qcToString(r.content))
@@ -1942,6 +1949,12 @@ class queryClient (object):
             type.  If not set, the schema is determined automatically from 
             the data.
 
+        drop: bool   	[Optional]
+            Drop any existing table of the same name before creating new one.
+
+        verbose: bool   [Optional]
+            Be verbose about operations.
+
         Returns
         -------
             schema	A string containing the table schema
@@ -1960,8 +1973,16 @@ class queryClient (object):
         else:
             schema, data_to_load = self.getSchema (data)
 
-        self._mydb_create (token, table, schema, **kw)
-        self._mydb_insert (token, table, data_to_load, **kw)
+        res1 = self._mydb_create (token, table, schema, **kw)
+        res2 = self._mydb_insert (token, table, data_to_load, **kw)
+
+        if res1 == 'OK' and res2 == 'OK':
+            return "OK"
+        else:
+            if res1 != 'OK':
+                return "MyDB create error: " + res1
+            else:
+                return "MyDB insert error: " + res2
 
 
     # --------------------------------------------------------------------
@@ -1980,7 +2001,18 @@ class queryClient (object):
         return self._mydb_truncate (token=def_token(token), table=table)
 
     def _mydb_truncate (self, token=None, table=None):
-        pass
+        '''
+        '''
+        headers = self.getHeaders (token)
+
+        dburl = '%s/truncate?table=%s' % (self.svc_url, table)
+
+        r = requests.get (dburl, headers=headers)
+        if r.content[:5].lower() == 'error':
+            return qcToString(r.content)
+        else:
+            return 'OK'
+
 
 
     # --------------------------------------------------------------------
@@ -2283,7 +2315,7 @@ class queryClient (object):
         # Get the size of the file to be transferred.
         fsize = os.stat(local_file).st_size
         nchunks = fsize / CHUNK_SIZE + 1
-        with open(local_file, 'rb', 0) as f:
+        with open(local_file, 'rb') as f:
             try:
                 nsent = 0
                 while nsent < fsize:
@@ -2305,8 +2337,8 @@ class queryClient (object):
             return 'text'
         except SyntaxError:
             return 'text'
-        if type(t) in [int, long, float]:
-           if (type(t) in [int, long]) and current_type not in ['float', 'varchar']:
+        if type(t) in [int, float]:
+           if (type(t) in [int]) and current_type not in ['float', 'varchar']:
                # Use smallest possible int type
                if (-32768 < t < 32767) and current_type not in ['int', 'bigint']:
                    return 'smallint'
@@ -2327,11 +2359,9 @@ class queryClient (object):
             if os.path.exists (data):
                 reader = csv.reader(open(data, 'r'))
             else:
-                print (data)
                 reader = csv.reader(StringIO(data))
         elif isinstance (data, pandas.core.frame.DataFrame):
             data_obj = data.to_csv(index=False)
-            print (data_obj)
             reader = csv.reader(StringIO(data_obj))
         else:
             print ('Unsupported data format')

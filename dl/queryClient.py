@@ -2309,6 +2309,7 @@ class queryClient (object):
         """
 
         debug = False
+        init = True
         CHUNK_SIZE = 4 * 1024 * 1024                   # 16MB chunks
         url = '%s/xfer' % (self.svc_url)
 
@@ -2323,8 +2324,10 @@ class queryClient (object):
                     requests.post (url, data,
                         headers={'Content-type': 'application/octet-stream',
                                  'X-DL-FileName': remote_file,
+                                 'X-DL-InitXfer': init,
                                  'X-DL-AuthToken': token})
                     nsent += len(data)
+                    if init: init = False
             except Exception as e:
                 raise queryClientError ('Upload error: ' + str(e))
 

@@ -2324,7 +2324,7 @@ class queryClient (object):
                     requests.post (url, data,
                         headers={'Content-type': 'application/octet-stream',
                                  'X-DL-FileName': remote_file,
-                                 'X-DL-InitXfer': init,
+                                 'X-DL-InitXfer': str(init),
                                  'X-DL-AuthToken': token})
                     nsent += len(data)
                     if init: init = False

@@ -1867,29 +1867,30 @@ class queryClient (object):
         # Data can be the name of a CSV file or a python tablular object that
         # can be converted.
         if isinstance (data, str):
-            if os.path.exists (data):
+            params = { 'table' : table, 
+                       'csv_header' : str(csv_header) }
+            if data.startswith ('http://') or data.startswith('https://') or \
+               data.startswith ('vos://'):
+                    # Passing a URI in the filename to be loaded on server-side
+                    params['filename'] = data
+
+            elif os.path.exists (data):
                 # Upload the file to the staging area.
                 data_name = os.path.basename (data)
                 self.chunked_upload (token, data, data)
-
-                params = { 'table' : table, 
-                           'filename' : data_name,
-                           'csv_header' : str(csv_header) }
-                r = requests.post (dburl, params=params, headers=headers)
+                params['filename'] = data_name
 
             else:
+                # Upload the file to the staging area.
                 tmp_file = NamedTemporaryFile(delete=True, dir='./').name
                 with open(tmp_file, 'w') as f:
                     f.write(data)
                 f.close()
                 tmp_name = os.path.basename (tmp_file)
-                # Upload the file to the staging area.
                 self.chunked_upload(token, tmp_file, tmp_name)
+                params['filename'] = tmp_name
 
-                params = { 'table' : table, 
-                           'filename' : tmp_name,
-                           'csv_header' : csv_header }
-                r = requests.post (dburl, params=params, headers=headers)
+            r = requests.post (dburl, params=params, headers=headers)
         else:
             pass
 
@@ -1968,21 +1969,77 @@ class queryClient (object):
             schema, data = queryClient.mydb_import ('foo', 'data.csv')
         """
 
-        if 'schema' in kw:
-            schema = kw['schema']
-        else:
-            schema, data_to_load = self.getSchema (data)
+#        if 'schema' in kw:
+#            schema = kw['schema']
+#        else:
+#            schema, data_to_load = self.getSchema (data)
+#
+#        res1 = self._mydb_create (token, table, schema, **kw)
+#        res2 = self._mydb_insert (token, table, data_to_load, **kw)
+#
+#        if res1 == 'OK' and res2 == 'OK':
+#            return "OK"
+#        else:
+#            if res1 != 'OK':
+#                return "MyDB create error: " + res1
+#            else:
+#                return "MyDB insert error: " + res2
 
-        res1 = self._mydb_create (token, table, schema, **kw)
-        res2 = self._mydb_insert (token, table, data_to_load, **kw)
 
-        if res1 == 'OK' and res2 == 'OK':
-            return "OK"
-        else:
-            if res1 != 'OK':
-                return "MyDB create error: " + res1
+        # Get optional parameters.
+        csv_header = True
+        if 'csv_header' in kw:         # set when CSV data contains col headers
+            csv_header = kw['csv_header']
+
+        verbose = False			# verbose output
+        if 'verbose' in kw:
+            verbose = kw['verbose']
+        drop = True
+        if 'drop' in kw:
+            drop = kw['drop']
+
+        # Set up the request headers and initialize.
+        headers = self.getHeaders (token)
+        dburl = '%s/import' % (self.svc_url)
+
+        # Data can be the name of a CSV file or a python tablular object that
+        # can be converted.
+        if isinstance (data, str):
+            params = { 'table' : table, 
+                       'drop' : str(drop),
+                       'csv_header' : str(csv_header) }
+            if data.startswith ('http://') or data.startswith('https://') or \
+               data.startswith ('vos://'):
+                    # Passing a URI in the filename to be loaded on server-side
+                    params['filename'] = data
+
+            elif os.path.exists (data):
+                # Upload the file to the staging area.
+                data_name = os.path.basename (data)
+                self.chunked_upload (token, data, data)
+                params['filename'] = data_name
+
             else:
-                return "MyDB insert error: " + res2
+                # Upload the CSV string to the staging area.
+                tmp_file = NamedTemporaryFile(delete=True, dir='./').name
+                with open(tmp_file, 'w') as f:
+                    f.write(data)
+                f.close()
+                tmp_name = os.path.basename (tmp_file)
+                self.chunked_upload(token, tmp_file, tmp_name)
+                params['filename'] = tmp_name
+
+            r = requests.post (dburl, params=params, headers=headers)
+        else:
+            pass
+
+        if verbose:
+            print (str(r.text))
+        if self.debug: print(r.text)
+        if r.content[:5].lower() == 'error':
+            raise queryClientError (qcToString(r.content))
+        else:
+            return 'OK'
 
 
     # --------------------------------------------------------------------

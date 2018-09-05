@@ -355,7 +355,6 @@ def ls  (optval, name='vos://', token=None, format='csv', verbose=False):
 def ls  (name='vos://', token=None, format='csv', verbose=False):
     '''  Usage:  storeClient.ls ()
     '''
-    print ('func ls: token = %s %s' % (token, def_token(token)))
     return sc_client._ls (name=name, format=format, token=def_token(token),
                        verbose=verbose)
 

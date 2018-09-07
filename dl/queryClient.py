@@ -40,6 +40,7 @@ import pandas
 from io import BytesIO
 from tempfile import NamedTemporaryFile
 
+from dl import storeClient
 from dl.helpers.utils import convert
 if os.path.isfile ('./Util.py'):		# use local dev copy
     from Util import multifunc
@@ -1873,7 +1874,7 @@ class queryClient (object):
             elif os.path.exists (data):
                 # Upload the file to the staging area.
                 data_name = os.path.basename (data)
-                self.chunked_upload (token, data, data_name)
+                storeClient.chunked_upload (token, data, data_name)
                 params['filename'] = data_name
 
             else:
@@ -1882,7 +1883,7 @@ class queryClient (object):
                     f.write(data)
                 f.close()
                 tmp_name = os.path.basename (tmp_file)
-                self.chunked_upload(token, tmp_file, tmp_name)
+                storeClient.chunked_upload(token, tmp_file, tmp_name)
                 params['filename'] = tmp_name
 
         elif isinstance (data, pandas.core.frame.DataFrame):
@@ -1893,7 +1894,7 @@ class queryClient (object):
                 f.write(data_to_load)
             f.close()
             tmp_name = os.path.basename (tmp_file)
-            self.chunked_upload(token, tmp_file, tmp_name)
+            storeClient.chunked_upload(token, tmp_file, tmp_name)
             params['filename'] = tmp_name
 
         else:
@@ -2006,7 +2007,7 @@ class queryClient (object):
             elif os.path.exists (data):
                 # Upload the file to the staging area.
                 data_name = os.path.basename (data)
-                self.chunked_upload (token, data, data_name)
+                storeClient.chunked_upload (token, data, data_name)
                 params['filename'] = data_name
 
             else:
@@ -2015,7 +2016,7 @@ class queryClient (object):
                     f.write(data)
                 f.close()
                 tmp_name = os.path.basename (tmp_file)
-                self.chunked_upload(token, tmp_file, tmp_name)
+                storeClient.chunked_upload(token, tmp_file, tmp_name)
                 params['filename'] = tmp_name
 
         elif isinstance (data, pandas.core.frame.DataFrame):
@@ -2026,7 +2027,7 @@ class queryClient (object):
                 f.write(data_to_load)
             f.close()
             tmp_name = os.path.basename (tmp_file)
-            self.chunked_upload(token, tmp_file, tmp_name)
+            storeClient.chunked_upload(token, tmp_file, tmp_name)
             params['filename'] = tmp_name
 
         else:
@@ -2431,6 +2432,8 @@ class queryClient (object):
         else:
             print ('Unsupported data format')
             return '', data
+
+        # TODO: Check behavior when no CSV header and data row contains floats
 
         longest, headers, type_list = [], [], []
         nrows = 10

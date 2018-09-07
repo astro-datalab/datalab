@@ -2004,6 +2004,38 @@ def expandFileList (svc_url, token, pattern, format, full=False):
         
 
 
+# ###################################
+#  Utility Methods
+# ###################################
+
+def chunked_upload (token, local_file, remote_file):
+    """ A streaming file uploader.
+    """
+
+    debug = False
+    init = True
+    CHUNK_SIZE = 4 * 1024 * 1024                   # 16MB chunks
+    url = '%s/xfer' % (sc_client.svc_url)
+
+    # Get the size of the file to be transferred.
+    fsize = os.stat(local_file).st_size
+    nchunks = fsize / CHUNK_SIZE + 1
+    with open(local_file, 'rb') as f:
+        try:
+            nsent = 0
+            while nsent < fsize:
+                data = f.read(CHUNK_SIZE)
+                requests.post (url, data,
+                    headers={'Content-type': 'application/octet-stream',
+                             'X-DL-FileName': remote_file,
+                             'X-DL-InitXfer': str(init),
+                             'X-DL-AuthToken': token})
+                nsent += len(data)
+                if init: init = False
+        except Exception as e:
+            raise queryClientError ('Upload error: ' + str(e))
+
+
 
 # ###################################
 #  Store Client Handles

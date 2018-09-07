@@ -379,7 +379,7 @@ def list (optval, table=None):
 
 @multifunc('qc',0)
 def list (table=None, token=None):
-    '''  Usage:  queryClient.list (table=<str>)
+    '''  Usage:  queryClient.list ()
     '''
     return qc_client._list (token=def_token(token), table=table)
 
@@ -1852,13 +1852,8 @@ class queryClient (object):
         """
 
         # Get optional parameters.
-        csv_header = True
-        if 'csv_header' in kw:         # set when CSV data contains col headers
-            csv_header = kw['csv_header']
-
-        verbose = False			# verbose output
-        if 'verbose' in kw:
-            verbose = kw['verbose']
+        csv_header = (kw['csv_header'] if 'csv_header' in kw else True)
+        verbose = (kw['drop'] if 'drop' in kw else False)
 
         # Set up the request headers and initialize.
         headers = self.getHeaders (token)
@@ -1866,6 +1861,7 @@ class queryClient (object):
 
         # Data can be the name of a CSV file or a python tablular object that
         # can be converted.
+        tmp_file = NamedTemporaryFile(delete=True, dir='/tmp').name
         if isinstance (data, str):
             params = { 'table' : table, 
                        'csv_header' : str(csv_header) }
@@ -1877,12 +1873,11 @@ class queryClient (object):
             elif os.path.exists (data):
                 # Upload the file to the staging area.
                 data_name = os.path.basename (data)
-                self.chunked_upload (token, data, data)
+                self.chunked_upload (token, data, data_name)
                 params['filename'] = data_name
 
             else:
                 # Upload the file to the staging area.
-                tmp_file = NamedTemporaryFile(delete=True, dir='./').name
                 with open(tmp_file, 'w') as f:
                     f.write(data)
                 f.close()
@@ -1890,13 +1885,27 @@ class queryClient (object):
                 self.chunked_upload(token, tmp_file, tmp_name)
                 params['filename'] = tmp_name
 
-            r = requests.post (dburl, params=params, headers=headers)
+        elif isinstance (data, pandas.core.frame.DataFrame):
+            # Convert a DataFrame to a CSV string object.
+            schema, data_to_load = self.getSchema (data)
+
+            with open (tmp_file, 'w') as f:
+                f.write(data_to_load)
+            f.close()
+            tmp_name = os.path.basename (tmp_file)
+            self.chunked_upload(token, tmp_file, tmp_name)
+            params['filename'] = tmp_name
+
         else:
             pass
 
-        if verbose:
+        r = requests.post (dburl, params=params, headers=headers)
+
+        if tmp_file is not None and os.path.exists(tmp_file):
+            os.remove (tmp_file) 
+        if verbose or self.debug:
             print (str(r.text))
-        if self.debug: print(r.text)
+
         if r.content[:5].lower() == 'error':
             raise queryClientError (qcToString(r.content))
         else:
@@ -1969,34 +1978,11 @@ class queryClient (object):
             schema, data = queryClient.mydb_import ('foo', 'data.csv')
         """
 
-#        if 'schema' in kw:
-#            schema = kw['schema']
-#        else:
-#            schema, data_to_load = self.getSchema (data)
-#
-#        res1 = self._mydb_create (token, table, schema, **kw)
-#        res2 = self._mydb_insert (token, table, data_to_load, **kw)
-#
-#        if res1 == 'OK' and res2 == 'OK':
-#            return "OK"
-#        else:
-#            if res1 != 'OK':
-#                return "MyDB create error: " + res1
-#            else:
-#                return "MyDB insert error: " + res2
-
-
         # Get optional parameters.
-        csv_header = True
-        if 'csv_header' in kw:         # set when CSV data contains col headers
-            csv_header = kw['csv_header']
-
-        verbose = False			# verbose output
-        if 'verbose' in kw:
-            verbose = kw['verbose']
-        drop = True
-        if 'drop' in kw:
-            drop = kw['drop']
+        csv_header = (kw['csv_header'] if 'csv_header' in kw else True)
+        verbose = (kw['drop'] if 'drop' in kw else False)
+        drop = (kw['drop'] if 'drop' in kw else True)
+        delimiter = (kw['delimiter'] if 'delimiter' in kw else ',')
 
         # Set up the request headers and initialize.
         headers = self.getHeaders (token)
@@ -2004,11 +1990,15 @@ class queryClient (object):
 
         # Data can be the name of a CSV file or a python tablular object that
         # can be converted.
+        tmp_file = NamedTemporaryFile(delete=True, dir='/tmp').name
+        params = { 'table' : table, 
+                   'delimiter' : str(delimiter),
+                   'drop' : str(drop),
+                   'csv_header' : str(csv_header) }
+
         if isinstance (data, str):
-            params = { 'table' : table, 
-                       'drop' : str(drop),
-                       'csv_header' : str(csv_header) }
-            if data.startswith ('http://') or data.startswith('https://') or \
+            if data.startswith ('http://') or \
+               data.startswith ('https://') or \
                data.startswith ('vos://'):
                     # Passing a URI in the filename to be loaded on server-side
                     params['filename'] = data
@@ -2016,26 +2006,41 @@ class queryClient (object):
             elif os.path.exists (data):
                 # Upload the file to the staging area.
                 data_name = os.path.basename (data)
-                self.chunked_upload (token, data, data)
+                self.chunked_upload (token, data, data_name)
                 params['filename'] = data_name
 
             else:
                 # Upload the CSV string to the staging area.
-                tmp_file = NamedTemporaryFile(delete=True, dir='./').name
-                with open(tmp_file, 'w') as f:
+                with open (tmp_file, 'w') as f:
                     f.write(data)
                 f.close()
                 tmp_name = os.path.basename (tmp_file)
                 self.chunked_upload(token, tmp_file, tmp_name)
                 params['filename'] = tmp_name
 
-            r = requests.post (dburl, params=params, headers=headers)
+        elif isinstance (data, pandas.core.frame.DataFrame):
+            # Convert a DataFrame to a CSV string object.
+            schema, data_to_load = self.getSchema (data)
+
+            with open (tmp_file, 'w') as f:
+                f.write(data_to_load)
+            f.close()
+            tmp_name = os.path.basename (tmp_file)
+            self.chunked_upload(token, tmp_file, tmp_name)
+            params['filename'] = tmp_name
+
         else:
+            # Reserved for future format support.
             pass
 
-        if verbose:
+        # Execute the service call.
+        r = requests.post (dburl, params=params, headers=headers)
+
+        if verbose or self.debug:
             print (str(r.text))
-        if self.debug: print(r.text)
+        if tmp_file is not None and os.path.exists(tmp_file):
+            os.remove(tmp_file) 
+
         if r.content[:5].lower() == 'error':
             raise queryClientError (qcToString(r.content))
         else:
@@ -2412,17 +2417,17 @@ class queryClient (object):
             return 'text'
 
     # Generate a schema for mydb_create() from a CSV file or data object.
-    def getSchema (self, data):
+    def getSchema (self, data, **kw):
         data_obj = data
         if isinstance (data, str):
-            # If a file, assume it is CSV
+            # If a file, assume it is CSV but allow the 'delimiter' et al opts
             if os.path.exists (data):
-                reader = csv.reader(open(data, 'r'))
+                reader = csv.reader(open(data, 'r'), **kw)
             else:
-                reader = csv.reader(StringIO(data))
+                reader = csv.reader(StringIO(data), **kw)
         elif isinstance (data, pandas.core.frame.DataFrame):
             data_obj = data.to_csv(index=False)
-            reader = csv.reader(StringIO(data_obj))
+            reader = csv.reader(StringIO(data_obj), **kw)
         else:
             print ('Unsupported data format')
             return '', data
@@ -2452,9 +2457,9 @@ class queryClient (object):
         schema = ''
         for i in range(len(headers)):
             if type_list[i] == 'text':
-                schema += '{},text\n'.format(headers[i].lower())
+                schema += '{},text\n'.format(headers[i].lower().replace('.','_'))
             else:
-                schema += '{},{}\n'.format(headers[i].lower(), type_list[i])
+                schema += '{},{}\n'.format(headers[i].lower().replace('.','_'), type_list[i])
 
         return schema, data_obj
 

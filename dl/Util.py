@@ -9,7 +9,7 @@ __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>'
 __version__ = '20180321'  # yyyymmdd
 
 
-""" 
+"""
     Utilities for managing the use of Data Lab auth tokens.
 
 Import via
@@ -21,6 +21,9 @@ Import via
 """
 
 import os
+import mimetypes
+import random
+import string
 
 try:
     import ConfigParser                         # Python 2
@@ -60,7 +63,7 @@ class MultiMethod(object):
         return function(instance, *args, **kw)
 
     def register(self, nargs, function, module):
-        ''' Register the method based on the number of method arguments.  
+        ''' Register the method based on the number of method arguments.
             Duplicates are rejected when two method names with the same
             number of arguments are registered.  For generality, we
             construct a registry id from the method name and no. of args.
@@ -122,7 +125,7 @@ class MultiFunction(object):
         return function(*args, **kw)
 
     def register(self, nargs, function, module):
-        ''' Register the method based on the number of method arguments.  
+        ''' Register the method based on the number of method arguments.
             Duplicates are rejected when two method names with the same
             number of arguments are registered.  For generality, we
             construct a registry id from the method name and no. of args.
@@ -156,7 +159,7 @@ def multifunc(module, nargs):
 ANON_TOKEN	= 'anonymous.0.0.anon_access'
 TOK_DEBUG	= False
 
-#  READTOKENFILE -- Read the contents of the named token file.  If it 
+#  READTOKENFILE -- Read the contents of the named token file.  If it
 #  doesn't exist, default to the anonymous token.
 #
 def readTokenFile (tok_file):
@@ -176,7 +179,7 @@ def readTokenFile (tok_file):
 #  by a Data Lab client call.
 #
 def def_token(tok):
-    ''' Get a default token.  If no token is provided, check for an 
+    ''' Get a default token.  If no token is provided, check for an
         existing $HOME/.datalab/id_token.<user> file and return that if
         it exists, otherwise default to the ANON_TOKEN.
 
@@ -227,3 +230,93 @@ def def_token(tok):
             return ANON_TOKEN
 
 
+
+"""Encode multipart form data to upload files via POST."""
+
+_BOUNDARY_CHARS = string.digits + string.ascii_letters
+
+def encode_multipart(fields, files, boundary=None):
+    """ Encode dict of form fields and dict of files as multipart/form-data.
+        Return tuple of (body_string, headers_dict). Each value in files is
+        a dict with required keys 'filename' and 'content', and optional
+        'mimetype' (if not specified, tries to guess mime type or uses
+        'application/octet-stream').
+
+        >>> body, headers = encode_multipart({'FIELD': 'VALUE'},
+        ...                                  {'FILE': {'filename': 'F.TXT', 'content': 'CONTENT'}},
+        ...                                  boundary='BOUNDARY')
+        >>> print('\n'.join(repr(l) for l in body.split('\r\n')))
+        '--BOUNDARY'
+        'Content-Disposition: form-data; name="FIELD"'
+        ''
+        'VALUE'
+        '--BOUNDARY'
+        'Content-Disposition: form-data; name="FILE"; filename="F.TXT"'
+        'Content-Type: text/plain'
+        ''
+        'CONTENT'
+        '--BOUNDARY--'
+        ''
+        >>> print(sorted(headers.items()))
+        [('Content-Length', '193'), ('Content-Type', 'multipart/form-data; boundary=BOUNDARY')]
+        >>> len(body)
+        193
+    """
+    def escape_quote(s):
+        return s.replace('"', '\\"')
+
+    if boundary is None:
+        boundary = ''.join(random.choice(_BOUNDARY_CHARS) for i in range(30))
+    lines = []
+
+    for name, value in fields.items():
+        lines.extend((
+            '--{0}'.format(boundary),
+            'Content-Disposition: form-data; name="{0}"'.format(escape_quote(name)),
+            '',
+            str(value),
+        ))
+
+    for name, value in files.items():
+        filename = value['filename']
+        if 'mimetype' in value:
+            mimetype = value['mimetype']
+        else:
+            mimetype = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+        lines.extend((
+            '--{0}'.format(boundary),
+            'Content-Disposition: form-data; name="{0}"; filename="{1}"'.format(
+                    escape_quote(name), escape_quote(filename)),
+            'Content-Type: {0}'.format(mimetype),
+            '',
+            value['content'],
+        ))
+
+    lines.extend((
+        '--{0}--'.format(boundary),
+        '',
+    ))
+    body = '\r\n'.join(lines)
+
+    headers = {
+        'Content-Type': 'multipart/form-data; boundary={0}'.format(boundary),
+        'Content-Length': str(len(body)),
+    }
+
+    return (body, headers)
+
+
+'''
+Example:
+
+import urllib2
+
+import formdata
+
+fields = {'name': 'BOB SMITH'}
+files = {'file': {'filename': 'F.DAT', 'content': 'DATA HERE'}}
+data, headers = formdata.encode_multipart(fields, files)
+request = urllib2.Request('http://httpbin.org/post', data=data, headers=headers)
+f = urllib2.urlopen(request)
+print f.read()
+'''

@@ -204,28 +204,28 @@ def schema (value='', format='text', profile=None):
 # QUERY -- Send a query to the Query Manager service
 #
 @multifunc('qc',2)
-def query (token, query, adql=None, sql=None, fmt='csv', out=None, 
+def query (token, query, adql=None, sql=None, fmt='csv', out=None,
            async=False, profile='default', **kw):
     '''  Usage:  queryClient.query (token)
     '''
-    return qc_client._query (token=def_token(token), adql=adql, sql=query, 
-                          fmt=fmt, out=out, async=async, 
+    return qc_client._query (token=def_token(token), adql=adql, sql=query,
+                          fmt=fmt, out=out, async=async,
                           profile=profile, **kw)
 
 @multifunc('qc',1)
-def query (optval, adql=None, sql=None, fmt='csv', out=None, async=False, 
+def query (optval, adql=None, sql=None, fmt='csv', out=None, async=False,
            token=None, profile='default', **kw):
     '''  Usage:  queryClient.query (token)
     '''
     if optval is not None and optval.lower()[:6] == 'select':
         # optval looks like a query string
-        return qc_client._query (token=def_token(None), adql=adql, sql=optval, 
-                              fmt=fmt, out=out, async=async, 
+        return qc_client._query (token=def_token(None), adql=adql, sql=optval,
+                              fmt=fmt, out=out, async=async,
                               profile=profile, **kw)
     else:
         # optval is (probably) a token
-        return qc_client._query (token=def_token(optval), adql=adql, sql=sql, 
-                              fmt=fmt, out=out, async=async, 
+        return qc_client._query (token=def_token(optval), adql=adql, sql=sql,
+                              fmt=fmt, out=out, async=async,
                               profile=profile, **kw)
 
 @multifunc('qc',0)
@@ -441,7 +441,7 @@ def mydb_list (table=None, token=None):
 
 
 # --------------------------------------------------------------------
-# MYDB_CREATE -- Create a table in the user's MyDB from a local file 
+# MYDB_CREATE -- Create a table in the user's MyDB from a local file
 # or python data object.
 #
 @multifunc('qc',3)
@@ -519,7 +519,7 @@ def mydb_truncate (table, token=None):
 def mydb_index (token, table, column):
     '''  Usage:  queryClient.mydb_index (token, table, column)
     '''
-    return qc_client._mydb_index (token=def_token(token), table=table, 
+    return qc_client._mydb_index (token=def_token(token), table=table,
                                column=column)
 
 @multifunc('qc',2)
@@ -553,7 +553,7 @@ def mydb_drop (table, token=None):
 def mydb_rename (token, source, target):
     '''  Usage:  queryClient.mydb_rename (token, source, target)
     '''
-    return qc_client._mydb_rename (token=def_token(token), 
+    return qc_client._mydb_rename (token=def_token(token),
                                 source=source, target=target)
 
 @multifunc('qc',2)
@@ -570,7 +570,7 @@ def mydb_rename (source, target, token=None):
 def mydb_copy (token, source, target):
     '''  Usage:  queryClient.mydb_copy (token, source, target)
     '''
-    return qc_client._mydb_copy (token=def_token(token), 
+    return qc_client._mydb_copy (token=def_token(token),
                               source=source, target=target)
 
 @multifunc('qc',2)
@@ -613,7 +613,7 @@ class queryClient (object):
 
     def isAlive (self, svc_url=None, timeout=2):
         """ Check whether the QueryManager service at the given URL is
-            alive and responding.  This is a simple call to the root 
+            alive and responding.  This is a simple call to the root
             service URL or ping() method.
 
         Parameters
@@ -695,7 +695,7 @@ class queryClient (object):
         ----------
         profile : str
             The name of the profile to use. The list of available profiles
-            can be retrieved from the service (see function 
+            can be retrieved from the service (see function
            func:`queryClient.list_profiles()`)
 
         Returns
@@ -866,8 +866,8 @@ class queryClient (object):
             Schema object to return: Of the form <schema>[.<table>[.<column]]
 
         profile : str
-            The name of the service profile to use. The list of available 
-            profiles can be retrieved from the service (see function 
+            The name of the service profile to use. The list of available
+            profiles can be retrieved from the service (see function
             :func:`queryClient.list_profiles()`)
 
         format : str
@@ -913,12 +913,12 @@ class queryClient (object):
     # ###########################
 
     @multimethod('qc',2)
-    def query (self, token, query, adql=None, sql=None, fmt='csv', out=None, 
+    def query (self, token, query, adql=None, sql=None, fmt='csv', out=None,
                async=False, profile='default', **kw):
         '''  Usage:  queryClient.query (token)
         '''
-        return self._query (token=def_token(token), adql=adql, sql=query, 
-                            fmt=fmt, out=out, async=async, 
+        return self._query (token=def_token(token), adql=adql, sql=query,
+                            fmt=fmt, out=out, async=async,
                             profile=profile, **kw)
 
     @multimethod('qc',1)
@@ -928,22 +928,22 @@ class queryClient (object):
         '''
         if optval is not None and optval.lower()[:6] == 'select':
             # optval looks like a query string
-            return self._query (token=def_token(None), adql=adql, sql=optval, 
-                                fmt=fmt, out=out, async=async, 
+            return self._query (token=def_token(None), adql=adql, sql=optval,
+                                fmt=fmt, out=out, async=async,
                                 profile=profile, **kw)
         else:
             # optval is (probably) a token
-            return self._query (token=def_token(optval), adql=adql, sql=sql, 
-                                fmt=fmt, out=out, async=async, 
+            return self._query (token=def_token(optval), adql=adql, sql=sql,
+                                fmt=fmt, out=out, async=async,
                                 profile=profile, **kw)
 
     @multimethod('qc',0)
-    def query (self, token=None, adql=None, sql=None, fmt='csv', out=None, 
+    def query (self, token=None, adql=None, sql=None, fmt='csv', out=None,
                async=False, profile='default', **kw):
         '''  Usage:  queryClient.client.query (...)
         '''
         return self._query (token=def_token(token), adql=adql, sql=sql,
-                            fmt=fmt, out=out, async=async, 
+                            fmt=fmt, out=out, async=async,
                             profile=profile, **kw)
 
     def _query (self, token=None, adql=None, sql=None, fmt='csv', out=None,
@@ -1003,7 +1003,7 @@ class queryClient (object):
 
         profile : str or None
             The Query Manager profile to use for this call.  If ``None`` then
-            the default profile is used.  Available profiles may be listed 
+            the default profile is used.  Available profiles may be listed
             using the :func:`queryClient.list_profiles()`
 
         **kw : dict
@@ -1015,20 +1015,20 @@ class queryClient (object):
                    and then poll for results internally before returning.
                    the default is to return the job ID immediately and let
                    the client poll for job status and return results.
- 
+
                timeout = 120
                    Requested timeout (in seconds) for a query. For a Sync
                    query, this value sets a session timeout request in the
                    database that will abort the query at the specified time.
-                   A maximum value of 600 seconds is permitted.  If the 
+                   A maximum value of 600 seconds is permitted.  If the
                    ``wait`` option is enabled for an ASync query, this is the
                    maximum time the query will be allowed to run before an
                    abort() is issued on the job.  The maximum timeout for
                    an ASync job is 24-hrs (86400 sec).
- 
+
                poll = 1
                    ASync job polling time in seconds.
- 
+
                verbose = False
                    Print verbose messages during ASync job.
 
@@ -1065,7 +1065,7 @@ class queryClient (object):
 
         # Process optional keyword arguments.
         if 'timeout' in kw: 		# set requested timeout on the query
-            timeout = int(kw['timeout']) 
+            timeout = int(kw['timeout'])
         else:
             timeout = self.timeout_request
         self.set_timeout_request (timeout)
@@ -1128,7 +1128,7 @@ class queryClient (object):
         resp = r.content
 
         if async and wait:
-            # Sync query timeouts are handled on the server.  If waiting 
+            # Sync query timeouts are handled on the server.  If waiting
             # for an async query, loop until job is completed or the timeout
             # expires.
             jobId = resp
@@ -1147,7 +1147,7 @@ class queryClient (object):
                     if verbose:
                         tim = tval * poll_time
                         rem = timeout - tim
-                        print ('Status = %s; elapsed time: %d, timeout in %d' % 
+                        print ('Status = %s; elapsed time: %d, timeout in %d' %
                                (stat, tim, rem))
                 tval = tval + poll_time
 
@@ -1169,7 +1169,7 @@ class queryClient (object):
                 resp = self._results (token=token, jobId=jobId).lower()
 
         if (out is not None and out != '') and not async:
-            # If we're saving to a local file (e.g. in a notebook directory), 
+            # If we're saving to a local file (e.g. in a notebook directory),
             # the file here.  Results saved to VOSpace or MyDB are handled on
             # the server side.
             if out[:7] == 'file://':
@@ -1220,7 +1220,7 @@ class queryClient (object):
         """ Get the status of an asynchronous query.
 
         Use the authentication token and the jobId of a previously issued
-        asynchronous query to check the query's current status. 
+        asynchronous query to check the query's current status.
 
         Parameters
         ----------
@@ -1563,7 +1563,7 @@ class queryClient (object):
         Returns
         -------
         listing : str
-            The list of tables in the user's MyDB or the schema of the 
+            The list of tables in the user's MyDB or the schema of the
             named table
 
         Example
@@ -1682,7 +1682,7 @@ class queryClient (object):
         Returns
         -------
         listing : str
-            The list of tables in the user's MyDB or the schema of the 
+            The list of tables in the user's MyDB or the schema of the
             named table
 
         Example
@@ -1735,7 +1735,7 @@ class queryClient (object):
             The schema is CSV text containing the name of the column and
             it's PostgreSQL data type.  If set as a 'str' type it is either
             a CSV string, or the name of a file containing the CSV.  If passed
-            as a 'dict' type, it is a dictionary object where keys are the 
+            as a 'dict' type, it is a dictionary object where keys are the
             column names and values are the data types.
 
         drop: bool   (optional)
@@ -1864,7 +1864,7 @@ class queryClient (object):
         # can be converted.
         tmp_file = NamedTemporaryFile(delete=True, dir='/tmp').name
         if isinstance (data, str):
-            params = { 'table' : table, 
+            params = { 'table' : table,
                        'csv_header' : str(csv_header) }
             if data.startswith ('http://') or data.startswith('https://') or \
                data.startswith ('vos://'):
@@ -1903,7 +1903,7 @@ class queryClient (object):
         r = requests.post (dburl, params=params, headers=headers)
 
         if tmp_file is not None and os.path.exists(tmp_file):
-            os.remove (tmp_file) 
+            os.remove (tmp_file)
         if verbose or self.debug:
             print (str(r.text))
 
@@ -1945,11 +1945,11 @@ class queryClient (object):
             The data file or python object to be loaded.  The 'data' value
             may be one of the following types:
 
-                filename	    A CSV file of data 
-                string		    A string containing CSV data 
+                filename	    A CSV file of data
+                string		    A string containing CSV data
                 Pandas DataFrame    A Pandas DataFrame object
                     :                   :        :       :
-            
+
             Additional object types can be added provided the data can be
             converted to a CSV format.
 
@@ -1957,7 +1957,7 @@ class queryClient (object):
             If set, this is a filename or string containing a schema for the
             data table to be created.  A schema contains a comma-delimited row
             for each column containing the column name and it's Postgres data
-            type.  If not set, the schema is determined automatically from 
+            type.  If not set, the schema is determined automatically from
             the data.
 
         drop: bool   	[Optional]
@@ -1992,7 +1992,7 @@ class queryClient (object):
         # Data can be the name of a CSV file or a python tablular object that
         # can be converted.
         tmp_file = NamedTemporaryFile(delete=True, dir='/tmp').name
-        params = { 'table' : table, 
+        params = { 'table' : table,
                    'delimiter' : str(delimiter),
                    'drop' : str(drop),
                    'csv_header' : str(csv_header) }
@@ -2040,7 +2040,7 @@ class queryClient (object):
         if verbose or self.debug:
             print (str(r.text))
         if tmp_file is not None and os.path.exists(tmp_file):
-            os.remove(tmp_file) 
+            os.remove(tmp_file)
 
         if r.content[:5].lower() == 'error':
             raise queryClientError (qcToString(r.content))
@@ -2151,7 +2151,7 @@ class queryClient (object):
     def mydb_rename (self, token, source, target):
         '''  Usage:  queryClient.mydb_rename (token, source, target)
         '''
-        return self._mydb_rename (token=def_token(token), 
+        return self._mydb_rename (token=def_token(token),
                                     source=source, target=target)
 
     @multimethod('qc',2)
@@ -2203,7 +2203,7 @@ class queryClient (object):
     def mydb_copy (self, token, source, target):
         '''  Usage:  queryClient.mydb_copy (token, source, target)
         '''
-        return self._mydb_copy (token=def_token(token), 
+        return self._mydb_copy (token=def_token(token),
                                   source=source, target=target)
 
     @multimethod('qc',2)
@@ -2287,8 +2287,8 @@ class queryClient (object):
             r = requests.get (SM_SERVICE_URL + "/put?name=%s" %
                              target, headers=headers)
             file = open(input).read()
-                         
-            headers2 = {'Content-type': 'application/octet-stream', 
+
+            headers2 = {'Content-type': 'application/octet-stream',
                         'X-DL-AuthToken': token}
             requests.put(r.content, data=file, headers=headers2)
 

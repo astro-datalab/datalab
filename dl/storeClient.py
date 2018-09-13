@@ -129,7 +129,7 @@ def list_profiles  (token, profile=None, format='text'):
     '''
     if optval is not None and len(opt1.split('.')) >= 4:
         # optval looks like a token
-        return sc_client._list_profiles (token=def_token(optval), 
+        return sc_client._list_profiles (token=def_token(optval),
                                          profile=profile, format=format)
     else:
         # optval looks like a profile name
@@ -144,7 +144,7 @@ def list_profiles  (token=None, profile=None, format='text'):
                                   format=format)
 
 
-        
+
 # -----------------------------
 #  Utility Functions
 # -----------------------------
@@ -158,21 +158,21 @@ def list_profiles  (token=None, profile=None, format='text'):
 def access (token, path, mode, verbose=True):
     '''  Usage:  storeClient.access (token, path, mode)
     '''
-    return sc_client._access (path=path, mode=mode, token=def_token(token), 
+    return sc_client._access (path=path, mode=mode, token=def_token(token),
                           verbose=verbose)
 
 @multifunc('sc',2)
 def access (path, mode, token=None, verbose=True):
     '''  Usage:  storeClient.access (path, mode)
     '''
-    return sc_client._access (path=path, mode=mode, token=def_token(token), 
+    return sc_client._access (path=path, mode=mode, token=def_token(token),
                           verbose=verbose)
 
 @multifunc('sc',1)
 def access (path, mode=None, token=None, verbose=True):
     '''  Usage:  storeClient.access (path)
     '''
-    return sc_client._access (path=path, mode=mode, token=def_token(token), 
+    return sc_client._access (path=path, mode=mode, token=def_token(token),
                           verbose=verbose)
 
 
@@ -223,11 +223,11 @@ def get (optval, fr='', to='', token=None, verbose=True, debug=False):
     '''
     if optval is not None and len(optval.split('.')) >= 4:
         # optval looks like a token
-        return sc_client._get (fr=fr, to=to, token=def_token(optval), 
+        return sc_client._get (fr=fr, to=to, token=def_token(optval),
                             verbose=verbose, debug=debug)
     else:
         # optval is the 'fr' value
-        return sc_client._get (fr=optval, to=to, token=def_token(token), 
+        return sc_client._get (fr=optval, to=to, token=def_token(token),
                             verbose=verbose, debug=debug)
 
 @multifunc('sc',0)
@@ -311,14 +311,14 @@ def cp  (token=None, fr='', to='', verbose=False):
 def ln  (token, fr, target, verbose=False):
     '''  Usage:  storeClient.ln (token, fr, target)
     '''
-    return sc_client._ln (fr=fr, target=target, token=def_token(token), 
+    return sc_client._ln (fr=fr, target=target, token=def_token(token),
                        verbose=verbose)
 
 @multifunc('sc',2)
 def ln  (fr, target, token=None, verbose=False):
     '''  Usage:  storeClient.ln (fr, target)
     '''
-    return sc_client._ln (fr=fr, target=target, token=def_token(token), 
+    return sc_client._ln (fr=fr, target=target, token=def_token(token),
                        verbose=verbose)
 
 @multifunc('sc',1)
@@ -539,7 +539,7 @@ class storeClient (object):
                         Storage Manager Service.
     """
     def __init__ (self, profile=DEF_PROFILE, svc_url=DEF_SERVICE_URL):
-        """ Initialize the store client object. 
+        """ Initialize the store client object.
         """
         self.svc_url = svc_url                  # StoreMgr service URL
         self.svc_profile = profile              # StoreMgr service profile
@@ -559,14 +559,14 @@ class storeClient (object):
     #
     def isAlive (self, svc_url=None, timeout=2):
         """ Check whether the StorageManager service at the given URL is
-            alive and responding.  This is a simple call to the root 
+            alive and responding.  This is a simple call to the root
             service URL or ping() method.
 
         Parameters
         ----------
         svc_url : str
-            The service URL of the storage manager to use 
-        
+            The service URL of the storage manager to use
+
         Returns
         -------
 
@@ -576,7 +576,7 @@ class storeClient (object):
 
             # Check if service is responding
             if storeClient.isAlive():
-               .....stuff 
+               .....stuff
         """
         if svc_url is None:
             svc_url = self.svc_url
@@ -599,8 +599,8 @@ class storeClient (object):
         Parameters
         ----------
         svc_url : str
-            The service URL of the Storage Manager to use 
-        
+            The service URL of the Storage Manager to use
+
         Returns
         -------
         Nothing
@@ -639,22 +639,22 @@ class storeClient (object):
         ----------
         profile : str
             The name of the profile to use. The list of available ones can
-            be retrieved from the service (see function 
+            be retrieved from the service (see function
             :func:`storeClient.list_profiles()`)
 
         Returns
         -------
         Nothing
-        
+
         Example
         -------
         .. code-block:: python
 
             storeClient.set_profile('test')
         """
-        
+
         self.svc_profile = scToString(profile)
-            
+
     def get_profile (self):
         """ Get the profile
 
@@ -666,7 +666,7 @@ class storeClient (object):
         -------
         profile : str
             The name of the current profile used with the Storage Manager
-            
+
         Example
         -------
         .. code-block:: python
@@ -674,8 +674,8 @@ class storeClient (object):
             print ('Store Service profile = ' + storeClient.get_profile())
         """
         return scToString(self.svc_profile)
-            
-        
+
+
     @multimethod('sc',1)
     def list_profiles  (self, token, profile=None, format='text'):
         '''  Usage:  storeClient.list_profiles (token, ....)
@@ -700,13 +700,13 @@ class storeClient (object):
 
         profile : str
             A specific profile to list
-            
+
         Returns
         -------
         profiles : list/dict
             A list of the names of the supported profiles or a dictionary of the
             specific profile
-        
+
         Example
         -------
         .. code-block:: python
@@ -715,18 +715,18 @@ class storeClient (object):
             profiles = storeClient.list_profiles (token)
         """
 
-        dburl = '/profiles?' 
+        dburl = '/profiles?'
         if profile != None and profile != 'None' and profile != '':
             dburl += "profile=%s&" % profile
         dburl += "format=%s" % format
-        
+
         r = self.getFromURL(self.svc_url, dburl, def_token(token))
         profiles = r.content
         if '{' in profiles:
             profiles = json.loads(profiles)
 
         return scToString(profiles)
-        
+
 
 
     # -----------------------------
@@ -740,21 +740,21 @@ class storeClient (object):
     def access (self, token, path, mode, verbose=True):
         '''  Usage:  storeClient.access (token, path, mode)
         '''
-        return self._access (path=path, mode=mode, token=def_token(token), 
+        return self._access (path=path, mode=mode, token=def_token(token),
                              verbose=verbose)
 
     @multimethod('sc',2)
     def access (self, path, mode, token=None, verbose=True):
         '''  Usage:  storeClient.access (path, mode)
         '''
-        return self._access (path=path, mode=mode, token=def_token(token), 
+        return self._access (path=path, mode=mode, token=def_token(token),
                              verbose=verbose)
 
     @multimethod('sc',1)
     def access (self, path, mode=None, token=None, verbose=True):
         '''  Usage:  storeClient.access (path, mode)
         '''
-        return self._access (path=path, mode=mode, token=def_token(token), 
+        return self._access (path=path, mode=mode, token=def_token(token),
                              verbose=verbose)
 
     def _access (self, path='', mode='', token=None, verbose=True):
@@ -764,18 +764,18 @@ class storeClient (object):
         ----------
         path : str
             A name or file template of the file status to retrieve.
-            
+
         mode : str
             Requested access mode.  Modes are 'r' (read access), 'w' (write
             access), or 'rw' to test for both read/write access.  If mode
             is None a simple existence check is made.
-            
+
         token : str
             Authentication token (see function :func:`authClient.login()`)
 
         verbose : bool
             Verbose output flag.
-            
+
         Returns
         -------
         result : bool
@@ -825,13 +825,13 @@ class storeClient (object):
         ----------
         path : str
             A name or file template of the file status to retrieve.
-            
+
         token : str
             Authentication token (see function :func:`authClient.login()`)
 
         verbose : bool
             Verbose output flag.
-            
+
         Returns
         -------
         stat : dictionary
@@ -875,7 +875,7 @@ class storeClient (object):
     def get (self, token, fr, to, verbose=True, debug=False):
         '''  Usage:  storeClient.get (token, fr, to)
         '''
-        return self._get (fr=fr, to=to, token=def_token(token), 
+        return self._get (fr=fr, to=to, token=def_token(token),
                           verbose=verbose, debug=debug)
 
     @multimethod('sc',2)
@@ -898,18 +898,18 @@ class storeClient (object):
         '''
         if optval is not None and len(optval.split('.')) >= 4:
             # optval looks like a token
-            return self._get (fr=fr, to=to, token=def_token(optval), 
+            return self._get (fr=fr, to=to, token=def_token(optval),
                               verbose=verbose, debug=debug)
         else:
             # optval is the 'fr' value
-            return self._get (fr=optval, to=to, token=def_token(token), 
+            return self._get (fr=optval, to=to, token=def_token(token),
                               verbose=verbose, debug=debug)
 
     @multimethod('sc',0)
     def get (self, fr='', to='', token=None, verbose=True, debug=False):
         '''  Usage:  storeClient.get (token, fr, to)
         '''
-        return self._get (fr=fr, to=to, token=def_token(token), 
+        return self._get (fr=fr, to=to, token=def_token(token),
                           verbose=verbose, debug=debug)
 
     def _get (self, token=None, fr='', to='', verbose=True, debug=False):
@@ -922,17 +922,17 @@ class storeClient (object):
 
         fr : str
             A name or file template of the file(s) to retrieve.
-            
+
         to : str
             Name of the file(s) to locally.  If not specified, the contents
             of the file are returned to the caller.
-            
+
         Returns
         -------
         result : str
-            A list of the names of the files retrieved, or the contents of 
+            A list of the names of the files retrieved, or the contents of
             a single file.
-        
+
         Example
         -------
         .. code-block:: python
@@ -989,7 +989,7 @@ class storeClient (object):
         if to != '' and to is not None:
             # Expand metacharacters to create a file list for download.
             flist = expandFileList (self.svc_url, token, nm, "csv", full=True)
-            if debug: 
+            if debug:
                 print ("get: flist = %s" % flist)
 
             nfiles = len(flist)
@@ -1052,8 +1052,8 @@ class storeClient (object):
                                headers=hdrs)
             r = requests.get(url.text, stream=False, headers=hdrs)
             return r.content
-        
-        
+
+
     # --------------------------------------------------------------------
     # PUT -- Upload a file to the store manager service
     # --------------------------------------------------------------------
@@ -1061,14 +1061,14 @@ class storeClient (object):
     def put (self, token, fr, to, verbose=True, debug=False):
         '''  Usage:  storeClient.put (token, fr, to)
         '''
-        return self._put (fr=fr, to=to, token=def_token(token), 
+        return self._put (fr=fr, to=to, token=def_token(token),
                           verbose=verbose, debug=False)
 
     @multimethod('sc',2)
     def put (self, fr, to, token=None, verbose=True, debug=False):
         '''  Usage:  storeClient.put (fr, to)
         '''
-        return self._put (fr=fr, to=to, token=def_token(token), 
+        return self._put (fr=fr, to=to, token=def_token(token),
                           verbose=verbose, debug=False)
 
     @multimethod('sc',1)
@@ -1078,11 +1078,11 @@ class storeClient (object):
         '''
         if optval is not None and len(optval.split('.')) >= 4:
             # optval looks like a token
-            return self._put (fr=fr, to=to, token=def_token(optval), 
+            return self._put (fr=fr, to=to, token=def_token(optval),
                               verbose=verbose, debug=False)
         else:
             # optval looks like a source name
-            return self._put (fr=optval, to=to, token=def_token(token), 
+            return self._put (fr=optval, to=to, token=def_token(token),
                               verbose=verbose, debug=False)
 
     @multimethod('sc',0)
@@ -1102,15 +1102,15 @@ class storeClient (object):
 
         fr : str
             Name or template of local files to upload.
-            
+
         to : str
             Name of the file for destination directory on remote VOSpace.
-            
+
         Returns
         -------
         result : str
             An 'OK' message or error string for each uploaded file.
-        
+
         Example
         -------
         .. code-block:: python
@@ -1175,7 +1175,7 @@ class storeClient (object):
             if r.status_code == 500:
                 file = fr[fr.rfind('/') + 1:]
                 nm += '/%s' % f
-                r = requests.get(self.svc_url + "/put?name=%s" % nm, 
+                r = requests.get(self.svc_url + "/put?name=%s" % nm,
                                     headers=hdrs)
             try:
                 if verbose:
@@ -1197,7 +1197,7 @@ class storeClient (object):
             fnum += 1
 
         return (str(resp) if len(resp) > 1 else resp[0])
-            
+
 
     # --------------------------------------------------------------------
     # LOAD -- Load a file from a remote endpoint to the store manager service
@@ -1238,15 +1238,15 @@ class storeClient (object):
 
         name : str
             Name or template of local files to upload.
-            
+
         endpoint : str
             Name of the file for destination directory on remote VOSpace.
-            
+
         Returns
         -------
         result : str
             An 'OK' message or error string
-        
+
         Example
         -------
         .. code-block:: python
@@ -1258,7 +1258,7 @@ class storeClient (object):
                        (name, endpoint), def_token(token))
         return scToString(r.content)
 
-        
+
     # --------------------------------------------------------------------
     # CP -- Copy a file/directory within the store manager service
     # --------------------------------------------------------------------
@@ -1296,15 +1296,15 @@ class storeClient (object):
 
         fr : str
             Name of the file to be copied (may not be a directory).
-            
+
         to : str
             Name of the file to be created
-            
+
         Returns
         -------
         result : str
             An 'OK' message or error string for each uploaded file.
-        
+
         Example
         -------
         .. code-block:: python
@@ -1382,15 +1382,15 @@ class storeClient (object):
 
         fr : str
             Name of the file to be linked (may not be a directory).
-            
+
         to : str
             Name of the link to be created
-            
+
         Returns
         -------
         result : str
             An 'OK' message or error string for each uploaded file.
-        
+
         Example
         -------
         .. code-block:: python
@@ -1425,7 +1425,7 @@ class storeClient (object):
         '''
         if optval is not None and len(optval.split('.')) >= 4:
             # optval looks like a token
-            return self._ls (name='vos://', format=format, 
+            return self._ls (name='vos://', format=format,
                              token=def_token(optval), verbose=verbose)
         else:
             return self._ls (name=optval, format=format, token=def_token(None),
@@ -1472,7 +1472,7 @@ class storeClient (object):
 
         try:
             uri = (name if name.count('://') > 0 else 'vos://' + name)
-            r = self.getFromURL(self.svc_url, 
+            r = self.getFromURL(self.svc_url,
                                    "/ls?name=%s&format=%s&verbose=%s" % \
                                    (uri, format, verbose), def_token(token))
         except Exception as e:
@@ -1508,12 +1508,12 @@ class storeClient (object):
 
         name : str
             Name of the container (directory) to create.
-            
+
         Returns
         -------
         result : str
             An 'OK' message or error string for each uploaded file.
-        
+
         Example
         -------
         .. code-block:: python
@@ -1522,16 +1522,16 @@ class storeClient (object):
             storeClient.mkdir ('foo')
         """
         nm = (name if name.count("://") > 0 else ("vos://" + name))
-        
+
         try:
-            r = self.getFromURL(self.svc_url, "/mkdir?dir=%s" % nm, 
+            r = self.getFromURL(self.svc_url, "/mkdir?dir=%s" % nm,
                                    def_token(token))
         except Exception:
             raise storeClientError(r.content)
         else:
             return 'OK'
-            
-        
+
+
     # --------------------------------------------------------------------
     # MV -- Move/rename a file/directory within the store manager service
     # --------------------------------------------------------------------
@@ -1569,16 +1569,16 @@ class storeClient (object):
 
         fr : str
             Name of the file to be moved
-            
+
         to : str
             Name of the file or directory to move the 'fr' file.  If given
             as a directory the original filename is preserved.
-            
+
         Returns
         -------
         result : str
             An 'OK' message or error string for each uploaded file.
-        
+
         Example
         -------
         .. code-block:: python
@@ -1621,9 +1621,9 @@ class storeClient (object):
                     resp.append("OK")
                 else:
                     resp.append(scToString(r.content))
-            return resp    
+            return resp
 
-        
+
     # --------------------------------------------------------------------
     # RM -- Delete a file from the store manager service
     # --------------------------------------------------------------------
@@ -1659,12 +1659,12 @@ class storeClient (object):
 
         name : str
             Name of the file to delete
-            
+
         Returns
         -------
         result : str
             An 'OK' message or error string for each uploaded file.
-        
+
         Example
         -------
         .. code-block:: python
@@ -1673,7 +1673,7 @@ class storeClient (object):
             storeClient.rm ('foo.csv')
             storeClient.rm ('vos://foo.csv')
         """
-        
+
         # Patch the names with the URI prefix if needed.
         nm = (name if name.count("://") > 0 else ("vos://" + name))
         if nm == "vos://" or nm == "vos://tmp" or nm == "vos://public":
@@ -1683,7 +1683,7 @@ class storeClient (object):
         # otherwise expand the file list on the and process the matches
         # individually.
         if not hasmeta(nm):
-            r = self.getFromURL(self.svc_url, "/rm?file=%s" % nm, 
+            r = self.getFromURL(self.svc_url, "/rm?file=%s" % nm,
                                    def_token(token))
             return scToString(r.content)
         else:
@@ -1694,13 +1694,13 @@ class storeClient (object):
             for f in flist:
                 if verbose:
                     print ("(%d / %d) %s" % (fnum, nfiles, f))
-                r = self.getFromURL(self.svc_url, "/rm?file=%s" % f, 
+                r = self.getFromURL(self.svc_url, "/rm?file=%s" % f,
                                        def_token(token))
                 fnum += 1
                 resp.append(scToString(r.content))
             return resp
 
-        
+
     # --------------------------------------------------------------------
     # RMDIR -- Delete a directory from the store manager service
     # --------------------------------------------------------------------
@@ -1737,12 +1737,12 @@ class storeClient (object):
 
         name : str
             Name of the container (directory) to delete.
-            
+
         Returns
         -------
         result : str
             An 'OK' message or error string for each uploaded file.
-        
+
         Example
         -------
         .. code-block:: python
@@ -1759,10 +1759,10 @@ class storeClient (object):
         if nm == "vos://" or nm == "vos://tmp" or nm == "vos://public":
             return "Error: operation not permitted"
 
-        try:        
+        try:
             self._saveAs(token=def_token(token), data="deleted",
                          name=(nm+"/.deleted"))
-            r = self.getFromURL(self.svc_url, "/rmdir?dir=%s" % nm, 
+            r = self.getFromURL(self.svc_url, "/rmdir?dir=%s" % nm,
                                    def_token(token))
         except Exception as e:
             raise storeClientError(str(e))
@@ -1795,16 +1795,16 @@ class storeClient (object):
 
         data : str
             Data object to be saved.
-            
+
         name : str
             Name of the file to create containing the string representation
             of the data.
-            
+
         Returns
         -------
         result : str
             An 'OK' message or error string for each uploaded file.
-        
+
         Example
         -------
         .. code-block:: python
@@ -1866,15 +1866,15 @@ class storeClient (object):
 
         name : str
             Name of the file to tag
-            
+
         tag : str
             Annotation string for file
-            
+
         Returns
         -------
         result : str
             An 'OK' message or error string for each uploaded file.
-        
+
         Example
         -------
         .. code-block:: python
@@ -2001,7 +2001,7 @@ def expandFileList (svc_url, token, pattern, format, full=False):
         print ("%s --> '%s' '%s' '%s' => '%s'" % (pattern,uri,dir,name,pstr))
 
     return sorted(list)
-        
+
 
 
 # ###################################

@@ -9,7 +9,7 @@ __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
 __version__ = '20180321'  # yyyymmdd
 
 
-""" 
+"""
     Client methods for the Data Lab Authentication Service.
 
 Import via
@@ -38,7 +38,7 @@ except ImportError:
 # Turn off some annoying astropy warnings
 import warnings
 from astropy.utils.exceptions import AstropyWarning
-warnings.simplefilter('ignore', AstropyWarning)   
+warnings.simplefilter('ignore', AstropyWarning)
 
 is_py3 = sys.version_info.major == 3
 
@@ -80,7 +80,7 @@ elif THIS_HOST[:6] == 'dltest':
 
 
 # The requested authentication "profile".  A profile refers to the specific
-# machines and services used by the AuthManager on the server. Note that 
+# machines and services used by the AuthManager on the server. Note that
 # profiles are not currently used.
 
 DEF_SERVICE_PROFILE = "default"
@@ -248,8 +248,8 @@ class dlAuthError (Exception):
 #####################################
 
 class authClient (object):
-    """  
-         AUTHCLIENT -- Client-side methods to access the Data Lab 
+    """
+         AUTHCLIENT -- Client-side methods to access the Data Lab
                        Authentication Service.
     """
 
@@ -432,7 +432,7 @@ class authClient (object):
 
     def isAlive(self, svc_url=DEF_SERVICE_URL):
         """ Check whether the AuthManager service at the given URL is
-            alive and responding.  This is a simple call to the root 
+            alive and responding.  This is a simple call to the root
             service URL or ping() method.
 
         Parameters

@@ -35,7 +35,7 @@ except ImportError:
     from io import StringIO
 import requests
 from io import BytesIO
-    
+
 # std lib imports
 import getpass
 import xml.etree.ElementTree as ET
@@ -213,17 +213,17 @@ def reformatQueryOutput(self, res=None, fmt='csv', verbose=True):
     if res is None:
         print ("Syntax - reformatQueryOutput(dl, results, fmt='csv'")
         return ""
-    
+
     # Add the mapping information if not already loaded
     if self.fmtmapping is None:
         addFormatMapping(self)
     mapping = self.fmtmapping
-        
+
     # Check that this format is supported
     if fmt not in mapping.keys():
         print ("Format %s not supported." % fmt)
         return ""
-            
+
     # Convert to the desired format
     #s = StringIO(res)
     s = BytesIO(res.encode())
@@ -270,7 +270,7 @@ def getNodeInfo(self, xnode, lenpathbase, verbose=True):
                 if (p.tag.endswith('properties') is True) and (len(p) > 0):
                     churi = ch.get('uri')
                     n = churi.split('#')[1]
-                    vals[n] = ch.text                          
+                    vals[n] = ch.text
                 if (p.tag.endswith('capabilities') is True) and (len(p) > 0):
                     churi = ch.get('uri')
                     cap = churi.split('#')[1]
@@ -364,17 +364,17 @@ def convertTableToFormat(t,format):
 #        self.verbosename = ''
 #        self.size = ''
 #        self.permissions = ''
-#       
+#
 #    def isdir(self):
 #        '''  Determine if this node is a directory.
 #        '''
 #        return (True if self.type == 'vos:ContainerNode' else False)
-#        
+#
 #    def islink(self):
 #        ''' Determine if this node is a link.
 #        '''
 #        return (True if self.type == 'vos:LinkNode' else False)
-#        
+#
 #    def getPerms(self):
 #        ''' Get the permissions string.
 #        '''
@@ -400,13 +400,13 @@ def convertTableToFormat(t,format):
 #        if self.groupread != '':
 #            perm[4] = 'r'
 #        return string.join(perm, '')
-       
-        
+
+
 class DLInteract:
     '''
        Main class for Data Lab interactions
     '''
-    
+
     def __init__(self):
         self.home = '%s/.datalab' % os.path.expanduser('~')
 
@@ -480,7 +480,7 @@ class Dlinterface:
         self.help()
         return " "
 
-    
+
 #### HELP ########
 
     def help(self, command=None):
@@ -568,12 +568,12 @@ class Dlinterface:
         else:
             print ("Storage -         DEAD")
 
-        
+
 ################################################
 #  Account Login Tasks
 ################################################
 
-    
+
     def login(self, user=None):
         '''
         Login to Data Lab using username.
@@ -603,7 +603,7 @@ class Dlinterface:
             Welcome to the Data Lab, myusername
 
         '''
-        # Check if we are already logged in.  The 'user' field of the 
+        # Check if we are already logged in.  The 'user' field of the
         # configuration contains the currently active user and token,
         # however previous logins will have preserved tokens from other
         # accounts we may be able to use.
@@ -645,7 +645,7 @@ class Dlinterface:
                 self.loginuser = user
             else:
                 token = authClient.login(user,getpass.getpass(prompt='Enter password: '))
-       
+
                 if not authClient.isValidToken(token):
                     print ("Invalid user name and/or password provided. Please try again.")
                     return
@@ -700,7 +700,7 @@ class Dlinterface:
 
 
     def status(self):
-        ''' 
+        '''
         Print the status of the Data Lab connection.
 
         Example
@@ -709,14 +709,14 @@ class Dlinterface:
         The "myusername" is logged in.
 
         .. code-block:: python
-     
+
             dl.status()
             User myusername is logged into the Data Lab
 
         No user is currently logged in.
 
         .. code-block:: python
-     
+
             dl.status()
             No user is currently logged into the Data Lab
 
@@ -736,7 +736,7 @@ class Dlinterface:
         -------
 
         .. code-block:: python
-     
+
             dl.whoami()
             myusername
 
@@ -847,7 +847,7 @@ class Dlinterface:
         if not checkLogin(self):
             return
         token = getUserToken (self)
-        
+
         # Check if the source file actually exist
         if out is not None and not out.startswith('mydb://'):
             res = storeClient.ls(token,out,'csv')
@@ -864,12 +864,12 @@ class Dlinterface:
         if (out is not None and out != '') and fmt in ['pandas','array','structarray','table']:
             print ("Cannot use format '%s' for file output." % fmt)
             return
-        
+
         # Use QID to rerun a previous query
         if (type(query) is int) or (type(query) is str and query.isdigit() is True):
             queryid = int(query)
             keys = sorted(self.qhistory.keys())
-            if ((queryid in keys) is False):           # no QID 
+            if ((queryid in keys) is False):           # no QID
                 print ("QID = %s not found" % str(queryid))
                 return
             print ("Rerunning QID = %d" % queryid)
@@ -877,20 +877,20 @@ class Dlinterface:
             # qid, type, async, query, time, jobid, username, format, status/nrows
             query = v[3]
             print ("Query = '%s'" % query)
-            
+
         # Check type
         if qtype not in ['sql','adql']:
             print ("Only 'sql' and 'adql' queries are currently supported.")
             return
-            
+
         _query = query         # local working copy
-        
+
         # Check if the query is in a file
         if os.path.exists (_query):
                 with open (_query, "r", 0) as fd:
                     _query = fd.read (os.path.getsize(_query)+1)
                 fd.close()
-                
+
         # What type of query are we doing
         sql = None
         adql = None
@@ -903,7 +903,7 @@ class Dlinterface:
         if (out is None or out == '') and (self.fmtmapping is None):
             addFormatMapping(self)
         mapping = self.fmtmapping
-        
+
         # The queryClient "fmt" will depend on the requested output format
         if (out is None or out == ''):
             try:
@@ -913,14 +913,14 @@ class Dlinterface:
                 return
         else:
             qcfmt = 'csv'
-            
+
         # Execute the query.
         if profile != "default":
             if profile != "" and profile is not None:
                 queryClient.set_profile (profile=profile)
 
         try:
-            res = queryClient.query (token, adql=adql, sql=sql, 
+            res = queryClient.query (token, adql=adql, sql=sql,
                                      fmt=qcfmt, out=out, async=async)
         except Exception as e:
             if not async and str(e) is not None:
@@ -947,10 +947,10 @@ class Dlinterface:
                 self.qhistory = {qid : (qid, qtype, async, _query, time.time(), jobid, getUserName(self), fmt, status)}
             else:
                 qid = int(max(self.qhistory.keys())) + 1
-                self.qhistory[qid] = (qid, qtype, async, _query, time.time(), jobid, getUserName(self), fmt, status) 
-            
+                self.qhistory[qid] = (qid, qtype, async, _query, time.time(), jobid, getUserName(self), fmt, status)
+
             # Return the results
-            
+
             # Asynchronous
             if async:
                 print ("Asynchronous query JobID = %s " % res)                # Return the JobID
@@ -959,8 +959,8 @@ class Dlinterface:
             elif out == '' or out is None:
                 # Convert to the desired format
                 return reformatQueryOutput(self,res,fmt,verbose=verbose)
-                    
-                
+
+
     def queryhistory(self, async=None):
         '''
         Report the history of queries made so far.
@@ -1012,7 +1012,7 @@ class Dlinterface:
                 if sum(asyncv) == 0:
                     print ("No ASYNC queries made so far")
                     return
-                
+
             # Loop through the query history
             print ("-------------------------------------------------------------------------------------------------------------------")
             print ("QID          DATE        Type  A/SYNC  Format       Status          JobID                   Query")
@@ -1029,12 +1029,12 @@ class Dlinterface:
                 if (async is True and v[2] == True) or (async is not True):
                     print ("%-3d  %-19s  %-4s  %-5s  %-11s  %-10s  %-18s  '%-s'" %
                            (v[0], time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(v[4])),
-                            v[1], 'ASYNC' if v[2] else 'SYNC', v[7], 
+                            v[1], 'ASYNC' if v[2] else 'SYNC', v[7],
                             str(v[8]), v[5] if v[2] else "--", ' '.join(v[3].split())))
             print ("-------------------------------------------------------------------------------------------------------------------")
                     # Maybe leave off the jobid if we are using QID instead??!!
 
-                
+
     def querystatus(self, jobid=None):
         '''
         Get the async query job status.
@@ -1062,9 +1062,9 @@ class Dlinterface:
         Submit an asynchronous query and then check the status.
 
         .. code-block:: python
-     
+
             jobid = dl.query('SELECT ra,dec from smash_dr1.source LIMIT 100',async=True)
-            Asynchronous query JobID = uqrcs8a5n8s6d0je 
+            Asynchronous query JobID = uqrcs8a5n8s6d0je
 
             dl.querystatus(jobid)
             COMPLETED
@@ -1083,7 +1083,7 @@ class Dlinterface:
         # QID was input
         if (type(jobid) is int) or (type(jobid) is str and jobid.isdigit() is True):
             keys = sorted(self.qhistory.keys())
-            if ((int(jobid) in keys) is False):           # no QID 
+            if ((int(jobid) in keys) is False):           # no QID
                 print ("QID = %s not found" % str(jobid))
                 return
             v = self.qhistory[int(jobid)]
@@ -1117,9 +1117,9 @@ class Dlinterface:
         Submit an asynchronous query and then check the status.
 
         .. code-block:: python
-     
+
             jobid = dl.query('SELECT ra,dec from smash_dr1.source LIMIT 3',async=True)
-            Asynchronous query JobID = uqrcs8a5n8s6d0je 
+            Asynchronous query JobID = uqrcs8a5n8s6d0je
 
             dl.querystatus(jobid)
             COMPLETED
@@ -1145,7 +1145,7 @@ class Dlinterface:
         # QID was input
         if (type(jobid) is int) or (type(jobid) is str and jobid.isdigit() is True):
             keys = sorted(self.qhistory.keys())
-            if ((int(jobid) in keys) is False):           # no QID 
+            if ((int(jobid) in keys) is False):           # no QID
                 print ("QID = %s not found" % str(jobid))
                 return
             v = self.qhistory[int(jobid)]
@@ -1174,8 +1174,8 @@ class Dlinterface:
         res = (queryClient.results (token, jobId=_jobid))
         # Convert to the desired format
         return reformatQueryOutput(self,res,fmt,verbose=True)
-        
-        
+
+
     def listdb(self, table=''):
         '''
         List the user's MyDB tables.
@@ -1196,7 +1196,7 @@ class Dlinterface:
         List the MyDB tables.
 
         .. code-block:: python
-     
+
             print dl.listmydb()
             table
             table2
@@ -1218,7 +1218,7 @@ class Dlinterface:
             else:
                 res = ' '.join(res.splitlines())    # convert to space separated list
             return res
-            
+
     def droptable(self, table=None):
         '''
         Drop a user's MyDB table.
@@ -1239,7 +1239,7 @@ class Dlinterface:
         Drop the MyDB table called ``table``.
 
         .. code-block:: python
-     
+
             print dl.listdb()
             table
             table2
@@ -1287,7 +1287,7 @@ class Dlinterface:
         Export the MyDB table called ``table`` to file ``test.csv``.
 
         .. code-block:: python
-     
+
             dl.exporttable('table','test.csv')
 
         '''
@@ -1332,7 +1332,7 @@ class Dlinterface:
         else:
             print ("Table '%s' was copied to '%s'." % (table, name))
 
-        
+
     def queryprofiles(self, profile=None):
         '''
         List the available Query Manager profiles to use with a :func:`dl.query`.
@@ -1354,7 +1354,7 @@ class Dlinterface:
         List of available profiles.
 
         .. code-block:: python
-     
+
             dl.queryprofiles()
             default,IRSA,HEASARC,Vizier,GAVO,SIMBAD,zeus1,SDSS-DR9,STScI-RegTAP,GALEX-DR6,dldb1
 
@@ -1401,8 +1401,8 @@ class Dlinterface:
         Print out all the DL tables.
 
         .. code-block:: python
-     
-            datalab schema 
+
+            datalab schema
 
             Schema Name   Description
            -----------   -----------
@@ -1411,7 +1411,7 @@ class Dlinterface:
               des_sva1   DES SVA1 Data Products
             tap_schema   TAP Schema Tables
                   usno   USNO Astrometry Catalogs
-             sdss_dr13   
+             sdss_dr13
                neo_dr1   NEO Survey Data Release 1
                 ls_dr3   The DECam Legacy Survey Data Release 3
              smash_dr1   SMASH Data Release 1
@@ -1420,7 +1420,7 @@ class Dlinterface:
         List all tables in a schema/catalog.
 
         .. code-block:: python
-     
+
             datalab schema val=smash_dr1
 
             Schema: smash_dr1
@@ -1439,13 +1439,13 @@ class Dlinterface:
         '''
 
         print (queryClient.schema (value=val, format=fmt, profile=profile))
-        
+
 
 ################################################
 #  Storage Manager Tasks
 ################################################
-        
-        
+
+
     def ls(self, name='vos://', format='csv', verbose=False):
         '''
         List files in VOSpace.
@@ -1472,19 +1472,19 @@ class Dlinterface:
         List the files.
 
         .. code-block:: python
-     
+
             dl.ls()
-            test2  test1 
+            test2  test1
 
         Verbose listing of the files in the ``public/`` directory.
 
         .. code-block:: python
-     
+
             dl.ls('public',verbose=True)
-            lrw-rw----  demo15      0B  17 May 2017 14:04:25  thisisalsoalink -> /public/smash2  
-            lrw-rw----  demo15      0B  17 May 2017 13:58:04  thisisalink -> /smash1  
-            -rw-rw-r--  demo15    3.4K  17 May 2017 09:40:13  smash2  
-            -rw-rw-r--  demo15    3.4K  17 May 2017 07:34:54  smash1  
+            lrw-rw----  demo15      0B  17 May 2017 14:04:25  thisisalsoalink -> /public/smash2
+            lrw-rw----  demo15      0B  17 May 2017 13:58:04  thisisalink -> /smash1
+            -rw-rw-r--  demo15    3.4K  17 May 2017 09:40:13  smash2
+            -rw-rw-r--  demo15    3.4K  17 May 2017 07:34:54  smash1
             drw-rw----  demo15      0B  17 May 2017 14:05:02  data/  tableingester,downloader,runner
 
         '''
@@ -1519,7 +1519,7 @@ class Dlinterface:
             # Gather up all the necessary information for this node
             vals = getNodeInfo(self, node, lenpathbase, verbose=verbose)
             if verbose is True:
-                # Now print out the information          
+                # Now print out the information
                 print ("%10s  %s  %6s  %s  %s  %s" % (vals['permissions'], user, vals['size'],
                                                   vals['time'], vals['verbosename'], vals['caps']))
             else:
@@ -1547,7 +1547,7 @@ class Dlinterface:
         Get a query output table called ``table1_output.txt`` from VOSpace.
 
         .. code-block:: python
-     
+
             dl.get('table1_output.txt','table1_output.txt')
             (1/1) [====================] [   9.1K] table1_output.txt
 
@@ -1586,7 +1586,7 @@ class Dlinterface:
         Put a catalog called ``cat.fits`` into VOSpace.
 
         .. code-block:: python
-     
+
             dl.put('cat.fits','cat.fits')
             (1 / 1) cat.fits -> vos://cat.fits
 
@@ -1608,7 +1608,7 @@ class Dlinterface:
         if res == '[<Response [200]>]':   # Return None if nothing to give
             res = None
         return res
-        
+
     def mv(self, source=None, destination=None, verbose=True):
         '''
         Move a file in Data Lab VOSpace.
@@ -1628,7 +1628,7 @@ class Dlinterface:
         Rename the file ``file.txt`` to ``newfile.txt``.
 
         .. code-block:: python
-     
+
             dl.ls()
             file.txt
 
@@ -1640,7 +1640,7 @@ class Dlinterface:
         Move the file ``output.fits`` to the ``results/`` directory.
 
         .. code-block:: python
-     
+
             dl.ls()
             output.txt, results
 
@@ -1688,7 +1688,7 @@ class Dlinterface:
         Copy the file ``file.txt`` to ``newfile.txt``.
 
         .. code-block:: python
-     
+
             dl.ls()
             file1.txt
 
@@ -1733,7 +1733,7 @@ class Dlinterface:
         Delete the file ``file1.txt``.
 
         .. code-block:: python
-     
+
             dl.ls()
             file1.txt, file2.txt
 
@@ -1757,7 +1757,7 @@ class Dlinterface:
         # Run the RM command
         storeClient.rm (token, name=name, verbose=verbose)
 
-        
+
     def ln(self, target=None, link=None):
         '''
         Link a file in Data Lab VOSpace.
@@ -1779,7 +1779,7 @@ class Dlinterface:
 
             dl.ls()
             file1.txt
-     
+
             dl.ln('file1.txt','iamlink')
 
             dl.ls()
@@ -1804,7 +1804,7 @@ class Dlinterface:
         storeClient.ln (token, fr=lnk, target=trg)
 
     def mkdir(self, name=None):
-        ''' 
+        '''
         Create a directory in Data Lab VOSpace.
 
         Parameters
@@ -1838,10 +1838,10 @@ class Dlinterface:
         if name[0:6] != 'vos://':
             name = 'vos://' + name
         storeClient.mkdir (token, name=name)
-        
+
 
     def rmdir(self, name=None):
-        ''' 
+        '''
         Delete a directory in Data Lab VOSpace.
 
         Parameters
@@ -1875,7 +1875,7 @@ class Dlinterface:
 
 
     def copyurl(self, url=None, name=None):
-        ''' 
+        '''
         Copy a file to VOSpace using a URL.
 
         Parameters
@@ -1911,9 +1911,9 @@ class Dlinterface:
         name = (name if name.startswith('vos://') else ('vos://'+name))
         storeClient.load(token, name, url)
 
-             
+
     def load(self, name=None, inpfmt=None, fmt='pandas', ext=None):
-        ''' 
+        '''
         Save the string representation of a data object to a file in VOSpace.
 
         Parameters
@@ -1922,7 +1922,7 @@ class Dlinterface:
              The name of the file in load into memory.  The vos:// prefix is necessary
              otherwise it is assumed a local file that should be read.  Currently only
              FITS binary tables and CSV file formats are supported.
-        
+
         inpfmt : str
              Tne input format type.  The currently supported types are FITS binary tables,
              HDF5, CSV, and ASCII files ('string').  If this is not specified then the
@@ -1966,12 +1966,12 @@ class Dlinterface:
         if (name is None):
             print ("Syntax - dl.load(name,inpfmt=inpfmt,fmt=fmt,ext=ext)")
             return
-        
+
         # Only fits, csv and string input format currently supported
         if inpfmt != None and inpfmt != '' and inpfmt not in ['fits','hdf5','csv','string']:
             print ("Format '%s' not currently supported for input file." % inpfmt)
             return
-                
+
         # Use file extension to figure out input format
         if inpfmt is None:
             fbase, fext = os.path.splitext(name)
@@ -1981,7 +1981,7 @@ class Dlinterface:
             except:
                 print ("Cannot use file extension to determine 'inpfmt'")
                 return
-        
+
         # Check token if reading from VOSpace
         if name.startswith("vos://"):
             # Check if we are logged in
@@ -2001,8 +2001,8 @@ class Dlinterface:
         else:
             if os.path.exists(name) is False:
                 print ("'%s' not found" % name)
-                return  
-            
+                return
+
         # Load the neccessary packages
         # astropy fits
         try:
@@ -2020,7 +2020,7 @@ class Dlinterface:
         except:
             from astropy.io.votable import from_table
 
-            
+
         # Reading and conversion mapping
         # for reading, x=filename; for conversion, x=data object
         writemap = { 'fits-csv':         (lambda x: Table.read(x,format='fits'),      partial(convertTableToFormat,format='ascii.csv')),
@@ -2046,7 +2046,7 @@ class Dlinterface:
                      'csv-votable':      (lambda x: Table.read(x,format='ascii.csv'), lambda x: from_table(x).resources[0].tables[0]),
                      'string-string':    (lambda x: readAscii(x),                     lambda x: x) }
         # Should add HDF5, use Table.read(x,format='hdf5',path='data'), h5py must be installed
-        
+
         # Check that we can do the operation
         mapcode = inpfmt+'-'+fmt
         if mapcode not in writemap.keys():
@@ -2072,7 +2072,7 @@ class Dlinterface:
                 except:
                     pass
                 fh.seek(0)    # reset to beginning of file
-                
+
         # Load a Fits image file
         if inpfmt == 'fits' and fitstable is False:
             try:
@@ -2082,7 +2082,7 @@ class Dlinterface:
                 print ("There was an error loading the FITS image '%s'" % name)
                 print (str(e))
                 return
-                
+
         # Step 1) Read the file
         try:
             rdata = writemap[mapcode][0](fh)
@@ -2090,7 +2090,7 @@ class Dlinterface:
             print ("Error reading file")
             print (str(e))
             return
-            
+
         # Step 2) Convert to output format
         try:
             return writemap[mapcode][1](rdata)
@@ -2098,9 +2098,9 @@ class Dlinterface:
             print ("Error converting data")
             print (str(e))
             return
-        
+
     def save(self, data=None, name=None, fmt=None, clobber=False):
-        ''' 
+        '''
         Save the string representation of a data object to a file in VOSpace.
 
         Parameters
@@ -2111,7 +2111,7 @@ class Dlinterface:
         name : str
              The name of the file in VOSpace to create.  The vos:// prefix is not
              necessary.
-        
+
         fmt : str
              The format to use for the output file.  If this is not specified then the
              file extension of ``name`` is used to attempt to figure out the format.
@@ -2125,7 +2125,7 @@ class Dlinterface:
              pandas            csv/fits/hdf5
              table             csv/fits/hdf5
              votable           csv/fits/hdf5
-        
+
         clobber : bool
              Whether to overwrite an existing file.  The default is False.
 
@@ -2153,7 +2153,7 @@ class Dlinterface:
             except:
                 print ("Cannot use file extension to determine 'fmt'")
                 return
-            
+
         # Input data object types
         # -'csv', type='str', ',' delimited
         # -'ascii', type='str', '\t' delimited
@@ -2193,7 +2193,7 @@ class Dlinterface:
             dum = writeo.__doc__
         except:
             from astropy.io.votable import from_table, writeto
-            
+
         # Check token if writing to VOSpace
         if name.startswith("vos://"):
             # Check if we are logged in
@@ -2220,7 +2220,7 @@ class Dlinterface:
                     return
                 else:
                     os.remove(name)    # clobber it
-            
+
         # What local file are we writing to
         # 1) local file, use name
         # 2) vos:// file, use temporary filename
@@ -2229,7 +2229,7 @@ class Dlinterface:
             tfd = tempfile.NamedTemporaryFile()
             outname = tfd.name
             tfd.close()
-            
+
         # Output formats supported
         # -'csv', (1) csv
         # -'ascii', (1) csv
@@ -2238,7 +2238,7 @@ class Dlinterface:
         # -'pandas', (1) csv, (2) FITS binary table, (3) HDF5
         # -'table', (1) csv, (2) FITS binary table, (3) HDF5
         # -'votable', (1) csv (2) FITS binary table, (3) HDF5,  XML not working right now
-            
+
         # These are functions to output the various types of files
         # x=data, y=filename
         writemap = { 'csv-csv':          lambda x,y: writeAscii(y, x),
@@ -2262,7 +2262,7 @@ class Dlinterface:
         if inptype+'-'+fmt not in writemap.keys():
             print ("Output format '%s' for data type '%s' not currently supported." % (fmt, inptype))
             return
-            
+
         # Write the file
         try:
             writemap[inptype+'-'+fmt](data,outname)
@@ -2274,7 +2274,7 @@ class Dlinterface:
         if name.startswith('vos://'):
             storeClient.put (token, outname, name, verbose=False)
             os.remove(outname)   # remove temporary file
- 
+
 
 ################################################
 #  SIA Tasks
@@ -2330,11 +2330,11 @@ class Dlinterface:
         # Check if we are logged in
         if not checkLogin(self):
             return
-        
+
         token = getUserToken(self)
         parts = token.strip().split(".")
         uid = parts[1]
-        
+
         # Use pyvo.dal.sia for now
 
         svc = sia.SIAService (SIA_DEF_ACCESS_URL)
@@ -2351,5 +2351,5 @@ class Dlinterface:
         # Print the results if verbose set
         if verbose is True and nrows > 0:
             print (res)
-    
+
         return res

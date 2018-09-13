@@ -36,8 +36,8 @@ DEBUG = False
 #
 #  Resource Management Client Interface
 #
-#  This API provides convenience methods that allow an application to 
-#  import the Client class without having to explicitly instantiate a 
+#  This API provides convenience methods that allow an application to
+#  import the Client class without having to explicitly instantiate a
 #  class object.  The parameter descriptions and example usage is given
 #  in the comments for the class methods.
 #
@@ -126,14 +126,14 @@ class dlResError (Exception):
     def __init__(self, message):
         self.message = message
 
-        
+
 #####################################
 #  Resource Management client procedures
 #####################################
 
 class resClient (object):
-    """  
-         RESCLIENT -- Client-side methods to access the Data Lab 
+    """
+         RESCLIENT -- Client-side methods to access the Data Lab
                        Resource Management Service.
     """
 
@@ -148,24 +148,24 @@ class resClient (object):
         self.home = '%s/.datalab' % os.path.expanduser('~')
 
         self.debug = DEBUG                      # interface debug flag
-    
+
 
     def set_svc_url (self, svc_url):
         """ Set the URL of the Resource Management Service to be used.
-    
+
         Parameters
         ----------
         svc_url : str
             Resource Management service base URL to call.
-    
+
         Returns
         -------
         Nothing
-    
+
         Example
         -------
         .. code-block:: python
-    
+
             from dl import resMgr
             resMgr.client.set_svc_url ("http://localhost:7001/")
         """
@@ -175,20 +175,20 @@ class resClient (object):
 
     def get_svc_url (self):
         """ Return the currently-used Resource Management Service URL.
-    
+
         Parameters
         ----------
         None
-    
+
         Returns
         -------
         service_url : str
             The currently-used Resource Management Service URL.
-    
+
         Example
         -------
         .. code-block:: python
-    
+
             from dl import resMgr
             service_url = resMgr.client.get_svc_url ()
         """
@@ -198,20 +198,20 @@ class resClient (object):
 
     def set_profile (self, profile):
         """ Set the requested service profile.
-    
+
         Parameters
         ----------
         profile : str
             Requested service profile string.
-    
+
         Returns
         -------
         Nothing
-    
+
         Example
         -------
         .. code-block:: python
-    
+
             from dl import resMgr
             token = resMgr.client.set_profile ("dev")
         """
@@ -221,20 +221,20 @@ class resClient (object):
 
     def get_profile (self):
         """ Get the requested service profile.
-    
+
         Parameters
         ----------
         None
-    
+
         Returns
         -------
         profile : str
             The currently requested service profile.
-    
+
         Example
         -------
         .. code-block:: python
-    
+
             from dl import resMgr
             profile = resMgr.client.get_profile ()
         """
@@ -245,15 +245,15 @@ class resClient (object):
     def list_profiles (self, token, profile=None, format='text'):
 
         """ List the service profiles which can be accessed by the user.
-    
+
         Returns
         -------
         profiles : JSON string
-    
+
         Example
         -------
         .. code-block:: python
-    
+
             from dl import resMgr
             profiles = resMgr.client.list_profiles (token, profile, format)
         """
@@ -263,7 +263,7 @@ class resClient (object):
 
     def isAlive (self, svc_url):
         """ Check whether the ResManager service at the given URL is
-            alive and responding.  This is a simple call to the root 
+            alive and responding.  This is a simple call to the root
             service URL or ping() method.
         """
         try:
@@ -277,9 +277,9 @@ class resClient (object):
 
 
 
-    ################################################### 
+    ###################################################
     #  USER MANAGEMENT
-    ################################################### 
+    ###################################################
 
     def createUser (self, username, password, email, name, institute):
         """ Create a new user in the system.
@@ -305,13 +305,13 @@ class resClient (object):
                 raise Exception (r.text)
 
         except Exception as e:
-            raise dlResError ("Error creating user '" + 
+            raise dlResError ("Error creating user '" +
                   username + "' : " + str(e))
         else:
             pass
 
         return response
-    
+
     def getUser (self, keyword):
         """ Read info about a user in the system.
         """
@@ -321,7 +321,7 @@ class resClient (object):
         """ Update info about a user in the system.
         """
         return self.clientUpdate ("user", keyword)
-    
+
     def deleteUser (self, token, username):
         """ Delete a user in the system.
         """
@@ -485,9 +485,9 @@ class resClient (object):
 
 
 
-    ################################################### 
+    ###################################################
     #  GROUP MANAGEMENT
-    ################################################### 
+    ###################################################
 
     def createGroup (self, name):
         """ Create a new Group in the system.
@@ -516,7 +516,7 @@ class resClient (object):
             pass
 
         return response
-    
+
     def getGroup (self, keyword):
         """ Read info about a Group in the system.
         """
@@ -526,7 +526,7 @@ class resClient (object):
         """ Update info about a Group in the system.
         """
         return self.clientUpdate ("group", keyword, value)
-    
+
     def deleteGroup (self, token, group):
         """ Delete a Group in the system.
         """
@@ -536,12 +536,12 @@ class resClient (object):
 
         return self.clientDelete (token, "group", query_args)
 
-    
-    
-    
-    ################################################### 
+
+
+
+    ###################################################
     #  RESOURCE MANAGEMENT
-    ################################################### 
+    ###################################################
 
     def createResource (self, resource):
         """ Create a new Resource in the system.
@@ -570,17 +570,17 @@ class resClient (object):
             pass
 
         return response
-    
+
     def getResource (self, keyword):
         """ Read info about a Resource in the system.
         """
         return self.clientRead ("resource", keyword)
-    
+
     def setResource (self, keyword, value):
         """ Update info about a Resource in the system.
         """
         return self.clientUpdate ("resource", keyword, value)
-    
+
     def deleteResource (self, token, resource):
         """ Delete a Group in the system.
         """
@@ -590,12 +590,12 @@ class resClient (object):
 
         return self.clientDelete (token, "resource", query_args)
 
-    
-    
 
-    ################################################### 
+
+
+    ###################################################
     #  PRIVATE UTILITY METHODS
-    ################################################### 
+    ###################################################
 
     def debug (self, debug_val):
         self.debug = debug_val

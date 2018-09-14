@@ -609,7 +609,7 @@ class storeClient (object):
         -------
         .. code-block:: python
 
-            storeClient.set_scv_url("http://dldemo.sdm.noao.edu:7003")
+            storeClient.set_scv_url("http://demo.datalab.noao.edu:7003")
         """
         self.svc_url = scToString(svc_url)
 

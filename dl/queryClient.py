@@ -486,15 +486,25 @@ def mydb_insert (table, data, token=None, **kw):
 def mydb_import (token, table, data, **kw):
     '''  Usage:  queryClient.mydb_import (token, table, data)
     '''
-    return qc_client._mydb_import (token=def_token(token), table=table,
-                                   data=data, **kw)
+    try:
+        result = qc_client._mydb_import (token=def_token(token), table=table,
+                                         data=data, **kw)
+    except Exception as e:
+        return (str(e))
+
+    return result
 
 @multifunc('qc',2)
 def mydb_import (table, data, token=None, **kw):
     '''  Usage:  queryClient.mydb_import (table, data)
     '''
-    return qc_client._mydb_import (token=def_token(token), table=table,
-                                   data=data, **kw)
+    try:
+        result = qc_client._mydb_import (token=def_token(token), table=table,
+                                         data=data, **kw)
+    except Exception as e:
+        return (str(e))
+
+    return result
 
 
 # --------------------------------------------------------------------
@@ -2042,7 +2052,10 @@ class queryClient (object):
         if tmp_file is not None and os.path.exists(tmp_file):
             os.remove(tmp_file)
 
-        if r.content[:5].lower() == 'error':
+        print ('text: ' + str(r.text))
+        print ('status: ' + str(r.status_code))
+
+        if r.content[:5].lower() == 'error' or r.status_code != 200:
             raise queryClientError (qcToString(r.content))
         else:
             return 'OK'

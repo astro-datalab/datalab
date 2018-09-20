@@ -2048,12 +2048,9 @@ class queryClient (object):
         r = requests.post (dburl, params=params, headers=headers)
 
         if verbose or self.debug:
-            print (str(r.text))
+            print (qcToString (r.content))
         if tmp_file is not None and os.path.exists(tmp_file):
             os.remove(tmp_file)
-
-        print ('text: ' + str(r.text))
-        print ('status: ' + str(r.status_code))
 
         if r.content[:5].lower() == 'error' or r.status_code != 200:
             raise queryClientError (qcToString(r.content))

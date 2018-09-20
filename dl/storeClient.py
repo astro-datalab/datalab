@@ -721,7 +721,7 @@ class storeClient (object):
         dburl += "format=%s" % format
 
         r = self.getFromURL(self.svc_url, dburl, def_token(token))
-        profiles = r.content
+        profiles = scToString(r.content)
         if '{' in profiles:
             profiles = json.loads(profiles)
 

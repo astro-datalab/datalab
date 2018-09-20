@@ -60,7 +60,7 @@ class MultiMethod(object):
 
         # Call the method instance with all original args/keywords and
         # return the result.
-        return function(instance, *args, **kw)
+        return function (instance, *args, **kw)
 
     def register(self, nargs, function, module):
         ''' Register the method based on the number of method arguments.
@@ -82,16 +82,22 @@ def multimethod(module, nargs):
     def register(function):
         function = getattr(function, "__lastreg__", function)
         name = function.__name__
-        mm = method_registry.get(name)
+        mm = registry.get(name)
         if mm is None:
-            mm = method_registry[name] = MultiMethod(module, name)
+            mm = registry[name] = MultiMethod(module, name)
         mm.register(nargs, function, module)
         mm.__lastreg__ = function
 
         # return function instead of an object - Python binds this automatically
         def getter(instance, *args, **kwargs):
             return mm(instance, *args, **kwargs)
+
         return getter
+
+    if module not in method_registry.keys():
+        method_registry[module] = {}
+    registry = method_registry[module]
+
     return register
 
 
@@ -135,6 +141,7 @@ class MultiFunction(object):
             raise TypeError("duplicate registration")
         self.funcmap[reg_name] = function
 
+
 def multifunc(module, nargs):
     '''  Wrapper function to implement multimethod for functions.  The
          identifying signature in this case is the number of required
@@ -144,12 +151,18 @@ def multifunc(module, nargs):
     def register(function):
         function = getattr(function, "__lastreg__", function)
         name = function.__name__
-        mf = func_registry.get(name)
+        mf = registry.get(name)
         if mf is None:
-            mf = func_registry[name] = MultiFunction(module, name)
+            mf = registry[name] = MultiFunction(module, name)
         mf.register(nargs, function, module)
         mf.__lastreg__ = function
+
         return mf
+
+    if module not in func_registry.keys():
+        func_registry[module] = {}
+    registry = func_registry[module]
+
     return register
 
 

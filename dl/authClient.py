@@ -34,6 +34,11 @@ except ImportError:
     from urllib.request import urlopen, Request # Python 3
     import configparser as ConfigParser         # Python 3
 
+if os.path.isfile ('./Util.py'):                # use local dev copy
+    from Util import def_token
+else:                                           # use distribution copy
+    from dl.Util import def_token
+
 
 # Turn off some annoying astropy warnings
 import warnings
@@ -118,7 +123,14 @@ def login(user, password=None, debug=False, verbose=False):
 
 
 def whoAmI():
-    pass
+    user = 'anonymous'
+    try:
+        token = def_token(None)
+        user, uid, gid, hash = token.strip().split('.', 3)
+    except Exception as e:
+        return 'anonymous'
+    else:
+        return user
 
 def isAlive(svc_url=DEF_SERVICE_URL):
     try:

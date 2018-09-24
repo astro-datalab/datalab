@@ -1008,7 +1008,7 @@ class storeClient (object):
                                    headers=hdrs)
 
                 if res.status_code != 200:
-                    resp.append ("Error: " + res.text)
+                    resp.append ("Error: " + scToString(res.text))
                 else:
                     r = requests.get(res.text, stream=True)
                     clen = r.headers.get('content-length')
@@ -1051,7 +1051,7 @@ class storeClient (object):
             url = requests.get(self.svc_url + "/get?name=%s" % nm,
                                headers=hdrs)
             r = requests.get(url.text, stream=False, headers=hdrs)
-            return r.content
+            return scToString (r.content)
 
 
     # --------------------------------------------------------------------
@@ -1158,6 +1158,7 @@ class storeClient (object):
             nm = nm.replace('///','//')      # fix extra path indicators
 
             if debug:
+                print ("put: fr_dir=%s  fr_name=%s" % (fr_dir,fr_name))
                 print ("put: f=%s  nm=%s" % (f,nm))
 
             if not os.path.exists(f):
@@ -1174,7 +1175,7 @@ class storeClient (object):
             #    r.content == "Data cannot be uploaded to a container":
             if r.status_code == 500:
                 file = fr[fr.rfind('/') + 1:]
-                nm += '/%s' % f
+                nm += '/%s' % fr_name
                 r = requests.get(self.svc_url + "/put?name=%s" % nm,
                                     headers=hdrs)
             try:
@@ -1317,9 +1318,11 @@ class storeClient (object):
         src = (fr if fr.count("://") > 0 else ("vos://" + fr))
         dest = (to if to.count("://") > 0 else ("vos://" + to))
 
-        # If the 'from' string has no metacharacters we're copying a single file,
+        # If the 'from' string has no metachars we're copying a single file,
         # otherwise expand the file list and process the matches individually.
         if not hasmeta(fr):
+            src = src.replace('///','//')
+            dest = dest.replace('///','//')
             r = self.getFromURL(self.svc_url, "/cp?from=%s&to=%s" % \
                                    (src, dest), def_token(token))
             if 'COMPLETED' in scToString(r.content):
@@ -1333,8 +1336,7 @@ class storeClient (object):
             resp = []
             for f in flist:
                 junk, fn = os.path.split (f)
-                to_fname = dest + ('/%s' % fn)
-                to_fname = to_fname.replace('///','//')
+                to_fname = (dest + ('/%s' % fn)).replace('///','//')
                 if verbose:
                     print ("(%d / %d) %s -> %s" % (fnum, nfiles, f, to_fname))
                 r = self.getFromURL(self.svc_url, "/cp?from=%s&to=%s" % \
@@ -1596,6 +1598,8 @@ class storeClient (object):
         # otherwise expand the file list on the and process the matches
         # individually.
         if not hasmeta(fr):
+            src = src.replace('///','//')
+            dest = dest.replace('///','//')
             r = self.getFromURL(self.svc_url, "/mv?from=%s&to=%s" % \
                                    (src, dest), def_token(token))
             if 'COMPLETED' in scToString(r.content):
@@ -1609,9 +1613,7 @@ class storeClient (object):
             resp = []
             for f in flist:
                 junk, fn = os.path.split (f)
-                to_fname = dest + ('/%s' % fn)
-                if to_fname[:-1] != 'vos://':
-                    to_fname = to_fname.replace('///','//')
+                to_fname = (dest + ('/%s' % fn)).replace('///','//')
                 if verbose:
                     print ("(%d / %d) %s -> %s" % (fnum, nfiles, f, to_fname))
                 r = self.getFromURL(self.svc_url, "/mv?from=%s&to=%s" % \

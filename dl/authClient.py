@@ -116,7 +116,8 @@ def login(user, password=None, debug=False, verbose=False):
         return DEF_USERS[user]
     else:
         try:
-            response = ac_client.login(user, password, debug)
+            response = ac_client.login(user, password, debug=debug,
+                                       verbose=verbose)
         except Exception as e:
             response = str(e)
     return response
@@ -527,7 +528,7 @@ class authClient (object):
 
         # See if a datalab token file exists for the requested user.
         tok_file = ('%s/id_token.%s' % (self.home, username))
-        if self.debug:
+        if debug or self.debug:
             print ("top of login: tok_file = '" + tok_file + "'")
             print ("top of login: self.auth_token = '%s'" %
                    str(self.auth_token))
@@ -535,21 +536,20 @@ class authClient (object):
             os.system("cat " + tok_file)
 
         if password is None:
-            if os.path.exists(tok_file):
-                tok_fd = open(tok_file, "r")
-                o_tok = acToString(tok_fd.read(128))  # read the old token
-                tok_fd.close()
+            if os.path.exists(tok_file) and os.stat(tok_file).st_size > 0:
+                with open(tok_file, "r") as tok_fd:
+                    o_tok = acToString(tok_fd.read(128))  # read the old token
 
                 # Return a valid token, otherwise remove the file and obtain a
                 # new one.
                 if o_tok.startswith(username+'.') and self.isValidToken(o_tok):
                     self.username = username
                     self.auth_token = o_tok
-                    if self.debug:
+                    if debug or self.debug:
                         print ("using old token for '%s'" % username)
                     return acToString(o_tok)
                 else:
-                    if self.debug:
+                    if debug or self.debug:
                         print ("removing invalid token file '%s'" % tok_file)
                     os.remove(tok_file)
 
@@ -559,20 +559,20 @@ class authClient (object):
         query_args = {"username": username,
                       "password": password,
                       "profile": self.svc_profile,
-                      "debug": self.debug}
+                      "debug": (debug or self.debug)}
 
         response = 'None'
         try:
             r = requests.get(url, params=query_args)
             response = acToString(r.content)
 
-            if self.debug:
+            if debug or self.debug:
                 print ("%s:  resp = '%s'" % (str(r.status_code),response))
             if r.status_code != 200:
                 raise Exception(response)
 
         except Exception as e:
-            if self.debug:
+            if debug or self.debug:
                 print ("Raw exception msg = '%s'" % acToString(r.content))
             if self.isAlive(self.svc_url) == False:
                 raise dlAuthError("AuthManager Service not responding.")
@@ -596,16 +596,15 @@ class authClient (object):
         # Save the token and config file.
         if os.access(self.home, os.W_OK):
             tok_file = '%s/id_token.%s' % (self.home, username)
-            with open(tok_file, 'wb') as tok_fd:
-                if self.debug:
+            with open(tok_file, 'w') as tok_fd:
+                if debug or self.debug:
                     print ("login: writing new token for '%s'" % username)
                     print ("login: self.auth_token = '%s'" %
                            str(self.auth_token))
                     print ("login: token = ")
                     os.system('cat ' + tok_file)
 
-                tok_fd.write(acToString(self.auth_token))
-                tok_fd.close()
+                tok_fd.write(self.auth_token)
 
             self.config.set('login', 'status', 'loggedin')
             self.config.set('login', 'user', username)
@@ -627,6 +626,12 @@ class authClient (object):
             print ("logout: auth_token = '%s'" % self.auth_token)
             print ("logout: url = '%s'" % url)
 
+
+        try:
+            user, uid, gid, hash = token.strip().split('.', 3)
+        except Exception as e:
+            raise dlAuthError('Error: Invalid user token')
+
         if not self.isValidToken(token):
             return "Error: Invalid user token"
 
@@ -644,16 +649,9 @@ class authClient (object):
             raise dlAuthError(str(e))
         else:
             self.auth_token = None
-            tok_file = self.home + '/id_token.' + self.username
+            tok_file = self.home + '/id_token.' + user
             if os.path.exists(tok_file):
                 os.remove(tok_file)
-
-            # Update the config file.
-            if os.access(self.home, os.W_OK):
-                tok_file = '%s/id_token.%s' % (self.home, username)
-                with open(tok_file, 'wb') as tok_fd:
-                    tok_fd.write(acToString(self.auth_token))
-                    tok_fd.close()
 
             self.config.set('login', 'status', 'loggedout')
             self.config.set('login', 'user', '')
@@ -703,8 +701,7 @@ class authClient (object):
                 raise Exception(r.content)
 
         except Exception:
-            #raise dlAuthError(r.text)
-            raise dlAuthError(r.content)
+            raise dlAuthError(acToString(r.content))
         else:
             # Update the saved user token.
             print ("Updating saved user token ....")

@@ -6,26 +6,37 @@
 """ Client methods for the Data Lab Resource Management Service.
 """
 
-from __future__ import print_function
-
-__authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20180321'  # yyyymmdd
-
-
 import requests
-import os
+import os, time
 
 
 # The URL of the ResManager service to contact.  This may be changed by
-# passing a new URL into the set_svc_url() method before beginning.
+# passing a new URL into the set_service() method before beginning.
 
-DEF_SERVICE_URL = "https://datalab.noao.edu/res"
+#DEF_SERVICE_URL = "http://dlsvcs.datalab.noao.edu/res"
+DEF_SERVICE_URL = "http://dldev.datalab.noao.edu/res"
 
 # The requested service "profile".  A profile refers to the specific
 # machines and services used by the ResManager on the server.
 
 DEF_SERVICE_PROFILE = "default"
 
+
+
+# Pre-defined authentication tokens. These are fixed strings that provide
+# limited access to Data Lab services, this access is controlled on the
+# server-side so we don't need strict security here.
+
+ANON_TOKEN = "anonymous.0.0.anon_access"
+DEMO_TOKEN = "dldemo.99999.99999.demo_access"
+TEST_TOKEN = "dltest.99998.99998.test_access"
+
+# Set the default user accounts for the resource management service.  We don't
+# include privileged users so that account can remain secure.
+
+DEF_USERS = {'anonymous' : ANON_TOKEN, 
+             'dldemo'    : DEMO_TOKEN, 
+             'dltest'    : TEST_TOKEN}
 
 # API debug flag.
 DEBUG = False
@@ -36,8 +47,8 @@ DEBUG = False
 #
 #  Resource Management Client Interface
 #
-#  This API provides convenience methods that allow an application to
-#  import the Client class without having to explicitly instantiate a
+#  This API provides convenience methods that allow an application to 
+#  import the Client class without having to explicitly instantiate a 
 #  class object.  The parameter descriptions and example usage is given
 #  in the comments for the class methods.
 #
@@ -46,8 +57,8 @@ DEBUG = False
 def createUser (username, password, email, name, institute):
     try:
         resp = client.createUser (username, password, email, name, institute)
-    except dlResError as e:
-        resp = str (e)
+    except dlResError, e:
+        resp = str (e.message)
 
     return resp
 
@@ -99,20 +110,20 @@ def deleteResource (resource):
 
 
 # Service methods
-def set_svc_url (svc_url):
-    return client.set_svc_url (svc_url)
+def set_service (svc_url):
+    return client.set_service (svc_url)
 
-def get_svc_url ():
-    return client.set_svc_url ()
+def get_service ():
+    return client.set_service ()
 
 def set_profile (profile):
-    return client.set_profile (profile)
+    return client.set_profile (svc_url)
 
 def get_profile ():
     return client.get_profile ()
 
-def list_profiles (token, profile=None, format='text'):
-    return client.list_profiles (token, profile, format)
+def list_profiles (token):
+    return client.list_profiles (token)
 
 
 
@@ -126,71 +137,71 @@ class dlResError (Exception):
     def __init__(self, message):
         self.message = message
 
-
+        
 #####################################
 #  Resource Management client procedures
 #####################################
 
 class resClient (object):
-    """
-         RESCLIENT -- Client-side methods to access the Data Lab
+    """  
+         RESCLIENT -- Client-side methods to access the Data Lab 
                        Resource Management Service.
     """
 
     def __init__ (self):
         """ Initialize the Resource Manager client. """
 
-        self.svc_url = DEF_SERVICE_URL          # service URL
+        self.svc_url = DEF_SERVICE_URL	        # service URL
         self.svc_profile = DEF_SERVICE_PROFILE  # service prfile
         self.auth_token = None
 
         # Get the $HOME/.datalab directory.
         self.home = '%s/.datalab' % os.path.expanduser('~')
 
-        self.debug = DEBUG                      # interface debug flag
+        self.debug = DEBUG			# interface debug flag
+    
 
-
-    def set_svc_url (self, svc_url):
+    def set_service (self, svc_url):
         """ Set the URL of the Resource Management Service to be used.
-
+    
         Parameters
         ----------
         svc_url : str
             Resource Management service base URL to call.
-
+    
         Returns
         -------
         Nothing
-
+    
         Example
         -------
         .. code-block:: python
-
+    
             from dl import resMgr
-            resMgr.client.set_svc_url ("http://localhost:7001/")
+            resMgr.client.set_service ("http://localhost:7001/")
         """
 
         self.svc_url = svc_url
 
 
-    def get_svc_url (self):
+    def get_service (self):
         """ Return the currently-used Resource Management Service URL.
-
+    
         Parameters
         ----------
         None
-
+    
         Returns
         -------
         service_url : str
             The currently-used Resource Management Service URL.
-
+    
         Example
         -------
         .. code-block:: python
-
+    
             from dl import resMgr
-            service_url = resMgr.client.get_svc_url ()
+            service_url = resMgr.client.get_service ()
         """
 
         return self.svc_url
@@ -198,20 +209,20 @@ class resClient (object):
 
     def set_profile (self, profile):
         """ Set the requested service profile.
-
+    
         Parameters
         ----------
         profile : str
             Requested service profile string.
-
+    
         Returns
         -------
         Nothing
-
+    
         Example
         -------
         .. code-block:: python
-
+    
             from dl import resMgr
             token = resMgr.client.set_profile ("dev")
         """
@@ -221,20 +232,20 @@ class resClient (object):
 
     def get_profile (self):
         """ Get the requested service profile.
-
+    
         Parameters
         ----------
         None
-
+    
         Returns
         -------
         profile : str
             The currently requested service profile.
-
+    
         Example
         -------
         .. code-block:: python
-
+    
             from dl import resMgr
             profile = resMgr.client.get_profile ()
         """
@@ -242,20 +253,20 @@ class resClient (object):
         return self.svc_profile
 
 
-    def list_profiles (self, token, profile=None, format='text'):
+    def list_profiles (self):
 
         """ List the service profiles which can be accessed by the user.
-
+    
         Returns
         -------
         profiles : JSON string
-
+    
         Example
         -------
         .. code-block:: python
-
+    
             from dl import resMgr
-            profiles = resMgr.client.list_profiles (token, profile, format)
+            profiles = resMgr.client.list_profiles ()
         """
 
         pass
@@ -263,23 +274,23 @@ class resClient (object):
 
     def isAlive (self, svc_url):
         """ Check whether the ResManager service at the given URL is
-            alive and responding.  This is a simple call to the root
+            alive and responding.  This is a simple call to the root 
             service URL or ping() method.
         """
         try:
             r = requests.get(svc_url)
             if r.status_code != 200:
                 raise Exception (r.text)
-        except Exception:
+        except Exception as e:
             return False
         else:
             return True
 
 
 
-    ###################################################
+    ################################################### 
     #  USER MANAGEMENT
-    ###################################################
+    ################################################### 
 
     def createUser (self, username, password, email, name, institute):
         """ Create a new user in the system.
@@ -295,23 +306,23 @@ class resClient (object):
                        "debug" : self.debug }
         try:
             headers = {'X-DL-AuthToken': self.auth_token}
-            r = requests.get(url, params=query_args, header=headers)
+            r = requests.get(url, params=query_args)
             response = r.text
 
             if self.debug:
-                print ('resp = ' + response)
-                print ('code = ' + str(r.status_code))
+                print 'resp = ' + response
+                print 'code = ' + str(r.status_code)
             if r.status_code != 200:
                 raise Exception (r.text)
 
         except Exception as e:
-            raise dlResError ("Error creating user '" +
-                  username + "' : " + str(e))
+            raise dlResError ("Error creating user '" + 
+		username + "' : " + e.message)
         else:
             pass
 
         return response
-
+    
     def getUser (self, keyword):
         """ Read info about a user in the system.
         """
@@ -321,7 +332,7 @@ class resClient (object):
         """ Update info about a user in the system.
         """
         return self.clientUpdate ("user", keyword)
-
+    
     def deleteUser (self, token, username):
         """ Delete a user in the system.
         """
@@ -342,7 +353,7 @@ class resClient (object):
         """
         try:
             if self.debug:
-                print ("url = '" + url + "'")
+                print "url = '" + url + "'"
 
             # Add the auth token to the reauest header.
             headers = {'X-DL-AuthToken': token}
@@ -350,12 +361,12 @@ class resClient (object):
             response = r.text
 
             if r.status_code == 302:
-                return "OK"
+		return "OK"
             elif r.status_code != 200:
                 raise Exception (r.text)
 
         except Exception as e:
-            raise dlResError (str(e))
+            raise dlResError (e.message)
 
         return response
 
@@ -363,41 +374,42 @@ class resClient (object):
     def passwordReset (self, token, user, password):
         """ Change a user's password.
         """
-        print ('passwordReset:  token = %s' % token)
-        print ('passwordReset:  user = %s  pw = %s' % (user, password))
+	print ('passwordReset:  token = %s' % token)
+	print ('passwordReset:  user = %s  pw = %s' % (user, password))
 
         url = self.svc_url + ("/pwReset?user=%s&password=%s" % (user, password))
 
-        try:
+	try:
             resp = self.svcGet (token, url)
-            print (resp)
-        except Exception as e:
-            raise Exception (str(e))
-        else:
-            # Service call was successful.
-            print ("passwordReset:  success, removing local token file")
+	    print (resp)
+	except Exception as e:
+	    raise Exception (e.message)
+	else:
+	    # Service call was successful.
+	    print ("passwordReset:  success, removing local token file")
             tok_file = ('%s/id_token.%s' % (self.home, user))
-            if os.path.exists (tok_file):
-                os.remove(tok_file)
+	    if os.path.exists (tok_file):
+	        os.remove(tok_file)
 
-
+    
     def sendPasswordLink (self, token, user):
         """ Send a password-reset link to the user.
         """
         url = self.svc_url + ("/pwResetLink?user=%s" % user)
 
-        try:
+	try:
             # Add the auth token to the reauest header.
             headers = {'X-DL-AuthToken': token}
             r = requests.get(url, headers=headers)
+            response = r.text
 
             if r.status_code == 200:
-                return "OK"
-            else:
+		return "OK"
+	    else:
                 raise Exception (r.text)
 
-        except Exception as e:
-            raise Exception (str(e))
+	except Exception as e:
+	    raise Exception (e.message)
 
 
     def listFields (self):
@@ -405,22 +417,22 @@ class resClient (object):
         """
         url = self.svc_url + ("/listFields")
 
-        try:
+	try:
             return (self.svcGet (self.auth_token, url))
-        except Exception as e:
-            raise Exception (str(e))
+	except Exception as e:
+	    raise Exception (e.message)
 
-        pass
+	pass
 
     def approveUser (self, token, user):
         """ Approve a pending user request
         """
         url = self.svc_url + "/approveUser?approve=True&user=" + user
 
-        try:
+	try:
             return (self.svcGet (token, url))
-        except Exception as e:
-            raise Exception (str(e))
+	except Exception as e:
+	    raise Exception (e.message)
 
 
     def disapproveUser (self, token, user):
@@ -428,10 +440,10 @@ class resClient (object):
         """
         url = self.svc_url + "/approveUser?approve=False&user=" + user
 
-        try:
+	try:
             return (self.svcGet (token, url))
-        except Exception as e:
-            raise Exception (str(e))
+	except Exception as e:
+	    raise Exception (e.message)
 
 
     def userRecord (self, token, user, value, format):
@@ -443,14 +455,14 @@ class resClient (object):
         url = self.svc_url + \
                 ("/userRecord?user=%s&value=%s&fmt=%s" % (user,value,format))
 
-        try:
+	try:
             resp = self.svcGet (token, url)
-        except Exception as e:
-            raise Exception (str(e))
-        else:
-            return resp
+	except Exception as e:
+	    raise Exception (e.message)
+	else:
+	    return resp
 
-        return "OK"
+	return "OK"
 
 
     def listPending (self, token, verbose=False):
@@ -458,36 +470,36 @@ class resClient (object):
         """
         url = self.svc_url + "/pending?verbose=" + str(verbose)
 
-        try:
+	try:
             resp = self.svcGet (token, url)
-        except Exception as e:
-            raise Exception (str(e))
-        else:
-            return resp
+	except Exception as e:
+	    raise Exception (e.message)
+	else:
+	    return resp
 
-        return "OK"
+	return "OK"
 
 
     def setField (self, token, user, field, value):
         """ Set a specific user record field
         """
         url = self.svc_url + "/setField?user=%s&field=%s&value=%s" % \
-                       (user, field, value)
+			(user, field, value)
 
-        try:
+	try:
             resp = self.svcGet (token, url)
-        except Exception as e:
-            raise Exception (str(e))
-        else:
-            return resp
+	except Exception as e:
+	    raise Exception (e.message)
+	else:
+	    return resp
 
-        return "OK"
+	return "OK"
 
 
-
-    ###################################################
+    
+    ################################################### 
     #  GROUP MANAGEMENT
-    ###################################################
+    ################################################### 
 
     def createGroup (self, name):
         """ Create a new Group in the system.
@@ -499,7 +511,7 @@ class resClient (object):
                        "debug" : self.debug }
         try:
             if self.debug:
-                print ("createGroup: " + name)
+                print "createGroup: " + name
 
             # Add the auth token to the reauest header.
             headers = {'X-DL-AuthToken': self.auth_token}
@@ -510,13 +522,13 @@ class resClient (object):
             if r.status_code != 200:
                 raise Exception (r.text)
 
-        except Exception:
+        except Exception as e:
             raise dlResError (response)
         else:
             pass
 
         return response
-
+    
     def getGroup (self, keyword):
         """ Read info about a Group in the system.
         """
@@ -526,7 +538,7 @@ class resClient (object):
         """ Update info about a Group in the system.
         """
         return self.clientUpdate ("group", keyword, value)
-
+    
     def deleteGroup (self, token, group):
         """ Delete a Group in the system.
         """
@@ -536,12 +548,12 @@ class resClient (object):
 
         return self.clientDelete (token, "group", query_args)
 
-
-
-
-    ###################################################
+    
+    
+    
+    ################################################### 
     #  RESOURCE MANAGEMENT
-    ###################################################
+    ################################################### 
 
     def createResource (self, resource):
         """ Create a new Resource in the system.
@@ -553,7 +565,7 @@ class resClient (object):
                        "debug" : self.debug }
         try:
             if self.debug:
-                print ("createResource: " + resource)
+                print "createResource: " + resource
 
             # Add the auth token to the reauest header.
             headers = {'X-DL-AuthToken': self.auth_token}
@@ -564,23 +576,23 @@ class resClient (object):
             if r.status_code != 200:
                 raise Exception (r.text)
 
-        except Exception:
+        except Exception as e:
             raise dlResError (response)
         else:
             pass
 
         return response
-
+    
     def getResource (self, keyword):
         """ Read info about a Resource in the system.
         """
         return self.clientRead ("resource", keyword)
-
+    
     def setResource (self, keyword, value):
         """ Update info about a Resource in the system.
         """
         return self.clientUpdate ("resource", keyword, value)
-
+    
     def deleteResource (self, token, resource):
         """ Delete a Group in the system.
         """
@@ -590,12 +602,12 @@ class resClient (object):
 
         return self.clientDelete (token, "resource", query_args)
 
+    
+    
 
-
-
-    ###################################################
+    ################################################### 
     #  PRIVATE UTILITY METHODS
-    ###################################################
+    ################################################### 
 
     def debug (self, debug_val):
         self.debug = debug_val
@@ -607,13 +619,13 @@ class resClient (object):
             # Add the auth token to the reauest header.
             headers = {'X-DL-AuthToken': self.auth_token}
 
-            r = requests.get(url, headers=headers)
+            r = requests.get(url, params=args, headers=headers)
             response = r.text
 
             if r.status_code != 200:
                 raise Exception (r.text)
 
-        except Exception:
+        except Exception as e:
             raise dlResError ("Invalid user")
         else:
             return response
@@ -628,7 +640,7 @@ class resClient (object):
                        "debug" : self.debug }
         try:
             if self.debug:
-                print ("get" + what + ": url = '" + url + "'")
+                print "get" + what + ": url = '" + url + "'"
 
             # Add the auth token to the reauest header.
             headers = {'X-DL-AuthToken': self.auth_token}
@@ -639,7 +651,7 @@ class resClient (object):
             if r.status_code != 200:
                 raise Exception (r.text)
 
-        except Exception:
+        except Exception as e:
             raise dlResError (response)
         else:
             pass
@@ -657,7 +669,7 @@ class resClient (object):
                        "debug" : self.debug }
         try:
             if self.debug:
-                print ("set" + what + ": url = '" + url + "'")
+                print "set" + what + ": url = '" + url + "'"
 
             # Add the auth token to the reauest header.
             headers = {'X-DL-AuthToken': self.auth_token}
@@ -668,7 +680,7 @@ class resClient (object):
             if r.status_code != 200:
                 raise Exception (r.text)
 
-        except Exception:
+        except Exception as e:
             raise dlResError (response)
         else:
             pass
@@ -682,7 +694,7 @@ class resClient (object):
 
         try:
             if self.debug:
-                print ("delete" + what + ": url = '" + url + "'")
+                print "delete" + what + ": url = '" + url + "'"
 
             # Add the auth token to the reauest header.
             headers = {'X-DL-AuthToken': token}
@@ -693,7 +705,7 @@ class resClient (object):
             if r.status_code != 200:
                 raise Exception (r.text)
 
-        except Exception:
+        except Exception as e:
             raise dlResError (response)
         else:
             pass

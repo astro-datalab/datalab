@@ -11,7 +11,7 @@ try:
 except ImportError:
     from io import StringIO          # python 3
     from queue import deque
-    
+
 # std lib imports
 from functools import partial
 
@@ -36,7 +36,7 @@ class Querist:
 
         """Helper class to authenticate user with Data Lab, run queries, and
         convert results to the requested data type.
-        
+
         Parameters
         ----------
         username : str
@@ -55,7 +55,7 @@ class Querist:
 
         # obtain auth token in secure way
         self.token = self._getToken(username)
-            
+
         # map outfmt container types to a tuple:
         # (:func:`queryClient.query()` fmt-value, descriptive title,
         # processing function for the result string)
@@ -100,24 +100,24 @@ class Querist:
             print("Authentication successful.")
             return token
 
-        
+
     def clearToken(self):
 
         """Sets to token to empty string. Useful e.g. before saving a notebook."""
 
         self.token = ''
 
-    
-    def __call__(self,query=None,outfmt='array',preview=0,async=False):
-        
+
+    def __call__(self,query=None,outfmt='array',preview=0,asynq=False,**kw):
+
         """Submit `query` string via :func:`queryClient.query()`, and process
         the result.
-                
+
         Parameters
         ----------
         query : str or None
             The query string (sql). Example:
-            
+
             .. code-block:: python
 
                query = "SELECT ra,dec,g FROM ls_dr3.tractor_primary WHERE g != 'nan'"
@@ -125,7 +125,7 @@ class Querist:
             If None, and the async FIFO queue is not empty, this
             triggers an attempt to retrieve the query results for the
             first async job in int queue. See below for more details.
-               
+
         outfmt : str
             Desired output container type. The result of a query will
             be returned in this format. Possible values are:
@@ -141,14 +141,14 @@ class Querist:
             ``'table'`` -- Astropy.table Table object.
 
             ``'votable'`` -- Astropy.io.votable. Note that this is much slower than e.g. 'pandas' or 'array'.
-            
+
         preview : int
             Number of lines to preview on STDOUT. This does not count
             the header line. If `outfmt='votable'`, `preview` is not
             very useful, because of the XML that votable carries
             around. Default: 0
-            
-        async : bool
+
+        asynq : bool
             If ``False`` (default), submit queries in sync mode,
             i.e. expecting results immediately.
 
@@ -163,32 +163,39 @@ class Querist:
             query in async mode, if the queryManager / DB raise
             Exception that "the query not suitable for sync mode".
 
+            ``asynq`` replaces the previous ``async`` parameter, because ``async``
+            was promoted to a keyword in Python 3.7. Users of Python versions
+            prior to 3.7 can continue to use the ``async`` keyword.
         """
+
+        # Process optional keyword arguments.
+        if 'async' in kw:
+            asynq = kw['async']
 
         if query is None:
             response, outfmt, preview = self.checkAsyncJob()
 
         else:
             try:
-                response = queryClient.query(self.token,sql=query,fmt=self.mapping[outfmt][0],async=async)  # submit the query, using your authentication token
+                response = queryClient.query(self.token,sql=query,fmt=self.mapping[outfmt][0],asynq=asynq)  # submit the query, using your authentication token
             except Exception as e:
                 print(str(e))
                 raise
 
-        output = self._processOutput(response,outfmt,async,preview)
-        
+        output = self._processOutput(response,outfmt,asynq,preview)
+
         return output
 
 
     def clearQueue(self):
 
         """Clears the async job queue, i.e. they become unretrievable."""
-        
+
         print("Clearing the queue of async queries.")
         self.openjobs.clear()
 
-        
-    def _processOutput(self,response,outfmt,async,preview):
+
+    def _processOutput(self,response,outfmt,asynq,preview):
 
         """Process the responses returned by calls to
         :func:`queryClient.query()`, either directly or indirectly
@@ -206,14 +213,14 @@ class Querist:
         outfmt : str
             As in :func:`__init__()`.
 
-        async : bool.
+        asynq : bool.
             As in :func:`__init__()`.
 
         preview : int
             As in :func:`__init__()`.
 
         """
-        
+
         # response=None means checkAsyncJob() was called, but status
         # was not 'COMPLETED'. No processing in this case.
         if response is None:
@@ -223,7 +230,7 @@ class Querist:
         else:
 
             # ... and async is False, means response is the returned query result; process it
-            if async is False:
+            if asynq is False:
                 s = StringIO(response)
                 output = self.mapping[outfmt][2](s)
                 print("Returning %s" % self.mapping[outfmt][1])
@@ -231,12 +238,12 @@ class Querist:
                 return output
 
             # ... and async is True, means the response is an async query jobID; put in in the FIFO queue
-            elif async is True:
+            elif asynq is True:
                 self.openjobs.append((response,outfmt,preview))
                 print("Asynchronous query submitted as jobid=%s" % response)
                 print("Get results a bit later with: result = Q()")
                 return None
-    
+
 
     def checkAsyncJob(self):
 
@@ -261,7 +268,7 @@ class Querist:
         try:
             jobid, outfmt, preview = self.openjobs.popleft()
             print("jobid, outfmt, preview", jobid, outfmt, preview)
-            
+
         except IndexError:
             print("There are no pending async jobs.")
             return None, None, None
@@ -272,7 +279,7 @@ class Querist:
 
         else:
             status = queryClient.status(self.token,jobid)
-            
+
             if status in ('QUEUED','EXECUTING'):
                 print("Async query job %s is currently %s. Please check a bit later with: result=Q()" % (jobid,status))
                 self.openjobs.appendleft((jobid,outfmt,preview))  # putting back in queue (from left, i.e. old position)
@@ -283,7 +290,7 @@ class Querist:
                 response = queryClient.results(self.token,jobid)
                 return response, outfmt, preview
 
-    
+
     def _printPreview(self,response,preview):
 
         """Print to STDOUT `preview` number of lines from the string-valued
@@ -297,7 +304,7 @@ class Querist:
         ----------
         response : str
             A string-valued result returned by the :mod:`queryClient`.
-        
+
         preview : int
             As in :func:`__init__()`.
 
@@ -306,13 +313,13 @@ class Querist:
         Nothing.
 
         """
-        
+
         if response is not None:
             if preview > 0: # TODO: take a (large enough) heading sub-string of response, and count lines on that)
                 print("RESULT PREVIEW (%d rows)" % preview)
                 print(response[:response.replace('\n', '|', preview).find('\n')]) # print the response preview
 
-                
+
     def printMapping(self):
 
         """Pretty-print to STDOUT the available `outfmt` values.
@@ -326,7 +333,7 @@ class Querist:
         Nothing
 
         """
-        
+
         length = max([len(s) for s in self.mapping.keys()]) + 1 # max length of any outfmt string, plus one
         fmt = "%%%ds   %%s" % length
         title = fmt % ("'outfmt' arg","Returned output")  # mini table header

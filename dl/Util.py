@@ -17,13 +17,14 @@ Import via
 .. code-block:: python
 
     from dl import Util
-    from dl.Util import multifunc, multimethod, def_token
+    from dl.Util import ultimethod, def_token
 """
 
 import os
 import mimetypes
 import random
 import string
+import wrapt
 
 try:
     import ConfigParser                         # Python 2
@@ -79,6 +80,7 @@ def multimethod(module, nargs):
          method parameters.  When methods are called, all original arguments
          and keywords are passed.
     '''
+    @wrapt.decorator
     def register(function):
         function = getattr(function, "__lastreg__", function)
         name = function.__name__
@@ -97,71 +99,6 @@ def multimethod(module, nargs):
     if module not in method_registry.keys():
         method_registry[module] = {}
     registry = method_registry[module]
-
-    return register
-
-
-
-# =========================================================================
-#  MULTIFUNCTION -- An object class to manage module functions.
-#
-# Globals
-func_registry   = {}			# Function registry
-
-class MultiFunction(object):
-    ''' MultiFunction -- An object class to manage the module functions
-        such that functions may be overloaded and the appropriate functions
-        is dispatched depending on the calling arguments.
-    '''
-    def __init__(self, module, name):
-        self.module = module
-        self.name = name
-        self.funcmap = {}
-
-    def __call__(self, *args, **kw):
-        '''  Call the appropriate instance of the function.
-        '''
-        # Lookup the function to call in the method map.
-        reg_name = self.module + '.' + self.name + '.' + str(len(args))
-        function = self.funcmap.get(reg_name)
-        if function is None:
-            raise TypeError("No MultiFunction match found")
-
-        # Call the function with all original args/keywords and return result.
-        return function(*args, **kw)
-
-    def register(self, nargs, function, module):
-        ''' Register the method based on the number of method arguments.
-            Duplicates are rejected when two method names with the same
-            number of arguments are registered.  For generality, we
-            construct a registry id from the method name and no. of args.
-        '''
-        reg_name = module + '.' + function.__name__ + '.' + str(nargs)
-        if reg_name in self.funcmap:
-            raise TypeError("duplicate registration")
-        self.funcmap[reg_name] = function
-
-
-def multifunc(module, nargs):
-    '''  Wrapper function to implement multimethod for functions.  The
-         identifying signature in this case is the number of required
-         method parameters.  When methods are called, all original arguments
-         and keywords are passed.
-    '''
-    def register(function):
-        function = getattr(function, "__lastreg__", function)
-        name = function.__name__
-        mf = registry.get(name)
-        if mf is None:
-            mf = registry[name] = MultiFunction(module, name)
-        mf.register(nargs, function, module)
-        mf.__lastreg__ = function
-
-        return mf
-
-    if module not in func_registry.keys():
-        func_registry[module] = {}
-    registry = func_registry[module]
 
     return register
 

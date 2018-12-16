@@ -17,14 +17,13 @@ Import via
 .. code-block:: python
 
     from dl import Util
-    from dl.Util import ultimethod, def_token
+    from dl.Util import multimethod, def_token
 """
 
 import os
 import mimetypes
 import random
 import string
-import wrapt
 
 try:
     import ConfigParser                         # Python 2
@@ -48,10 +47,8 @@ class MultiMethod(object):
         self.name = name
         self.methodmap = {}
 
-    def __call__(self, instance, *args, **kw):
-        '''  Call the appropriate instance of the class method.  In this
-             case, 'self' is a MultiMethod instance, 'instance' is the object
-             we want to bind to
+    def __call__(self, *args, **kw):
+        '''  Call the appropriate instance of the class method.
         '''
         # Lookup the function to call in the method map.
         reg_name = self.module + '.' + self.name + '.' + str(len(args))
@@ -61,7 +58,7 @@ class MultiMethod(object):
 
         # Call the method instance with all original args/keywords and
         # return the result.
-        return function (instance, *args, **kw)
+        return function (*args, **kw)
 
     def register(self, nargs, function, module):
         ''' Register the method based on the number of method arguments.
@@ -80,7 +77,6 @@ def multimethod(module, nargs):
          method parameters.  When methods are called, all original arguments
          and keywords are passed.
     '''
-    @wrapt.decorator
     def register(function):
         function = getattr(function, "__lastreg__", function)
         name = function.__name__
@@ -90,11 +86,7 @@ def multimethod(module, nargs):
         mm.register(nargs, function, module)
         mm.__lastreg__ = function
 
-        # return function instead of an object - Python binds this automatically
-        def getter(instance, *args, **kwargs):
-            return mm(instance, *args, **kwargs)
-
-        return getter
+        return mm
 
     if module not in method_registry.keys():
         method_registry[module] = {}

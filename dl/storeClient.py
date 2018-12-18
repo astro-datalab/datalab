@@ -2074,17 +2074,21 @@ sc_client = getClient (profile=DEF_PROFILE, svc_url=DEF_SERVICE_URL)
 
 def scToString(s):
     """ scToString -- Force a return value to be type 'string' for all
-                      Python versions.
+                      Python versions.  If there is an error, return the
+                      original.
     """
-    if is_py3:
-        if isinstance(s,bytes):
-            strval = str(s.decode())
-        elif isinstance(s,str):
-            strval = s
-    else:
-        if isinstance(s,bytes) or isinstance(s,unicode):
-            strval = str(s)
+    try:
+        if is_py3:
+            if isinstance(s,bytes):
+                strval = str(s.decode())
+            elif isinstance(s,str):
+                strval = s
         else:
-            strval = s
+            if isinstance(s,bytes) or isinstance(s,unicode):
+                strval = str(s)
+            else:
+                strval = s
+    except Exception as e:
+        return s
 
     return strval

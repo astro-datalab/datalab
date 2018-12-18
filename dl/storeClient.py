@@ -196,44 +196,44 @@ def stat (path, token=None, verbose=True):
 # GET -- Retrieve a file (or files) from the Store Manager service
 #
 @multimethod('sc',3)
-def get  (token, fr, to, verbose=True, debug=False):
+def get  (token, fr, to, mode='text', verbose=True, debug=False):
     '''  Usage:  storeClient.get (token, fr, to)
     '''
     return sc_client._get (fr=fr, to=to, token=def_token(token),
-                        verbose=verbose, debug=debug)
+                        mode=mode, verbose=verbose, debug=debug)
 
 @multimethod('sc',2)
-def get  (opt1, opt2, fr='', to='', token=None, verbose=True, debug=False):
+def get  (opt1, opt2, fr='', to='', token=None, mode='text', verbose=True, debug=False):
     '''  Usage:  storeClient.get (fr, to)
     '''
     if opt1 is not None and len(opt1.split('.')) >= 4:
         # opt1 looks like a token
         return sc_client._get (fr=opt2, to=to, token=def_token(opt1),
-                            verbose=verbose, debug=debug)
+                            mode=mode, verbose=verbose, debug=debug)
     else:
         # opt1 is the 'fr' value, opt2 is the 'to' value
         return sc_client._get (fr=opt1, to=opt2, token=def_token(token),
-                            verbose=verbose, debug=debug)
+                            mode=mode, verbose=verbose, debug=debug)
 
 @multimethod('sc',1)
-def get (optval, fr='', to='', token=None, verbose=True, debug=False):
+def get (optval, fr='', to='', token=None, mode='text', verbose=True, debug=False):
     '''  Usage:  storeClient.get (fr)
     '''
     if optval is not None and len(optval.split('.')) >= 4:
         # optval looks like a token
         return sc_client._get (fr=fr, to=to, token=def_token(optval),
-                            verbose=verbose, debug=debug)
+                            mode=mode, verbose=verbose, debug=debug)
     else:
         # optval is the 'fr' value
         return sc_client._get (fr=optval, to=to, token=def_token(token),
-                            verbose=verbose, debug=debug)
+                            mode=mode, verbose=verbose, debug=debug)
 
 @multimethod('sc',0)
-def get  (token=None, fr='', to='', verbose=True, debug=False):
+def get  (token=None, fr='', to='', mode='text', verbose=True, debug=False):
     '''  Usage:  storeClient.get (token, fr, to)
     '''
     return sc_client._get (fr=fr, to=to, token=def_token(token),
-                        verbose=verbose, debug=debug)
+                        mode=mode, verbose=verbose, debug=debug)
 
 
 # --------------------------------------------------------------------
@@ -870,47 +870,50 @@ class storeClient (object):
     # GET -- Retrieve a file from the store manager service
     # --------------------------------------------------------------------
     @multimethod('_sc',3)
-    def get (self, token, fr, to, verbose=True, debug=False):
+    def get (self, token, fr, to, mode='text', verbose=True, debug=False):
         '''  Usage:  storeClient.get (token, fr, to)
         '''
         return self._get (fr=fr, to=to, token=def_token(token),
-                          verbose=verbose, debug=debug)
+                          mode=mode, verbose=verbose, debug=debug)
 
     @multimethod('_sc',2)
     def get (self, opt1, opt2, fr='', to='', token=None, verbose=True,
-             debug=False):
+             mode='text', debug=False):
         '''  Usage:  storeClient.get (fr, to)
         '''
         if opt1 is not None and len(opt1.split('.')) >= 4:
             # opt1 looks like a token
             return self._get (fr=opt2, to=to, token=def_token(opt1),
-                              verbose=verbose, debug=debug)
+                              mode=mode, verbose=verbose, debug=debug)
         else:
             # opt1 is the 'fr' value, opt2 is the 'to' value
             return self._get (fr=opt1, to=opt2, token=def_token(token),
-                              verbose=verbose, debug=debug)
+                              mode=mode, verbose=verbose, debug=debug)
 
     @multimethod('_sc',1)
-    def get (self, optval, fr='', to='', token=None, verbose=True, debug=False):
+    def get (self, optval, fr='', to='', token=None, mode='text',
+             verbose=True, debug=False):
         '''  Usage:  storeClient.get (fr)
         '''
         if optval is not None and len(optval.split('.')) >= 4:
             # optval looks like a token
             return self._get (fr=fr, to=to, token=def_token(optval),
-                              verbose=verbose, debug=debug)
+                              mode=mode, verbose=verbose, debug=debug)
         else:
             # optval is the 'fr' value
             return self._get (fr=optval, to=to, token=def_token(token),
-                              verbose=verbose, debug=debug)
+                              mode=mode, verbose=verbose, debug=debug)
 
     @multimethod('_sc',0)
-    def get (self, fr='', to='', token=None, verbose=True, debug=False):
+    def get (self, fr='', to='', token=None, mode='text', verbose=True,
+             debug=False):
         '''  Usage:  storeClient.get (token, fr, to)
         '''
         return self._get (fr=fr, to=to, token=def_token(token),
-                          verbose=verbose, debug=debug)
+                          mode=mode, verbose=verbose, debug=debug)
 
-    def _get (self, token=None, fr='', to='', verbose=True, debug=False):
+    def _get (self, token=None, fr='', to='', mode='text', verbose=True,
+              debug=False):
         """ Retrieve a file from the store manager service
 
         Parameters
@@ -924,6 +927,14 @@ class storeClient (object):
         to : str
             Name of the file(s) to locally.  If not specified, the contents
             of the file are returned to the caller.
+
+        mode : [binary | text]
+            Return data type if note saving to file.  If set to 'text' the
+            file contents are converted to string -- this is appropriate when
+            dealing with unicode but may fail with general binary data.  If
+            set to 'binary' the raw content of the HTTP response is returned --
+            for Python 2 this will be a 'string', for Python 3 it will be a
+            'bytes' data type (the caller is responsible for conversion).
 
         Returns
         -------
@@ -1049,7 +1060,10 @@ class storeClient (object):
             url = requests.get(self.svc_url + "/get?name=%s" % nm,
                                headers=hdrs)
             r = requests.get(url.text, stream=False, headers=hdrs)
-            return scToString (r.content)
+            if mode == 'text':
+                return scToString (r.content)
+            else:
+                return r.content
 
 
     # --------------------------------------------------------------------
@@ -1435,9 +1449,10 @@ class storeClient (object):
     def ls  (self, name='vos://', token=None, format='csv', verbose=False):
         '''  Usage:  storeClient.ls ()
         '''
-        return self._ls (name=name, format=format, token=def_token(token))
+        return self._ls (name=name, format=format, token=def_token(token),
+                         verbose=verbose)
 
-    def _ls (self, token=None, name='', format='csv', verbose=False):
+    def _ls (self, token=None, name='vos://', format='csv', verbose=False):
         """
             Get a file/directory listing from the store manager service
 

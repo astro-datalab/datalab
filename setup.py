@@ -54,5 +54,5 @@ setup(name="datalab-client",
         'Programming Language :: Python',
         ], 
       install_requires=['requests>=2.7', 'argparse', 'lxml', 'httplib2', 'numpy', 'astropy', 'pyvo', 'matplotlib', 'html2text'],
-      requires=['requests (>=2.7)', 'argparse', 'lxml', 'httplib2', 'numpy', 'astropy', 'pyvo', 'matplotlib', 'html2text']
+      requires=['requests (>=2.7)', 'argparse', 'lxml', 'httplib2', 'numpy', 'astropy', 'pyvo', 'matplotlib', 'html2text', 'wrapt']
       )

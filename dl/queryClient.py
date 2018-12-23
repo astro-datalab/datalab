@@ -187,11 +187,11 @@ def get_timeout_request ():
 #
 @multimethod('qc',1)
 def schema (value, format='text', profile=None):
-    return qc_client.schema (value=value, format=format, profile=profile)
+    return qc_client._schema (value=value, format=format, profile=profile)
 
 @multimethod('qc',0)
 def schema (value='', format='text', profile=None):
-    return qc_client.schema (value=value, format=format, profile=profile)
+    return qc_client._schema (value=value, format=format, profile=profile)
 
 
 # -----------------------------

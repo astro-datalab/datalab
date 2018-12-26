@@ -193,6 +193,13 @@ def schema (value, format='text', profile=None):
 def schema (value='', format='text', profile=None):
     return qc_client._schema (value=value, format=format, profile=profile)
 
+# --------------------------------------------------------------------
+# SERVICES -- List public storage services
+#
+def services (name=None, svc_type=None, format=None, profile='default'):
+    return qc_client.services (name=name, svc_type=svc_type, format=format,
+                               profile=profile)
+
 
 # -----------------------------
 #  Query Functions
@@ -914,6 +921,34 @@ class queryClient (object):
             raise queryClientError("Error getting schema: " + value)
 
         return qcToString(resp)
+
+
+    def services (self, name=None, svc_type='vos', format=None,
+                  profile='default'):
+        return self._services (name=name, svc_type=svc_type, format=format,
+                                   profile=profile)
+
+    def _services (self, name=None, svc_type='vos', format=None,
+                  profile='default'):
+        """
+        """
+        dburl = '/services?'
+        if profile is not None and profile != 'None' and profile != '':
+            dburl += ("profile=%s" % profile)
+        if name is not None and name != 'None' and name != '':
+            dburl += ("&name=%s" % name.replace('%','%25'))
+        if svc_type is not None and svc_type != 'None' and svc_type != '':
+            dburl += ("&type=%s" % svc_type)
+        if format is not None and format != 'None' and format != '':
+            dburl += "&format=%s" % format
+
+        r = self.getFromURL(self.svc_url, dburl, def_token(None))
+        svcs = qcToString(r.content)
+        if '{' in svcs:
+            svcs = json.loads(svcs)
+
+        return qcToString(svcs)
+
 
 
     # ###########################

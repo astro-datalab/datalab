@@ -52,6 +52,7 @@ is_py3 = sys.version_info.major == 3
 # passing a new URL into the set_svc_url() method before beginning.
 
 DEF_SERVICE_URL = 'https://datalab.noao.edu/storage'
+QM_SERVICE_URL = 'https://datalab.noao.edu/query'
 
 
 # Allow the service URL for dev/test systems to override the default.
@@ -60,8 +61,10 @@ THIS_IP   = socket.gethostbyname(socket.gethostname())  # host IP address
 
 if THIS_HOST[:5] == 'dldev':
     DEF_SERVICE_URL  = 'http://dldev.datalab.noao.edu/storage'
+    QM_SERVICE_URL = 'http://dldev.datalab.noao.edu/query'
 elif THIS_HOST[:6] == 'dltest':
     DEF_SERVICE_URL  = 'http://dltest.datalab.noao.edu/storage'
+    QM_SERVICE_URL = 'http://dltest.datalab.noao.edu/query'
 
 # The requested query 'profile'.  A profile refers to the specific
 # machines and services used by the Storage Manager on the server.
@@ -117,6 +120,13 @@ def set_profile (profile=DEF_PROFILE):
 #
 def get_profile ():
     return sc_client.get_profile ()
+
+# --------------------------------------------------------------------
+# SERVICES -- List public storage services
+#
+def services (name=None, svc_type='vos', format=None, profile='default'):
+    return sc_client.services (name=name, svc_type=svc_type, format=format, 
+                               profile=profile)
 
 # --------------------------------------------------------------------
 # LIST_PROFILES -- List the profiles supported by the storage manager service
@@ -540,6 +550,7 @@ class storeClient (object):
         """ Initialize the store client object.
         """
         self.svc_url = svc_url                  # StoreMgr service URL
+        self.qm_svc_url = QM_SERVICE_URL        # QueryMgr service URL
         self.svc_profile = profile              # StoreMgr service profile
 
         self.hostip = THIS_IP
@@ -725,6 +736,35 @@ class storeClient (object):
 
         return scToString(profiles)
 
+
+    # --------------------------------------------------------------------
+    # SERVICES -- List public storage services
+    #
+    def services (self, name=None, svc_type='vos', format=None,
+                  profile='default'):
+        return self._services (name=name, svc_type=svc_type, format=format, 
+                                   profile=profile)
+
+    def _services (self, name=None, svc_type='vos', format=None,
+                   profile='default'):
+        """
+        """
+        dburl = '/services?'
+        if profile is not None and profile != 'None' and profile != '':
+            dburl += ("profile=%s" % profile)
+        if name is not None and name != 'None' and name != '':
+            dburl += ("&name=%s" % name.replace('%','%25'))
+        if svc_type is not None and svc_type != 'None' and svc_type != '':
+            dburl += ("&type=%s" % svc_type)
+        if format is not None and format != 'None' and format != '':
+            dburl += "&format=%s" % format
+
+        r = self.getFromURL(self.qm_svc_url, dburl, def_token(None))
+        svcs = scToString(r.content)
+        if '{' in svcs:
+            svcs = json.loads(svcs)
+
+        return scToString(svcs)
 
 
     # -----------------------------

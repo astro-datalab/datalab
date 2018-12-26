@@ -32,7 +32,7 @@ def my_test_suite():
 
 setup(name="datalab-client",
       version=dl_version,
-      url="https://github.noao.edu/noao-datalab/datalab-client",
+      url="https://github.com/noaodatalab/datalab.git",
       description="Tools for interacting with NOAO Data Lab.",
       author="M.J. Graham, M.J. Fitzpatrick, D.L. Nidever, R. Nikutta",
       author_email="graham@noao.edu, fitz@noao.edu, dnidever@noao.edu, nikutta@noao.edu",

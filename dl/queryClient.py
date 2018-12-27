@@ -1141,12 +1141,15 @@ class queryClient (object):
 
         if adql is not None and adql != '':
             # Check for unsupported ADQL functions.
-            if 'q3c_' in adql.lower():
-                msg = "Q3C functions are not allowed in ADQL queries"
-                raise queryClientError(msg)
-            if 'healpix_' in adql.lower():
-                msg = "Healpix functions are is not allowed in ADQL queries"
-                raise queryClientError(msg)
+            #if 'q3c_' in adql.lower():
+            #    msg = "Q3C functions are not allowed in ADQL queries"
+            #    raise queryClientError(msg)
+            #if 'healpix_' in adql.lower():
+            #    msg = "Healpix functions are is not allowed in ADQL queries"
+            #    raise queryClientError(msg)
+            #if 'htm_' in adql.lower():
+            #    msg = "HTM functions are is not allowed in ADQL queries"
+            #    raise queryClientError(msg)
 
             query = quote_plus(adql)		# URL-encode the query string
             dburl = '%s/query?adql=%s&ofmt=%s&out=%s&async=%s' % (

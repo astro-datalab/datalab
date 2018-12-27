@@ -785,7 +785,7 @@ class Query2 (Task):
         try:
             res = queryClient.query (token, adql=adql, sql=sql,
                         fmt=self.fmt.value, out=self.out.value,
-                        asynq=getattr(self,"async").value, timeout=self.timeout.value)
+                        async_=getattr(self,"async").value, timeout=self.timeout.value)
 
             if getattr(self,"async").value:
                 print (res)                         # Return the JobID

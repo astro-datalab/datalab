@@ -64,17 +64,17 @@ def drop(table):
     r = requests.get(dburl, headers=headers)
     return r.content.decode('utf-8')
 
-def sqlquery(qry, fmt='csv', out=None, asynq=False):
+def sqlquery(qry, fmt='csv', out=None, async_=False):
   qry = quote_plus(qry)
-  dburl = '%s/query?sql=%s&ofmt=%s&out=%s&async=%s' % (QM_URL, qry, fmt, out, asynq)
+  dburl = '%s/query?sql=%s&ofmt=%s&out=%s&async=%s' % (QM_URL, qry, fmt, out, async_)
   dburl += "&profile=%s" % "default"
   headers = {'Content-Type': 'text/ascii', 'X-DL-AuthToken': TEST_TOKEN}
   r = requests.get(dburl, headers=headers)
   return r.content.decode('utf-8')
 
-def adqlquery(qry, fmt='csv', out=None, asynq=False):
+def adqlquery(qry, fmt='csv', out=None, async_=False):
   qry = quote_plus(qry)
-  dburl = '%s/query?adql=%s&ofmt=%s&out=%s&async=%s' % (QM_URL, qry, fmt, out, asynq)
+  dburl = '%s/query?adql=%s&ofmt=%s&out=%s&async=%s' % (QM_URL, qry, fmt, out, async_)
   dburl += "&profile=%s" % "default"
   headers = {'Content-Type': 'text/ascii', 'X-DL-AuthToken': TEST_TOKEN}
   r = requests.get(dburl, headers=headers)
@@ -147,19 +147,19 @@ class TestQuerySql(unittest.TestCase):
     def test_querysqlcsv(self):
         self.qry = qry
         # Run the list command
-        res = queryClient.query(TEST_TOKEN,sql=self.qry,out=None,asynq=False,fmt='csv')
+        res = queryClient.query(TEST_TOKEN,sql=self.qry,out=None,async_=False,fmt='csv')
         self.assertEqual(res,qryrescsv)
 
     def test_querysqlascii(self):
         self.qry = qry
         # Run the list command
-        res = queryClient.query(TEST_TOKEN,sql=self.qry,out=None,asynq=False,fmt='ascii')
+        res = queryClient.query(TEST_TOKEN,sql=self.qry,out=None,async_=False,fmt='ascii')
         self.assertEqual(res,qryresascii)
 
     def test_querysqlvotable(self):
         self.qry = qry
         # Run the list command
-        res = queryClient.query(TEST_TOKEN,sql=self.qry,out=None,asynq=False,fmt='votable')
+        res = queryClient.query(TEST_TOKEN,sql=self.qry,out=None,async_=False,fmt='votable')
         self.assertEqual(res,qryresvotablesql)
 
 class TestQuerySqlToVospaceCsv(unittest.TestCase):
@@ -178,7 +178,7 @@ class TestQuerySqlToVospaceCsv(unittest.TestCase):
     def test_querysqltovospacecsv(self):
         self.qry = qry
         # Run the list command
-        res = queryClient.query(TEST_TOKEN,sql=self.qry,out='vos://'+self.outfile,asynq=False,fmt='csv')
+        res = queryClient.query(TEST_TOKEN,sql=self.qry,out='vos://'+self.outfile,async_=False,fmt='csv')
         self.assertEqual(res,'OK')
         self.assertTrue(fileExists(self.outfile))
         # Get the results and compare
@@ -205,7 +205,7 @@ class TestQuerySqlToVospaceFits(unittest.TestCase):
     def test_querysqltovospacefits(self):
         self.qry = qry
         # Run the list command
-        res = queryClient.query(TEST_TOKEN,sql=self.qry,out='vos://'+self.outfile,asynq=False,fmt='fits')
+        res = queryClient.query(TEST_TOKEN,sql=self.qry,out='vos://'+self.outfile,async_=False,fmt='fits')
         self.assertEqual(res,'OK')
         self.assertTrue(fileExists(self.outfile))
         # Get the results and compare
@@ -231,13 +231,13 @@ class TestQuerySqlToMydb(unittest.TestCase):
     def test_querysqltomydb(self):
         self.qry = qry
         # Create the mydb table from a query
-        res = queryClient.query(TEST_TOKEN,sql=self.qry,out='mydb://'+self.table,asynq=False)
+        res = queryClient.query(TEST_TOKEN,sql=self.qry,out='mydb://'+self.table,async_=False)
         self.assertEqual(res,'OK')
         res = list(self.table)
         self.assertNotEqual(res,'relation "'+self.table+'" not known')
         # Get the results and compare
         mydbqry = 'select * from mydb://'+self.table
-        res = sqlquery(mydbqry,fmt='csv',asynq=False,out=None)
+        res = sqlquery(mydbqry,fmt='csv',async_=False,out=None)
         tab = np.loadtxt(StringIO(res),unpack=False,skiprows=1,delimiter=',')
         self.assertTrue(np.array_equiv(tab[:,0],qryresid.astype('float64')))
         self.assertTrue(np.allclose(tab[:,1],qryresra))
@@ -248,7 +248,7 @@ class TestQueryAdql(unittest.TestCase):
     def test_queryadqlcsv(self):
         self.qry = qryadql
         # Run the query command
-        res = queryClient.query(TEST_TOKEN,adql=self.qry,out=None,asynq=False,fmt='csv')
+        res = queryClient.query(TEST_TOKEN,adql=self.qry,out=None,async_=False,fmt='csv')
         tab = np.loadtxt(StringIO(res),unpack=False,skiprows=1,delimiter=',')
         self.assertTrue(np.array_equiv(tab[:,0],qryresid.astype('float64')))
         self.assertTrue(np.allclose(tab[:,1],qryresra))
@@ -257,7 +257,7 @@ class TestQueryAdql(unittest.TestCase):
     def test_queryadqlascii(self):
         self.qry = qryadql
         # Run the query command
-        res = queryClient.query(TEST_TOKEN,adql=self.qry,out=None,asynq=False,fmt='ascii')
+        res = queryClient.query(TEST_TOKEN,adql=self.qry,out=None,async_=False,fmt='ascii')
         tab = np.loadtxt(StringIO(res),unpack=False,skiprows=1,delimiter='\t')
         self.assertTrue(np.array_equiv(tab[:,0],qryresid.astype('float64')))
         self.assertTrue(np.allclose(tab[:,1],qryresra))
@@ -266,7 +266,7 @@ class TestQueryAdql(unittest.TestCase):
     def test_queryadqlvotable(self):
         self.qry = qryadql
         # Run the query command
-        res = queryClient.query(TEST_TOKEN,adql=self.qry,out=None,asynq=False,fmt='votable')
+        res = queryClient.query(TEST_TOKEN,adql=self.qry,out=None,async_=False,fmt='votable')
         # remove whitespace when comparing the strings
         self.assertEqual("".join(res.split()),"".join(qryresvotableadql.split()))
 
@@ -286,7 +286,7 @@ class TestQueryAdqlToVospaceCsv(unittest.TestCase):
     def test_queryadqltovospacecsv(self):
         self.qry = qryadql
         # Run the list command
-        res = queryClient.query(TEST_TOKEN,adql=self.qry,out='vos://'+self.outfile,asynq=False,fmt='csv')
+        res = queryClient.query(TEST_TOKEN,adql=self.qry,out='vos://'+self.outfile,async_=False,fmt='csv')
         self.assertEqual(res,'OK')
         self.assertTrue(fileExists(self.outfile))
         # Get the results and compare
@@ -316,7 +316,7 @@ class TestQueryAdqlToVospaceFits(unittest.TestCase):
     def test_queryadqltovospacefits(self):
         self.qry = qryadql
         # Run the list command
-        res = queryClient.query(TEST_TOKEN,adql=self.qry,out='vos://'+self.outfile,asynq=False,fmt='fits')
+        res = queryClient.query(TEST_TOKEN,adql=self.qry,out='vos://'+self.outfile,async_=False,fmt='fits')
         self.assertEqual(res,'OK')
         self.assertTrue(fileExists(self.outfile))
         # Get the results and compare
@@ -336,7 +336,7 @@ class TestQueryAsync(unittest.TestCase):
 
     def test_queryasync(self):
         # Run the query command
-        jobid = queryClient.query(TEST_TOKEN,sql=self.qry,asynq=True)
+        jobid = queryClient.query(TEST_TOKEN,sql=self.qry,async_=True)
         if qstatus(jobid) != 'COMPLETED':
           time.sleep(2)
         # Get the results
@@ -356,7 +356,7 @@ class TestQueryStatus(unittest.TestCase):
 
     def test_querystatus(self):
         # Run the query command
-        jobid = queryClient.query(TEST_TOKEN,sql=self.qry,asynq=True)
+        jobid = queryClient.query(TEST_TOKEN,sql=self.qry,async_=True)
         res = qstatus(jobid)
         self.assertIn(res,['QUEUED','EXECUTING','COMPLETED'])
         # Wait a little
@@ -374,7 +374,7 @@ class TestQueryResults(unittest.TestCase):
 
     def test_queryresults(self):
         # Run the query
-        jobid = sqlquery(self.qry,asynq=True,out=None)
+        jobid = sqlquery(self.qry,async_=True,out=None)
         if qstatus(jobid) != 'COMPLETED':
           time.sleep(2)
         # Get the results

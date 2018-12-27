@@ -749,7 +749,7 @@ class Dlinterface:
 ################################################
 
 
-    def query(self, query=None, qtype='sql', fmt='csv', out=None, asynq=False, profile='default', verbose=True, **kw):
+    def query(self, query=None, qtype='sql', fmt='csv', out=None, async_=False, profile='default', verbose=True, **kw):
         '''
         Send a query to a remote query service.
 
@@ -786,23 +786,23 @@ class Dlinterface:
             The output name if the results are to be saved to mydb (mydb://tablename), to VOSpace (vos://filename),
             or the local file system (file:// and other names with no prefix).  The files are in csv format.
 
-        asynq : bool
+        async_ : bool
             If ``True``, the query is asynchronous, i.e. a job is
             submitted to the DB, and a jobID is returned. The jobID
             must be then used to check the query's status and to retrieve
             the result (when status is ``COMPLETE``). Default is
             ``False``, i.e. synchroneous query.
 
-            ``asynq`` replaces the previous ``async`` parameter, because ``async``
+            ``async_`` replaces the previous ``async`` parameter, because ``async``
             was promoted to a keyword in Python 3.7. Users of Python versions
             prior to 3.7 can continue to use the ``async`` keyword.
 
         Returns
         -------
         result : str
-            If ``asynq=False`` and ``out`` is not used, then the return value is the result of the query
+            If ``async_=False`` and ``out`` is not used, then the return value is the result of the query
             in the requested format (see ``fmt``).  If ``out`` is given then the query result is saved to
-            a file or mydb.  If ``asynq=True`` the jobID is returned with which later the asynchronous
+            a file or mydb.  If ``async_=True`` the jobID is returned with which later the asynchronous
             query's status can be checked (:func:`dl.querystatus()`), and the result retrieved (see
             :func:`dl.queryresults()`.
 
@@ -843,12 +843,12 @@ class Dlinterface:
         '''
         # Process optional keyword arguments.
         if 'async' in kw:
-            asynq = kw['async']
+            async_ = kw['async']
 
         # Not enough information input
         if (query is None):
             print ("Syntax - dl.query(query, qtype='sql|adql', fmt='csv|ascii|array|structarray|pandas|table|votable|fits|hdf5',")
-            print ("                  out='', asynq=False, profile='default')")
+            print ("                  out='', async_=False, profile='default')")
             return
 
         # Check if we are logged in
@@ -882,7 +882,7 @@ class Dlinterface:
                 return
             print ("Rerunning QID = %d" % queryid)
             v = self.qhistory[queryid]
-            # qid, type, asynq, query, time, jobid, username, format, status/nrows
+            # qid, type, async_, query, time, jobid, username, format, status/nrows
             query = v[3]
             print ("Query = '%s'" % query)
 
@@ -929,9 +929,9 @@ class Dlinterface:
 
         try:
             res = queryClient.query (token, adql=adql, sql=sql,
-                                     fmt=qcfmt, out=out, asynq=asynq)
+                                     fmt=qcfmt, out=out, async_=async_)
         except Exception as e:
-            if not asynq and str(e) is not None:
+            if not async_ and str(e) is not None:
                 err = str(e)
                 if err.find("Time-out") >= 0:
                     print ("Error: Sync query timeout, try an async query")
@@ -943,24 +943,24 @@ class Dlinterface:
             # Add this query to the query history
             jobid = None
             status = ''
-            if (out is None or out == '') and (not asynq):   # regular sync query
+            if (out is None or out == '') and (not async_):   # regular sync query
                 status = len(res.split('\n'))-2              # number of rows returned
-            if (out is not None) and (out != '') and (not asynq):
+            if (out is not None) and (out != '') and (not async_):
                 status = res                                 # sync query to file, vos, or mydb
-            if asynq:
+            if async_:
                 jobid = res
                 status = 'SUBMITTED'
             if self.qhistory is None:
                 qid = 1
-                self.qhistory = {qid : (qid, qtype, asynq, _query, time.time(), jobid, getUserName(self), fmt, status)}
+                self.qhistory = {qid : (qid, qtype, async_, _query, time.time(), jobid, getUserName(self), fmt, status)}
             else:
                 qid = int(max(self.qhistory.keys())) + 1
-                self.qhistory[qid] = (qid, qtype, asynq, _query, time.time(), jobid, getUserName(self), fmt, status)
+                self.qhistory[qid] = (qid, qtype, async_, _query, time.time(), jobid, getUserName(self), fmt, status)
 
             # Return the results
 
             # Asynchronous
-            if asynq:
+            if async_:
                 print ("Asynchronous query JobID = %s " % res)                # Return the JobID
                 return res
             # Synchronous
@@ -969,7 +969,7 @@ class Dlinterface:
                 return reformatQueryOutput(self,res,fmt,verbose=verbose)
 
 
-    def queryhistory(self, asynq=None, **kw):
+    def queryhistory(self, async_=None, **kw):
         '''
         Report the history of queries made so far.
 
@@ -979,7 +979,7 @@ class Dlinterface:
             A boolean (True/False) of whether to only show the ASYNC queries.
             By default all queries are shown.
 
-            ``asynq`` replaces the previous ``async`` parameter, because ``async``
+            ``async_`` replaces the previous ``async`` parameter, because ``async``
             was promoted to a keyword in Python 3.7. Users of Python versions
             prior to 3.7 can continue to use the ``async`` keyword.
 
@@ -1012,7 +1012,7 @@ class Dlinterface:
         '''
         # Process optional keyword arguments.
         if 'async' in kw:
-            asynq = kw['async']
+            async_ = kw['async']
 
         if self.qhistory is None:
             print ("No queries made so far")
@@ -1020,7 +1020,7 @@ class Dlinterface:
         else:
             keys = sorted(self.qhistory.keys())
             # Only async request, make sure we have some
-            if asynq is True:
+            if async_ is True:
                 asyncv = []
                 for k in keys:
                     v = self.qhistory[k]
@@ -1034,7 +1034,7 @@ class Dlinterface:
             print ("QID          DATE        Type  A/SYNC  Format       Status          JobID                   Query")
             print ("-------------------------------------------------------------------------------------------------------------------")
             for k in keys:
-                # qid, type, asynq, query, time, jobid, username, format, status/nrows
+                # qid, type, async_, query, time, jobid, username, format, status/nrows
                 v = list(self.qhistory[k])    # convert to list
                 # Get the query status for ASYNC queries
                 if v[2] is True:
@@ -1042,7 +1042,7 @@ class Dlinterface:
                     token = getUserToken(self)
                     stat = queryClient.status(token, jobId=jobid)
                     v[8] = stat
-                if (asynq is True and v[2] == True) or (asynq is not True):
+                if (async_ is True and v[2] == True) or (async_ is not True):
                     print ("%-3d  %-19s  %-4s  %-5s  %-11s  %-10s  %-18s  '%-s'" %
                            (v[0], time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(v[4])),
                             v[1], 'ASYNC' if v[2] else 'SYNC', v[7],
@@ -1079,7 +1079,7 @@ class Dlinterface:
 
         .. code-block:: python
 
-            jobid = dl.query('SELECT ra,dec from smash_dr1.source LIMIT 100',asynq=True)
+            jobid = dl.query('SELECT ra,dec from smash_dr1.source LIMIT 100',async_=True)
             Asynchronous query JobID = uqrcs8a5n8s6d0je
 
             dl.querystatus(jobid)
@@ -1103,7 +1103,7 @@ class Dlinterface:
                 print ("QID = %s not found" % str(jobid))
                 return
             v = self.qhistory[int(jobid)]
-            # qid, type, asynq, query, time, jobid, username, format, status/nrows
+            # qid, type, async_, query, time, jobid, username, format, status/nrows
             if v[2] is False:         # not an async query
                 print ("QID = %s is not an ASYNC query" % str(jobid))
                 return
@@ -1134,7 +1134,7 @@ class Dlinterface:
 
         .. code-block:: python
 
-            jobid = dl.query('SELECT ra,dec from smash_dr1.source LIMIT 3',asynq=True)
+            jobid = dl.query('SELECT ra,dec from smash_dr1.source LIMIT 3',async_=True)
             Asynchronous query JobID = uqrcs8a5n8s6d0je
 
             dl.querystatus(jobid)
@@ -1165,7 +1165,7 @@ class Dlinterface:
                 print ("QID = %s not found" % str(jobid))
                 return
             v = self.qhistory[int(jobid)]
-            # qid, type, asynq, query, time, jobid, username, format, status/nrows
+            # qid, type, async_, query, time, jobid, username, format, status/nrows
             if v[2] is False:         # not an async query
                 print ("QID = %s is not an ASYNC query" % str(jobid))
                 return
@@ -1176,7 +1176,7 @@ class Dlinterface:
            keys = sorted(self.qhistory.keys())
            for k in keys:
                v = self.qhistory[k]
-               # qid, type, asynq, query, time, jobid, username, format, status/nrows
+               # qid, type, async_, query, time, jobid, username, format, status/nrows
                if v[5] == jobid:
                    fmt = v[7]
                    break

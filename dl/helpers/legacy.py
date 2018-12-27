@@ -108,7 +108,7 @@ class Querist:
         self.token = ''
 
 
-    def __call__(self,query=None,outfmt='array',preview=0,asynq=False,**kw):
+    def __call__(self,query=None,outfmt='array',preview=0,async_=False,**kw):
 
         """Submit `query` string via :func:`queryClient.query()`, and process
         the result.
@@ -148,7 +148,7 @@ class Querist:
             very useful, because of the XML that votable carries
             around. Default: 0
 
-        asynq : bool
+        async_ : bool
             If ``False`` (default), submit queries in sync mode,
             i.e. expecting results immediately.
 
@@ -163,26 +163,26 @@ class Querist:
             query in async mode, if the queryManager / DB raise
             Exception that "the query not suitable for sync mode".
 
-            ``asynq`` replaces the previous ``async`` parameter, because ``async``
+            ``async_`` replaces the previous ``async`` parameter, because ``async``
             was promoted to a keyword in Python 3.7. Users of Python versions
             prior to 3.7 can continue to use the ``async`` keyword.
         """
 
         # Process optional keyword arguments.
         if 'async' in kw:
-            asynq = kw['async']
+            async_ = kw['async']
 
         if query is None:
             response, outfmt, preview = self.checkAsyncJob()
 
         else:
             try:
-                response = queryClient.query(self.token,sql=query,fmt=self.mapping[outfmt][0],asynq=asynq)  # submit the query, using your authentication token
+                response = queryClient.query(self.token,sql=query,fmt=self.mapping[outfmt][0],async_=async_)  # submit the query, using your authentication token
             except Exception as e:
                 print(str(e))
                 raise
 
-        output = self._processOutput(response,outfmt,asynq,preview)
+        output = self._processOutput(response,outfmt,async_,preview)
 
         return output
 
@@ -195,7 +195,7 @@ class Querist:
         self.openjobs.clear()
 
 
-    def _processOutput(self,response,outfmt,asynq,preview):
+    def _processOutput(self,response,outfmt,async_,preview):
 
         """Process the responses returned by calls to
         :func:`queryClient.query()`, either directly or indirectly
@@ -213,7 +213,7 @@ class Querist:
         outfmt : str
             As in :func:`__init__()`.
 
-        asynq : bool.
+        async_ : bool.
             As in :func:`__init__()`.
 
         preview : int
@@ -230,7 +230,7 @@ class Querist:
         else:
 
             # ... and async is False, means response is the returned query result; process it
-            if asynq is False:
+            if async_ is False:
                 s = StringIO(response)
                 output = self.mapping[outfmt][2](s)
                 print("Returning %s" % self.mapping[outfmt][1])
@@ -238,7 +238,7 @@ class Querist:
                 return output
 
             # ... and async is True, means the response is an async query jobID; put in in the FIFO queue
-            elif asynq is True:
+            elif async_ is True:
                 self.openjobs.append((response,outfmt,preview))
                 print("Asynchronous query submitted as jobid=%s" % response)
                 print("Get results a bit later with: result = Q()")

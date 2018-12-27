@@ -1,15 +1,15 @@
 
 # DOCUMENTATION
 
-<b>datalab</b> is command-line Python client for the [NOAO DataLab](http://datalab.noao.edu).
+<b>datalab</b> is command-line Python client for the [NOAO Data Lab](http://datalab.noao.edu).
 
-It provides easy access to DataLab functionalities:
+It provides easy access to Data Lab functionalities:
 
 1. remote storage (VOSpace)
 1. (a)synchronous data queries (TAP)
 1. job management
 
-Authentication to DataLab is based on a username and password.
+Authentication to Data Lab is based on a username and password.
 
 
 ## SYSTEM REQUIREMENTS
@@ -21,11 +21,11 @@ Authentication to DataLab is based on a username and password.
 
 ## INSTALLATION
 
-You can retrieve the datalab client from [gitlab](https://github.com/noao-datalab/datalab-client.git) and
+You can retrieve the ``datalab`` client from [GiHub](https://github.com/noaodatalab/datalab.git) and
 install via:
 
 ```
-git clone https://github.com/noao-datalab/datalab-client.git
+git clone https://github.com/noaodatalab/datalab.git
 cd datalab
 python setup.py install
 ```
@@ -44,7 +44,7 @@ touch ~/.netrc
 ```
 ## TUTORIAL
 
-Documentation for all the datalab commands can be found
+Documentation for all the ``datalab`` commands can be found
 [here](http://datalab.noao.edu/twiki/pub/DataLab/SoftwareDocs/DataLab_Command_Line_Client.pdf). Examples
 of using the <b>datalab</b> command for working with the virtual storage and
 querying can be found in the following Jupyter notebooks:
@@ -52,7 +52,7 @@ querying can be found in the following Jupyter notebooks:
 * [A Jupyter notebook for using the Storage Manager API](http://datalab.noao.edu/twiki/pub/DataLab/SoftwareDocs/How_to_use_the_Data_Lab_storage_manager_service.ipynb)
 * [A Jupyer notebook for using the Query Manager API](http://datalab.noao.edu/twiki/pub/DataLab/SoftwareDocs/How_to_use_the_Data_Lab_query_manager_service.ipynb)
 
-The <b>datalab</b> command will prompt you for required arguments if you do not
+The ``datalab`` command will prompt you for required arguments if you do not
 provide them on the command line, e.g.:
 
 ```
@@ -70,8 +70,8 @@ The 'login' task takes the following parameters:
   debug - print debug log level messages [optional]
   verbose - print verbose level log messages [optional]
   warning - print warning level log messages [optional]
-  user - username of account in DataLab [required]
-  password - password for account in DataLab [required]
+  user - username of account in Data Lab [required]
+  password - password for account in Data Lab [required]
   mount - mountpoint of remove VOSpace [optional]
 ```
 
@@ -85,7 +85,7 @@ datalab login --user=<user> --password=<password> --mount=/tmp/vospace
 ```
 
 This will attempt to mount the default virtual storage (at NOAO). If
-you need to mount another one, you should use the <b>datalab mount</b> option.
+you need to mount another one, you should use the ``datalab mount`` option.
 
   
 ### To mount virtual storage as a local directory once logged in

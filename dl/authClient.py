@@ -274,8 +274,11 @@ class authClient (object):
         self.username = ""                      # default client logn user
         self.auth_token = None                  # default client logn token
 
-        # Get the $HOME/.datalab directory.
+        # Check the $HOME/.datalab directory for a valid token.  If that dir
+        # doesn't already exist, create it so we can store the new token.
         self.home = '%s/.datalab' % os.path.expanduser('~')
+        if not os.path.exists(self.home):
+            os.makedirs(self.home)
         self.loadConfig()                       # load config file
 
         self.debug = DEBUG                      # interface debug flag

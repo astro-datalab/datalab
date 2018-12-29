@@ -224,13 +224,11 @@ def vospace_readable_fileobj(name_or_obj, token=None, **kwargs):
     """
     fileobj = name_or_obj
     close_fileobj = False
-    if (isinstance(name_or_obj, string_types) and
-        name_or_obj.startswith('vos:') and
-        token is not None):
+    if (isinstance(name_or_obj, string_types) and name_or_obj.find('://') > 0):
         #
         # VOSpace call
         #
-        fileobj = BytesIO(storeClient.get(token, fr=name_or_obj, to=''))
+        fileobj = BytesIO(storeClient.get(name_or_obj, mode='binary'))
         close_fileobj = True
     with get_readable_fileobj(fileobj, **kwargs) as f:
         try:

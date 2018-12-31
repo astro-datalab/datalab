@@ -829,8 +829,9 @@ class storeClient (object):
                 print ('File is both readable and writable')
         """
 
+        uri = (path if path.count('://') > 0 else 'vos://' + path)
         url = self.svc_url + ("/access?name=%s&mode=%s&verbose=%s" % \
-                         (path,mode,verbose))
+                         (uri,mode,verbose))
         r = requests.get(url, headers={'X-DL-AuthToken': def_token(token)})
         if r.status_code != 200:
             return False
@@ -898,7 +899,8 @@ class storeClient (object):
                 print ('File size is: ' + stat['size'])
         """
 
-        url = self.svc_url + ("/stat?name=%s&verbose=%s" % (path,verbose))
+        uri = (path if path.count('://') > 0 else 'vos://' + path)
+        url = self.svc_url + ("/stat?name=%s&verbose=%s" % (uri,verbose))
         r = requests.get(url, headers={'X-DL-AuthToken': def_token(token)})
         if r.status_code != 200:
             return {}
@@ -968,7 +970,7 @@ class storeClient (object):
             Name of the file(s) to locally.  If not specified, the contents
             of the file are returned to the caller.
 
-        mode : [binary | text]
+        mode : [binary | text | fileobj]
             Return data type if note saving to file.  If set to 'text' the
             file contents are converted to string -- this is appropriate when
             dealing with unicode but may fail with general binary data.  If
@@ -1102,6 +1104,16 @@ class storeClient (object):
             r = requests.get(url.text, stream=False, headers=hdrs)
             if mode == 'text':
                 return scToString (r.content)
+            elif mode == 'fileobj':
+                from astropy.utils.data import get_readable_fileobj
+                from io import BytesIO
+                try:
+                    fileobj = BytesIO (r.content)
+                    with get_readable_fileobj (fileobj, encoding='binary',
+                                               cache=True) as f:
+                        return f
+                except Exception as e:
+                    raise storeClientError(str(e))
             else:
                 return r.content
 
@@ -1307,8 +1319,9 @@ class storeClient (object):
             # Load a file from a remote URL
             storeClient.load ('mydata.vot', 'http://example.com/data.vot')
         """
+        uri = (name if name.count('://') > 0 else 'vos://' + name)
         r = self.getFromURL(self.svc_url, "/load?name=%s&endpoint=%s" % \
-                       (name, endpoint), def_token(token))
+                       (uri, endpoint), def_token(token))
         return scToString(r.content)
 
 
@@ -1454,8 +1467,10 @@ class storeClient (object):
             storeClient.ln ('vos://foo', 'vos:///new/bar')
         """
         try:
+            fro = (fr if fr.count('://') > 0 else 'vos://' + fr)
+            to = (target if target.count('://') > 0 else 'vos://' + target)
             r = self.getFromURL(self.svc_url, "/ln?from=%s&to=%s" % \
-                                   (fr, target), def_token(token))
+                                   (fro, to), def_token(token))
         except Exception:
             raise storeClientError(r.content)
         else:

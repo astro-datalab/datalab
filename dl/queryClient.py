@@ -515,13 +515,13 @@ def mydb_import (table, data, token=None, **kw):
 # --------------------------------------------------------------------
 # MYDB_TRUNCATE -- Truncate a table in the user's MyDB.
 #
-@multimethod('qc',3)
+@multimethod('qc',2)
 def mydb_truncate (token, table):
     '''  Usage:  queryClient.mydb_truncate (token, table)
     '''
     return qc_client._mydb_truncate (token=def_token(token), table=table)
 
-@multimethod('qc',2)
+@multimethod('qc',1)
 def mydb_truncate (table, token=None):
     '''  Usage:  queryClient.mydb_truncate (table)
     '''
@@ -2097,13 +2097,13 @@ class queryClient (object):
     # --------------------------------------------------------------------
     # MYDB_TRUNCATE -- Truncate a table in the user's MyDB.
     #
-    @multimethod('_qc',3)
+    @multimethod('_qc',2)
     def mydb_truncate (self, token, table):
         '''  Usage:  queryClient.mydb_truncate (token, table)
         '''
         return self._mydb_truncate (token=def_token(token), table=table)
 
-    @multimethod('_qc',2)
+    @multimethod('_qc',1)
     def mydb_truncate (self, table, token=None):
         '''  Usage:  queryClient.mydb_truncate (table)
         '''

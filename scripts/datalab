@@ -130,14 +130,15 @@ if __name__ == "__main__":
  		  # MyDB commands \
                'listdb' : dl.ListMyDB,
                'dropdb' : dl.DropMyDB,
-#           'mydb_list' : dl.MyDB_List,         # list MyDB table schema*
-#           'mydb_drop' : dl.MyDB_Drop,         # drop MyDB table*
-#         'mydb_create' : dl.MyDB_Create,       # create MyDB table from file*
-#         'mydb_insert' : dl.MyDB_Insert,       # insert into MyDB table*
-#       'mydb_truncate' : dl.MyDB_Truncate,     # truncate MyDB table*
+            'mydb_list' : dl.MyDB_List,         # list MyDB table schema*
+            'mydb_drop' : dl.MyDB_Drop,         # drop MyDB table*
+          'mydb_create' : dl.MyDB_Create,       # create MyDB table from file*
+          'mydb_insert' : dl.MyDB_Insert,       # insert into MyDB table*
+          'mydb_import' : dl.MyDB_Import,       # import data into MyDB table*
+        'mydb_truncate' : dl.MyDB_Truncate,     # truncate MyDB table*
 #          'mydb_index' : dl.MyDB_Index,        # index MyDB table column*
-#         'mydb_rename' : dl.MyDB_Rename,       # rename a MyDB table*
-#           'mydb_copy' : dl.MyDB_Copy,         # copy a MyDB table*
+          'mydb_rename' : dl.MyDB_Rename,       # rename a MyDB table*
+            'mydb_copy' : dl.MyDB_Copy,         # copy a MyDB table*
 \
  		 # Storage commands \
 #               'mount' : dl.Mount,             # mount a VOSpace*

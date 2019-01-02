@@ -91,7 +91,7 @@ elif THIS_HOST[:6] == 'dltest':
 DEF_SERVICE_PROFILE = "default"
 
 # Use a /tmp/AM_DEBUG file as a way to turn on debugging in the client code.
-DEBUG 	= os.path.isfile ('/tmp/AM_DEBUG')
+DEBUG = os.path.isfile ('/tmp/AM_DEBUG')
 
 
 # ######################################################################
@@ -128,7 +128,7 @@ def whoAmI():
     try:
         token = def_token(None)
         user, uid, gid, hash = token.strip().split('.', 3)
-    except Exception as e:
+    except:
         return 'anonymous'
     else:
         return user
@@ -885,7 +885,7 @@ class authClient (object):
             resp = requests.get("%s%s" % (svc_url, path), headers=hdrs)
 
         except Exception as e:
-            raise queryClientError(str(e))
+            raise dlAuthError(str(e))
         return resp
 
 

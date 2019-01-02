@@ -5,7 +5,7 @@
 
 from __future__ import print_function
 
-__authors__ = 'Matthew Graham <graham@noao.edu>, Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
+__authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Matthew Graham <graham@noao.edu>, Data Lab <datalab@noao.edu>'
 __version__ = '20180907'  # yyyymmdd
 
 
@@ -33,11 +33,9 @@ import json
 import time
 import os
 import sys
-import re
 import collections
 import ast, csv
 import pandas
-from io import BytesIO
 from tempfile import NamedTemporaryFile
 
 from dl import storeClient
@@ -156,12 +154,12 @@ def list_profiles (optval, token=None, profile=None, format='text'):
     '''
     if optval is not None and len(optval.split('.')) >= 4:
         # optval looks like a token
-        return qc_client._list_profiles (token=def_token(optval), profile=profile,
-                                      format=format)
+        return qc_client._list_profiles (token=def_token(optval),
+                                         profile=profile, format=format)
     else:
         # optval looks like a profile name
         return qc_client._list_profiles (token=def_token(token), profile=optval,
-                                      format=format)
+                                         format=format)
 
 @multimethod('qc',0)
 def list_profiles (token=None, profile=None, format='text'):
@@ -1820,11 +1818,13 @@ class queryClient (object):
         dburl = '%s/create' % (self.svc_url)
 
         drop = True			# drop table if exists
+        verbose = False
         verbose = False			# verbose output
         if 'verbose' in kw:
             verbose = kw['verbose']
         if 'drop' in kw:
             drop = kw['drop']
+        params['verbose'] = str(verbose)
         params['drop'] = str(drop)
 
         # Schema can be a dictionary, a CSV string, or the name of a file.
@@ -2424,7 +2424,6 @@ class queryClient (object):
     def chunked_upload (self, token, local_file, remote_file):
         """ A streaming file uploader.
         """
-
         debug = False
         init = True
         CHUNK_SIZE = 4 * 1024 * 1024                   # 16MB chunks
@@ -2433,6 +2432,7 @@ class queryClient (object):
         # Get the size of the file to be transferred.
         fsize = os.stat(local_file).st_size
         nchunks = fsize / CHUNK_SIZE + 1
+        if (debug): print ('Upload in %d chunks ....' % nchunks)
         with open(local_file, 'rb') as f:
             try:
                 nsent = 0

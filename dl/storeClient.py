@@ -132,10 +132,10 @@ def services (name=None, svc_type='vos', format=None, profile='default'):
 # LIST_PROFILES -- List the profiles supported by the storage manager service
 #
 @multimethod('sc',1)
-def list_profiles  (token, profile=None, format='text'):
+def list_profiles  (optval, profile=None, format='text', token=None):
     '''  Usage:  storeClient.list_profiles (token)
     '''
-    if optval is not None and len(opt1.split('.')) >= 4:
+    if optval is not None and len(optval.split('.')) >= 4:
         # optval looks like a token
         return sc_client._list_profiles (token=def_token(optval),
                                          profile=profile, format=format)
@@ -1488,7 +1488,7 @@ class storeClient (object):
                          verbose=verbose)
 
     @multimethod('_sc',1)
-    def ls  (self, name, token=None, format='csv', verbose=False):
+    def ls  (self, optval, token=None, format='csv', verbose=False):
         '''  Usage:  storeClient.ls (name)
              Usage:  storeClient.ls (token, name='foo')
         '''
@@ -1545,7 +1545,7 @@ class storeClient (object):
             r = self.getFromURL(self.svc_url,
                                    "/ls?name=%s&format=%s&verbose=%s" % \
                                    (uri, format, verbose), def_token(token))
-        except Exception as e:
+        except:
             raise Exception (r.content)
         return (scToString(r.content))
 
@@ -1835,6 +1835,7 @@ class storeClient (object):
             r = self.getFromURL(self.svc_url, "/rmdir?dir=%s" % nm,
                                    def_token(token))
         except Exception as e:
+            print ('storeClient._rm: error: ' + r.content)
             raise storeClientError(str(e))
         else:
             return 'OK'
@@ -2090,6 +2091,7 @@ def chunked_upload (token, local_file, remote_file):
     # Get the size of the file to be transferred.
     fsize = os.stat(local_file).st_size
     nchunks = fsize / CHUNK_SIZE + 1
+    if (debug): print ('Upload in %d chunks' % nchunks)
     with open(local_file, 'rb') as f:
         try:
             nsent = 0
@@ -2103,7 +2105,7 @@ def chunked_upload (token, local_file, remote_file):
                 nsent += len(data)
                 if init: init = False
         except Exception as e:
-            raise queryClientError ('Upload error: ' + str(e))
+            raise storeClientError('Upload error: ' + str(e))
 
 
 
@@ -2143,7 +2145,7 @@ def scToString(s):
                 strval = str(s)
             else:
                 strval = s
-    except Exception as e:
+    except:
         return s
 
     return strval

@@ -17,7 +17,7 @@ Import via
 .. code-block:: python
 
     from dl import Util
-    from dl.Util import multifunc, multimethod, def_token
+    from dl.Util import multimethod, def_token
 """
 
 import os
@@ -47,10 +47,8 @@ class MultiMethod(object):
         self.name = name
         self.methodmap = {}
 
-    def __call__(self, instance, *args, **kw):
-        '''  Call the appropriate instance of the class method.  In this
-             case, 'self' is a MultiMethod instance, 'instance' is the object
-             we want to bind to
+    def __call__(self, *args, **kw):
+        '''  Call the appropriate instance of the class method.
         '''
         # Lookup the function to call in the method map.
         reg_name = self.module + '.' + self.name + '.' + str(len(args))
@@ -60,7 +58,7 @@ class MultiMethod(object):
 
         # Call the method instance with all original args/keywords and
         # return the result.
-        return function (instance, *args, **kw)
+        return function (*args, **kw)
 
     def register(self, nargs, function, module):
         ''' Register the method based on the number of method arguments.
@@ -88,80 +86,11 @@ def multimethod(module, nargs):
         mm.register(nargs, function, module)
         mm.__lastreg__ = function
 
-        # return function instead of an object - Python binds this automatically
-        def getter(instance, *args, **kwargs):
-            return mm(instance, *args, **kwargs)
-
-        return getter
+        return mm
 
     if module not in method_registry.keys():
         method_registry[module] = {}
     registry = method_registry[module]
-
-    return register
-
-
-
-# =========================================================================
-#  MULTIFUNCTION -- An object class to manage module functions.
-#
-# Globals
-func_registry   = {}			# Function registry
-
-class MultiFunction(object):
-    ''' MultiFunction -- An object class to manage the module functions
-        such that functions may be overloaded and the appropriate functions
-        is dispatched depending on the calling arguments.
-    '''
-    def __init__(self, module, name):
-        self.module = module
-        self.name = name
-        self.funcmap = {}
-
-    def __call__(self, *args, **kw):
-        '''  Call the appropriate instance of the function.
-        '''
-        # Lookup the function to call in the method map.
-        reg_name = self.module + '.' + self.name + '.' + str(len(args))
-        function = self.funcmap.get(reg_name)
-        if function is None:
-            raise TypeError("No MultiFunction match found")
-
-        # Call the function with all original args/keywords and return result.
-        return function(*args, **kw)
-
-    def register(self, nargs, function, module):
-        ''' Register the method based on the number of method arguments.
-            Duplicates are rejected when two method names with the same
-            number of arguments are registered.  For generality, we
-            construct a registry id from the method name and no. of args.
-        '''
-        reg_name = module + '.' + function.__name__ + '.' + str(nargs)
-        if reg_name in self.funcmap:
-            raise TypeError("duplicate registration")
-        self.funcmap[reg_name] = function
-
-
-def multifunc(module, nargs):
-    '''  Wrapper function to implement multimethod for functions.  The
-         identifying signature in this case is the number of required
-         method parameters.  When methods are called, all original arguments
-         and keywords are passed.
-    '''
-    def register(function):
-        function = getattr(function, "__lastreg__", function)
-        name = function.__name__
-        mf = registry.get(name)
-        if mf is None:
-            mf = registry[name] = MultiFunction(module, name)
-        mf.register(nargs, function, module)
-        mf.__lastreg__ = function
-
-        return mf
-
-    if module not in func_registry.keys():
-        func_registry[module] = {}
-    registry = func_registry[module]
 
     return register
 

@@ -8,7 +8,7 @@
 from __future__ import print_function
 
 __authors__ = 'Matthew Graham <graham@noao.edu>, Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20180521'  # yyyymmdd
+__version__ = '20181231'  # yyyymmdd
 
 
 """ 
@@ -16,7 +16,7 @@ __version__ = '20180521'  # yyyymmdd
 """
 
 from dl import dltasks as dl
-#import dltasks as dl
+from dl import __version__ as dlver
 import sys
 import logging
 from optparse import Values
@@ -130,14 +130,15 @@ if __name__ == "__main__":
  		  # MyDB commands \
                'listdb' : dl.ListMyDB,
                'dropdb' : dl.DropMyDB,
-#           'mydb_list' : dl.MyDB_List,         # list MyDB table schema*
-#           'mydb_drop' : dl.MyDB_Drop,         # drop MyDB table*
-#         'mydb_create' : dl.MyDB_Create,       # create MyDB table from file*
-#         'mydb_insert' : dl.MyDB_Insert,       # insert into MyDB table*
-#       'mydb_truncate' : dl.MyDB_Truncate,     # truncate MyDB table*
+            'mydb_list' : dl.MyDB_List,         # list MyDB table schema*
+            'mydb_drop' : dl.MyDB_Drop,         # drop MyDB table*
+          'mydb_create' : dl.MyDB_Create,       # create MyDB table from file*
+          'mydb_insert' : dl.MyDB_Insert,       # insert into MyDB table*
+          'mydb_import' : dl.MyDB_Import,       # import data into MyDB table*
+        'mydb_truncate' : dl.MyDB_Truncate,     # truncate MyDB table*
 #          'mydb_index' : dl.MyDB_Index,        # index MyDB table column*
-#         'mydb_rename' : dl.MyDB_Rename,       # rename a MyDB table*
-#           'mydb_copy' : dl.MyDB_Copy,         # copy a MyDB table*
+          'mydb_rename' : dl.MyDB_Rename,       # rename a MyDB table*
+            'mydb_copy' : dl.MyDB_Copy,         # copy a MyDB table*
 \
  		 # Storage commands \
 #               'mount' : dl.Mount,             # mount a VOSpace*
@@ -157,15 +158,19 @@ if __name__ == "__main__":
                 'rmdir' : dl.RmDir              # remove a VOSpace container
              }
 
-    # List tasks
-    #if len(sys.argv) == 1 or "help" in sys.argv[1]:
     help_opts = ['--help', '--h', '-h', 'help', '-help']
+    version_opts = ['--version', '-v', 'version', '-version']
+
+    # List tasks
     if len(sys.argv) == 1 or sys.argv[1] in help_opts:
         print ("\nUsage:\n\n    % datalab <task> [task_options]\n")
         print ("where <task> is one of:\n")
         for task in sorted(tasks):
             print ('    %15s - %s' % (task, tasks[task](datalab).description))
         print (' ')
+
+    elif sys.argv[1] in version_opts:
+        print ("Version:  " + dlver.version)
 
     # Parse arguments
     elif sys.argv[1] in tasks:

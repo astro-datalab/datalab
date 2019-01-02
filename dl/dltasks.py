@@ -847,44 +847,6 @@ class QueryStatus(Task):
         print (queryClient.status (token, jobId=self.jobId.value))
 
 
-class ListMyDB(Task):
-    '''
-        List the user's MyDB tables.
-    '''
-    def __init__(self, datalab):
-        Task.__init__(self, datalab, 'listdb', 'List the user MyDB tables')
-        self.addOption("table", Option("table", "",
-                        "Table name", required=False))
-        self.addStdOptions()
-
-    def run(self):
-        token = getUserToken(self)
-        try:
-            res = queryClient.list (token, table=self.table.value)
-        except Exception as e:
-            print ("Error listing MyDB tables.")
-        else:
-            print (res)
-
-
-class DropMyDB(Task):
-    '''
-        Drop a user's MyDB table.
-    '''
-    def __init__(self, datalab):
-        Task.__init__(self, datalab, 'dropdb', 'Drop a user MyDB table')
-        self.addOption("table",
-            Option("table", "", "Table name", required=False))
-        self.addStdOptions()
-
-    def run(self):
-        token = getUserToken(self)
-        try:
-            queryClient.drop (token, table=self.table.value)
-        except Exception as e:
-            print ("Error dropping table '%s'." % self.table.value)
-
-
 class QueryProfiles(Task):
     '''
         List the available Query Manager profiles.
@@ -1011,6 +973,230 @@ class Query(Task):
         resp, content = h.request(url, 'GET', headers=headers)
         if out == '':
             print (content)
+
+
+
+################################################
+#  MyDB Tasks
+################################################
+
+class ListMyDB(Task):
+    '''
+        List the user's MyDB tables. [DEPRECATED]
+    '''
+    def __init__(self, datalab):
+        Task.__init__(self, datalab, 'listdb', 'List the user MyDB tables')
+        self.addOption("table", Option("table", "",
+                        "Table name", required=False))
+        self.addStdOptions()
+
+    def run(self):
+        token = getUserToken(self)
+        try:
+            res = queryClient.list (token=token, table=self.table.value)
+        except Exception as e:
+            print ("Error listing MyDB tables: " % str(e))
+        else:
+            print (res)
+
+
+class DropMyDB(Task):
+    '''
+        Drop a user's MyDB table. [DEPRECATED]
+    '''
+    def __init__(self, datalab):
+        Task.__init__(self, datalab, 'dropdb', 'Drop a user MyDB table')
+        self.addOption("table",
+            Option("table", "", "Table name", required=True))
+        self.addStdOptions()
+
+    def run(self):
+        token = getUserToken(self)
+        try:
+            queryClient.drop (token, table=self.table.value)
+        except Exception as e:
+            print ("Error dropping table '%s': %s" % (self.table.value, str(e)))
+
+
+class MyDB_List(Task):
+    '''
+        List the user's MyDB tables.
+    '''
+    def __init__(self, datalab):
+        Task.__init__(self, datalab, 'mydb_list', 'List the user MyDB tables')
+        self.addOption("table", Option("table", "",
+                        "Table name", required=False))
+        self.addStdOptions()
+
+    def run(self):
+        token = getUserToken(self)
+        try:
+            res = queryClient.mydb_list (token, table=self.table.value)
+        except Exception as e:
+            print ("Error listing MyDB tables: %s" % str(e))
+        else:
+            print (res)
+
+
+class MyDB_Drop(Task):
+    '''
+        Drop a user's MyDB table.
+    '''
+    def __init__(self, datalab):
+        Task.__init__(self, datalab, 'mydb_drop', 'Drop a user MyDB table')
+        self.addOption("table",
+            Option("table", "", "Table name", required=True))
+        self.addStdOptions()
+
+    def run(self):
+        token = getUserToken(self)
+        try:
+            res = queryClient.mydb_drop (token, self.table.value)
+        except Exception as e:
+            print ("Error dropping table '%s': %s" % (self.table.value,str(e)))
+        else:
+            print (res)
+
+
+class MyDB_Create(Task):
+    '''
+        Create a user MyDB table.
+    '''
+    def __init__(self, datalab):
+        Task.__init__(self, datalab, 'mydb_create', 'Create a user MyDB table')
+        self.addOption("table",
+            Option("table", "", "Table name", required=True))
+        self.addOption("schema",
+            Option("schema", "", "Schema file", required=True))
+        self.addStdOptions()
+
+    def run(self):
+        token = getUserToken(self)
+        try:
+            res = queryClient.mydb_create (token, self.table.value,
+                                           self.schema.value)
+        except Exception as e:
+            print ("Error creating table '%s': %s" % (self.table.value,str(e)))
+        else:
+            print (res)
+
+
+class MyDB_Import(Task):
+    '''
+        Import data into a user MyDB table.
+    '''
+    def __init__(self, datalab):
+        Task.__init__(self, datalab, 'mydb_import',
+                      'Import data into a user MyDB table')
+        self.addOption("table",
+            Option("table", "", "Table name to create", required=True))
+        self.addOption("data",
+            Option("data", "", "Data file to load", required=True))
+        self.addStdOptions()
+
+    def run(self):
+        token = getUserToken(self)
+        try:
+            res = queryClient.mydb_import (token, self.table.value,
+                                           self.data.value)
+        except Exception as e:
+            print ("Error importing table '%s': %s" % \
+                     (self.table.value, str(e)))
+        else:
+            print (res)
+
+
+class MyDB_Insert(Task):
+    '''
+        Insert data into a user MyDB table.
+    '''
+    def __init__(self, datalab):
+        Task.__init__(self, datalab, 'mydb_insert',
+                      'Insert data into a user MyDB table')
+        self.addOption("table",
+            Option("table", "", "Table name to create", required=True))
+        self.addOption("data",
+            Option("data", "", "Data file to load", required=True))
+        self.addStdOptions()
+
+    def run(self):
+        token = getUserToken(self)
+        try:
+            res = queryClient.mydb_import (token, self.table.value,
+                                           self.data.value)
+        except Exception as e:
+            print ("Error importing table '%s': %s" % (self.table.value,str(e)))
+        else:
+            print (res)
+
+
+class MyDB_Truncate(Task):
+    '''
+        Truncate a user MyDB table.
+    '''
+    def __init__(self, datalab):
+        Task.__init__(self, datalab, 'mydb_truncate',
+                      'Truncate a user MyDB table')
+        self.addOption("table",
+            Option("table", "", "Table name to create", required=True))
+        self.addStdOptions()
+
+    def run(self):
+        token = getUserToken(self)
+        try:
+            res = queryClient.mydb_truncate (token, table=self.table.value)
+        except Exception as e:
+            print ("Error truncating table '%s': %s" % \
+                   (self.table.value,str(e)))
+        else:
+            print (res)
+
+
+class MyDB_Rename(Task):
+    '''
+        Rename a user MyDB table.
+    '''
+    def __init__(self, datalab):
+        Task.__init__(self, datalab, 'mydb_rename', 'Rename a user MyDB table')
+        self.addOption("old",
+            Option("old", "", "Old table name", required=True))
+        self.addOption("new",
+            Option("new", "", "New table name", required=True))
+        self.addStdOptions()
+
+    def run(self):
+        token = getUserToken(self)
+        try:
+            res = queryClient.mydb_rename(token, self.old.value, self.new.value)
+        except Exception as e:
+            print ("Error renaming table '%s': %s" % (self.old.value,str(e)))
+        else:
+            print (res)
+
+
+class MyDB_Copy(Task):
+    '''
+        Copy a user MyDB table.
+    '''
+    def __init__(self, datalab):
+        Task.__init__(self, datalab, 'mydb_rename', 'Rename a user MyDB table')
+        self.addOption("source",
+            Option("source", "", "Original table name", required=True))
+        self.addOption("target",
+            Option("target", "", "New table name", required=True))
+        self.addStdOptions()
+
+    def run(self):
+        token = getUserToken(self)
+        try:
+            res = queryClient.mydb_copy (token, self.source.value,
+                                         self.target.value)
+        except Exception as e:
+            print ("Error copying table '%s': %s" % (self.old.value,str(e)))
+        else:
+            print (res)
+
+
 
 
 ################################################

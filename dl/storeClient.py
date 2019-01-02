@@ -29,11 +29,9 @@ import socket
 import json
 
 if os.path.isfile ('./Util.py'):                # use local dev copy
-    from Util import multifunc
     from Util import multimethod
     from Util import def_token
 else:                                           # use distribution copy
-    from dl.Util import multifunc
     from dl.Util import multimethod
     from dl.Util import def_token
 
@@ -54,6 +52,7 @@ is_py3 = sys.version_info.major == 3
 # passing a new URL into the set_svc_url() method before beginning.
 
 DEF_SERVICE_URL = 'https://datalab.noao.edu/storage'
+QM_SERVICE_URL = 'https://datalab.noao.edu/query'
 
 
 # Allow the service URL for dev/test systems to override the default.
@@ -62,8 +61,10 @@ THIS_IP   = socket.gethostbyname(socket.gethostname())  # host IP address
 
 if THIS_HOST[:5] == 'dldev':
     DEF_SERVICE_URL  = 'http://dldev.datalab.noao.edu/storage'
+    QM_SERVICE_URL = 'http://dldev.datalab.noao.edu/query'
 elif THIS_HOST[:6] == 'dltest':
     DEF_SERVICE_URL  = 'http://dltest.datalab.noao.edu/storage'
+    QM_SERVICE_URL = 'http://dltest.datalab.noao.edu/query'
 
 # The requested query 'profile'.  A profile refers to the specific
 # machines and services used by the Storage Manager on the server.
@@ -121,9 +122,16 @@ def get_profile ():
     return sc_client.get_profile ()
 
 # --------------------------------------------------------------------
+# SERVICES -- List public storage services
+#
+def services (name=None, svc_type='vos', format=None, profile='default'):
+    return sc_client.services (name=name, svc_type=svc_type, format=format, 
+                               profile=profile)
+
+# --------------------------------------------------------------------
 # LIST_PROFILES -- List the profiles supported by the storage manager service
 #
-@multifunc('sc',1)
+@multimethod('sc',1)
 def list_profiles  (token, profile=None, format='text'):
     '''  Usage:  storeClient.list_profiles (token)
     '''
@@ -136,7 +144,7 @@ def list_profiles  (token, profile=None, format='text'):
         return sc_client._list_profiles (token=def_token(token), profile=optval,
                                       format=format)
 
-@multifunc('sc',0)
+@multimethod('sc',0)
 def list_profiles  (token=None, profile=None, format='text'):
     '''  Usage:  storeClient.list_profiles ()
     '''
@@ -154,21 +162,21 @@ def list_profiles  (token=None, profile=None, format='text'):
 #           Modes are 'r' (read access), 'w' (write access), or '' or None
 #           for an existence test.
 #
-@multifunc('sc',3)
+@multimethod('sc',3)
 def access (token, path, mode, verbose=True):
     '''  Usage:  storeClient.access (token, path, mode)
     '''
     return sc_client._access (path=path, mode=mode, token=def_token(token),
                           verbose=verbose)
 
-@multifunc('sc',2)
+@multimethod('sc',2)
 def access (path, mode, token=None, verbose=True):
     '''  Usage:  storeClient.access (path, mode)
     '''
     return sc_client._access (path=path, mode=mode, token=def_token(token),
                           verbose=verbose)
 
-@multifunc('sc',1)
+@multimethod('sc',1)
 def access (path, mode=None, token=None, verbose=True):
     '''  Usage:  storeClient.access (path)
     '''
@@ -180,13 +188,13 @@ def access (path, mode=None, token=None, verbose=True):
 # STAT -- Get file status. Values are returned as a dictionary of the
 #         requested node.
 #
-@multifunc('sc',2)
+@multimethod('sc',2)
 def stat (token, path, verbose=True):
     '''  Usage:  storeClient.stat (token, path)
     '''
     return sc_client._stat (path=path, token=def_token(token), verbose=verbose)
 
-@multifunc('sc',1)
+@multimethod('sc',1)
 def stat (path, token=None, verbose=True):
     '''  Usage:  storeClient.stat (path)
     '''
@@ -197,65 +205,65 @@ def stat (path, token=None, verbose=True):
 # --------------------------------------------------------------------
 # GET -- Retrieve a file (or files) from the Store Manager service
 #
-@multifunc('sc',3)
-def get  (token, fr, to, verbose=True, debug=False):
+@multimethod('sc',3)
+def get  (token, fr, to, mode='text', verbose=True, debug=False):
     '''  Usage:  storeClient.get (token, fr, to)
     '''
     return sc_client._get (fr=fr, to=to, token=def_token(token),
-                        verbose=verbose, debug=debug)
+                        mode=mode, verbose=verbose, debug=debug)
 
-@multifunc('sc',2)
-def get  (opt1, opt2, fr='', to='', token=None, verbose=True, debug=False):
+@multimethod('sc',2)
+def get  (opt1, opt2, fr='', to='', token=None, mode='text', verbose=True, debug=False):
     '''  Usage:  storeClient.get (fr, to)
     '''
     if opt1 is not None and len(opt1.split('.')) >= 4:
         # opt1 looks like a token
         return sc_client._get (fr=opt2, to=to, token=def_token(opt1),
-                            verbose=verbose, debug=debug)
+                            mode=mode, verbose=verbose, debug=debug)
     else:
         # opt1 is the 'fr' value, opt2 is the 'to' value
         return sc_client._get (fr=opt1, to=opt2, token=def_token(token),
-                            verbose=verbose, debug=debug)
+                            mode=mode, verbose=verbose, debug=debug)
 
-@multifunc('sc',1)
-def get (optval, fr='', to='', token=None, verbose=True, debug=False):
+@multimethod('sc',1)
+def get (optval, fr='', to='', token=None, mode='text', verbose=True, debug=False):
     '''  Usage:  storeClient.get (fr)
     '''
     if optval is not None and len(optval.split('.')) >= 4:
         # optval looks like a token
         return sc_client._get (fr=fr, to=to, token=def_token(optval),
-                            verbose=verbose, debug=debug)
+                            mode=mode, verbose=verbose, debug=debug)
     else:
         # optval is the 'fr' value
         return sc_client._get (fr=optval, to=to, token=def_token(token),
-                            verbose=verbose, debug=debug)
+                            mode=mode, verbose=verbose, debug=debug)
 
-@multifunc('sc',0)
-def get  (token=None, fr='', to='', verbose=True, debug=False):
+@multimethod('sc',0)
+def get  (token=None, fr='', to='', mode='text', verbose=True, debug=False):
     '''  Usage:  storeClient.get (token, fr, to)
     '''
     return sc_client._get (fr=fr, to=to, token=def_token(token),
-                        verbose=verbose, debug=debug)
+                        mode=mode, verbose=verbose, debug=debug)
 
 
 # --------------------------------------------------------------------
 # PUT -- Upload a file (or files) to the Store Manager service
 #
-@multifunc('sc',3)
+@multimethod('sc',3)
 def put  (token, fr, to, verbose=True, debug=False):
     '''  Usage:  storeClient.put (token, fr, to)
     '''
     return sc_client._put (fr=fr, to=to, token=def_token(token),
                         verbose=verbose, debug=debug)
 
-@multifunc('sc',2)
+@multimethod('sc',2)
 def put  (fr, to, token=None, verbose=True, debug=False):
     '''  Usage:  storeClient.put (fr, to)
     '''
     return sc_client._put (fr=fr, to=to, token=def_token(token),
                         verbose=verbose, debug=debug)
 
-@multifunc('sc',1)
+@multimethod('sc',1)
 def put  (optval, fr='', to='vos://', token=None, verbose=True, debug=False):
     '''  Usage:  storeClient.put (fr)
     '''
@@ -268,7 +276,7 @@ def put  (optval, fr='', to='vos://', token=None, verbose=True, debug=False):
         return sc_client._put (fr=optval, to=to, token=def_token(token),
                             verbose=verbose, debug=debug)
 
-@multifunc('sc',0)
+@multimethod('sc',0)
 def put  (fr='', to='vos://', token=None, verbose=True, debug=False):
     '''  Usage:  storeClient.put (fr='',to='')
     '''
@@ -279,25 +287,25 @@ def put  (fr='', to='vos://', token=None, verbose=True, debug=False):
 # --------------------------------------------------------------------
 # CP -- Copy a file/directory within the store manager service
 #
-@multifunc('sc',3)
+@multimethod('sc',3)
 def cp  (token, fr, to, verbose=False):
     '''  Usage:  storeClient.cp (token, fr, to)
     '''
     return sc_client._cp (fr=fr, to=to, token=def_token(token), verbose=verbose)
 
-@multifunc('sc',2)
+@multimethod('sc',2)
 def cp  (fr, to, token=None, verbose=False):
     '''  Usage:  storeClient.cp (fr, to)
     '''
     return sc_client._cp (fr=fr, to=to, token=def_token(token), verbose=verbose)
 
-@multifunc('sc',1)
+@multimethod('sc',1)
 def cp  (token, fr='', to='', verbose=False):
     '''  Usage:  storeClient.cp (fr, to)
     '''
     return sc_client._cp (fr=fr, to=to, token=def_token(token), verbose=verbose)
 
-@multifunc('sc',0)
+@multimethod('sc',0)
 def cp  (token=None, fr='', to='', verbose=False):
     '''  Usage:  storeClient.cp (fr, to)
     '''
@@ -307,21 +315,21 @@ def cp  (token=None, fr='', to='', verbose=False):
 # --------------------------------------------------------------------
 # LN -- Create a link to a file/directory in the store manager service
 #
-@multifunc('sc',3)
+@multimethod('sc',3)
 def ln  (token, fr, target, verbose=False):
     '''  Usage:  storeClient.ln (token, fr, target)
     '''
     return sc_client._ln (fr=fr, target=target, token=def_token(token),
                        verbose=verbose)
 
-@multifunc('sc',2)
+@multimethod('sc',2)
 def ln  (fr, target, token=None, verbose=False):
     '''  Usage:  storeClient.ln (fr, target)
     '''
     return sc_client._ln (fr=fr, target=target, token=def_token(token),
                        verbose=verbose)
 
-@multifunc('sc',1)
+@multimethod('sc',1)
 def ln  (token, fr='', target='', verbose=False):
     '''  Usage:  storeClient.ln (fr, target)
     '''
@@ -332,14 +340,14 @@ def ln  (token, fr='', target='', verbose=False):
 # --------------------------------------------------------------------
 # LS -- Get a file/directory listing from the store manager service
 #
-@multifunc('sc',2)
+@multimethod('sc',2)
 def ls  (token, name, format='csv', verbose=False):
     '''  Usage:  storeClient.ls (token, name)
     '''
     return sc_client._ls (name=name, format=format, token=def_token(token),
                        verbose=verbose)
 
-@multifunc('sc',1)
+@multimethod('sc',1)
 def ls  (optval, name='vos://', token=None, format='csv', verbose=False):
     '''  Usage:  storeClient.ls (name)
     '''
@@ -351,7 +359,7 @@ def ls  (optval, name='vos://', token=None, format='csv', verbose=False):
         return sc_client._ls(name=optval, format=format, token=def_token(None),
                           verbose=verbose)
 
-@multifunc('sc',0)
+@multimethod('sc',0)
 def ls  (name='vos://', token=None, format='csv', verbose=False):
     '''  Usage:  storeClient.ls ()
     '''
@@ -362,13 +370,13 @@ def ls  (name='vos://', token=None, format='csv', verbose=False):
 # --------------------------------------------------------------------
 # MKDIR -- Create a directory in the store manager service
 #
-@multifunc('sc',2)
+@multimethod('sc',2)
 def mkdir  (token, name):
     '''  Usage:  storeClient.mkdir (token, name)
     '''
     return sc_client._mkdir (name=name, token=def_token(token))
 
-@multifunc('sc',1)
+@multimethod('sc',1)
 def mkdir  (optval, name='', token=None):
     '''  Usage:  storeClient.mkdir (name)
     '''
@@ -381,25 +389,25 @@ def mkdir  (optval, name='', token=None):
 # --------------------------------------------------------------------
 # MV -- Move/rename a file/directory within the store manager service
 #
-@multifunc('sc',3)
+@multimethod('sc',3)
 def mv  (token, fr, to, verbose=False):
     '''  Usage:  storeClient.mv (token, fr, to)
     '''
     return sc_client._mv (fr=fr, to=to, token=def_token(token), verbose=verbose)
 
-@multifunc('sc',2)
+@multimethod('sc',2)
 def mv  (fr, to, token=None, verbose=False):
     '''  Usage:  storeClient.mv (fr, to)
     '''
     return sc_client._mv (fr=fr, to=to, token=def_token(token), verbose=verbose)
 
-@multifunc('sc',1)
+@multimethod('sc',1)
 def mv  (token, fr='', to='', verbose=False):
     '''  Usage:  storeClient.mv (fr, to)
     '''
     return sc_client._mv (fr=fr, to=to, token=def_token(token), verbose=verbose)
 
-@multifunc('sc',0)
+@multimethod('sc',0)
 def mv  (token=None, fr='', to='', verbose=False):
     '''  Usage:  storeClient.mv (fr, to)
     '''
@@ -409,13 +417,13 @@ def mv  (token=None, fr='', to='', verbose=False):
 # --------------------------------------------------------------------
 # RM -- Delete a file from the store manager service
 #
-@multifunc('sc',2)
+@multimethod('sc',2)
 def rm  (token, name, verbose=False):
     '''  Usage:  storeClient.rm (token, name)
     '''
     return sc_client._rm (name=name, token=def_token(token), verbose=verbose)
 
-@multifunc('sc',1)
+@multimethod('sc',1)
 def rm  (optval, name='', token=None, verbose=False):
     '''  Usage:  storeClient.rm (name)
     '''
@@ -426,7 +434,7 @@ def rm  (optval, name='', token=None, verbose=False):
         # optval is the name to be removed
         return sc_client._rm (name=optval, token=def_token(token), verbose=verbose)
 
-@multifunc('sc',0)
+@multimethod('sc',0)
 def rm  (name='', token=None, verbose=False):
     '''  Usage:  storeClient.rm (name)
     '''
@@ -436,13 +444,13 @@ def rm  (name='', token=None, verbose=False):
 # --------------------------------------------------------------------
 # RMDIR -- Delete a directory from the store manager service
 #
-@multifunc('sc',2)
+@multimethod('sc',2)
 def rmdir  (token, name, verbose=False):
     '''  Usage:  storeClient.rmdir (token, name)
     '''
     return sc_client._rmdir (name=name, token=def_token(token), verbose=verbose)
 
-@multifunc('sc',1)
+@multimethod('sc',1)
 def rmdir  (optval, name='', token=None, verbose=False):
     '''  Usage:  storeClient.rmdir (name)
     '''
@@ -453,7 +461,7 @@ def rmdir  (optval, name='', token=None, verbose=False):
         return sc_client._rmdir (name=optval, token=def_token(token),
                             verbose=verbose)
 
-@multifunc('sc',0)
+@multimethod('sc',0)
 def rmdir  (name='', token=None, verbose=False):
     '''  Usage:  storeClient.rm (name)
     '''
@@ -463,13 +471,13 @@ def rmdir  (name='', token=None, verbose=False):
 # --------------------------------------------------------------------
 # SAVEAS -- Save the string representation of a data object as a file.
 #
-@multifunc('sc',3)
+@multimethod('sc',3)
 def saveAs  (token, data, name):
     '''  Usage:  storeClient.saveAs (token, data, name)
     '''
     return sc_client._saveAs (data=data, name=name, token=def_token(token))
 
-@multifunc('sc',2)
+@multimethod('sc',2)
 def saveAs  (data, name, token=None):
     '''  Usage:  storeClient.saveAs (data, name)
     '''
@@ -479,19 +487,19 @@ def saveAs  (data, name, token=None):
 # --------------------------------------------------------------------
 # TAG -- Annotate a file/directory in the store manager service
 #
-@multifunc('sc',3)
+@multimethod('sc',3)
 def tag  (token, name, tag):
     '''  Usage:  storeClient.tag (token, name, tag)
     '''
     return sc_client._tag (name=name, tag=tag, token=def_token(token))
 
-@multifunc('sc',2)
+@multimethod('sc',2)
 def tag  (name, tag, token=None):
     '''  Usage:  storeClient.tag (name, tag)
     '''
     return sc_client._tag (name=name, tag=tag, token=def_token(token))
 
-@multifunc('sc',1)
+@multimethod('sc',1)
 def tag  (token, name='', tag=''):
     '''  Usage:  storeClient.tag (token, name='foo', tag='bar')
     '''
@@ -501,13 +509,13 @@ def tag  (token, name='', tag=''):
 # --------------------------------------------------------------------
 # LOAD/PULL -- Load a file from a remote endpoint to the store manager service
 #
-@multifunc('sc',3)
+@multimethod('sc',3)
 def load  (token, name, endpoint):
     '''  Usage:  storeClient.load (token, name, endpoint)
     '''
     return sc_client._load (name=name, endpoint=endpoint, token=def_token(token))
 
-@multifunc('sc',2)
+@multimethod('sc',2)
 def load  (name, endpoint, token=None):
     '''  Usage:  storeClient.load (name, endpoint)
     '''
@@ -515,13 +523,13 @@ def load  (name, endpoint, token=None):
 
 # Aliases for load() calls.
 
-@multifunc('sc',3)
+@multimethod('sc',3)
 def pull  (token, name, endpoint):
     '''  Usage:  storeClient.pull (token, name, endpoint)
     '''
     return sc_client._load (name=name, endpoint=endpoint, token=def_token(token))
 
-@multifunc('sc',2)
+@multimethod('sc',2)
 def pull  (name, endpoint, token=None):
     '''  Usage:  storeClient.pull (name, endpoint)
     '''
@@ -542,6 +550,7 @@ class storeClient (object):
         """ Initialize the store client object.
         """
         self.svc_url = svc_url                  # StoreMgr service URL
+        self.qm_svc_url = QM_SERVICE_URL        # QueryMgr service URL
         self.svc_profile = profile              # StoreMgr service profile
 
         self.hostip = THIS_IP
@@ -676,14 +685,14 @@ class storeClient (object):
         return scToString(self.svc_profile)
 
 
-    @multimethod('sc',1)
+    @multimethod('_sc',1)
     def list_profiles  (self, token, profile=None, format='text'):
         '''  Usage:  storeClient.list_profiles (token, ....)
         '''
         return self._list_profiles (token=def_token(token), profile=profile,
                                       format=format)
 
-    @multimethod('sc',0)
+    @multimethod('_sc',0)
     def list_profiles  (self, token=None, profile=None, format='text'):
         '''  Usage:  storeClient.list_profiles (....)
         '''
@@ -728,6 +737,35 @@ class storeClient (object):
         return scToString(profiles)
 
 
+    # --------------------------------------------------------------------
+    # SERVICES -- List public storage services
+    #
+    def services (self, name=None, svc_type='vos', format=None,
+                  profile='default'):
+        return self._services (name=name, svc_type=svc_type, format=format, 
+                                   profile=profile)
+
+    def _services (self, name=None, svc_type='vos', format=None,
+                   profile='default'):
+        """
+        """
+        dburl = '/services?'
+        if profile is not None and profile != 'None' and profile != '':
+            dburl += ("profile=%s" % profile)
+        if name is not None and name != 'None' and name != '':
+            dburl += ("&name=%s" % name.replace('%','%25'))
+        if svc_type is not None and svc_type != 'None' and svc_type != '':
+            dburl += ("&type=%s" % svc_type)
+        if format is not None and format != 'None' and format != '':
+            dburl += "&format=%s" % format
+
+        r = self.getFromURL(self.qm_svc_url, dburl, def_token(None))
+        svcs = scToString(r.content)
+        if '{' in svcs:
+            svcs = json.loads(svcs)
+
+        return scToString(svcs)
+
 
     # -----------------------------
     #  Utility Methods
@@ -736,21 +774,21 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # ACCESS -- Determine whether the file can be accessed with the given node.
     #
-    @multimethod('sc',3)
+    @multimethod('_sc',3)
     def access (self, token, path, mode, verbose=True):
         '''  Usage:  storeClient.access (token, path, mode)
         '''
         return self._access (path=path, mode=mode, token=def_token(token),
                              verbose=verbose)
 
-    @multimethod('sc',2)
+    @multimethod('_sc',2)
     def access (self, path, mode, token=None, verbose=True):
         '''  Usage:  storeClient.access (path, mode)
         '''
         return self._access (path=path, mode=mode, token=def_token(token),
                              verbose=verbose)
 
-    @multimethod('sc',1)
+    @multimethod('_sc',1)
     def access (self, path, mode=None, token=None, verbose=True):
         '''  Usage:  storeClient.access (path, mode)
         '''
@@ -791,8 +829,9 @@ class storeClient (object):
                 print ('File is both readable and writable')
         """
 
+        uri = (path if path.count('://') > 0 else 'vos://' + path)
         url = self.svc_url + ("/access?name=%s&mode=%s&verbose=%s" % \
-                         (path,mode,verbose))
+                         (uri,mode,verbose))
         r = requests.get(url, headers={'X-DL-AuthToken': def_token(token)})
         if r.status_code != 200:
             return False
@@ -806,13 +845,13 @@ class storeClient (object):
     # STAT -- Get file status. Values are returned as a dictionary of the
     #         requested node.
     #
-    @multimethod('sc',2)
+    @multimethod('_sc',2)
     def stat (self, token, path, verbose=True):
         '''  Usage:  storeClient.stat (token, path)
         '''
         return self._stat (path=path, token=def_token(token), verbose=verbose)
 
-    @multimethod('sc',1)
+    @multimethod('_sc',1)
     def stat (self, path, token=None, verbose=True):
         '''  Usage:  storeClient.stat (path)
         '''
@@ -860,7 +899,8 @@ class storeClient (object):
                 print ('File size is: ' + stat['size'])
         """
 
-        url = self.svc_url + ("/stat?name=%s&verbose=%s" % (path,verbose))
+        uri = (path if path.count('://') > 0 else 'vos://' + path)
+        url = self.svc_url + ("/stat?name=%s&verbose=%s" % (uri,verbose))
         r = requests.get(url, headers={'X-DL-AuthToken': def_token(token)})
         if r.status_code != 200:
             return {}
@@ -871,48 +911,51 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # GET -- Retrieve a file from the store manager service
     # --------------------------------------------------------------------
-    @multimethod('sc',3)
-    def get (self, token, fr, to, verbose=True, debug=False):
+    @multimethod('_sc',3)
+    def get (self, token, fr, to, mode='text', verbose=True, debug=False):
         '''  Usage:  storeClient.get (token, fr, to)
         '''
         return self._get (fr=fr, to=to, token=def_token(token),
-                          verbose=verbose, debug=debug)
+                          mode=mode, verbose=verbose, debug=debug)
 
-    @multimethod('sc',2)
+    @multimethod('_sc',2)
     def get (self, opt1, opt2, fr='', to='', token=None, verbose=True,
-             debug=False):
+             mode='text', debug=False):
         '''  Usage:  storeClient.get (fr, to)
         '''
         if opt1 is not None and len(opt1.split('.')) >= 4:
             # opt1 looks like a token
             return self._get (fr=opt2, to=to, token=def_token(opt1),
-                              verbose=verbose, debug=debug)
+                              mode=mode, verbose=verbose, debug=debug)
         else:
             # opt1 is the 'fr' value, opt2 is the 'to' value
             return self._get (fr=opt1, to=opt2, token=def_token(token),
-                              verbose=verbose, debug=debug)
+                              mode=mode, verbose=verbose, debug=debug)
 
-    @multimethod('sc',1)
-    def get (self, optval, fr='', to='', token=None, verbose=True, debug=False):
+    @multimethod('_sc',1)
+    def get (self, optval, fr='', to='', token=None, mode='text',
+             verbose=True, debug=False):
         '''  Usage:  storeClient.get (fr)
         '''
         if optval is not None and len(optval.split('.')) >= 4:
             # optval looks like a token
             return self._get (fr=fr, to=to, token=def_token(optval),
-                              verbose=verbose, debug=debug)
+                              mode=mode, verbose=verbose, debug=debug)
         else:
             # optval is the 'fr' value
             return self._get (fr=optval, to=to, token=def_token(token),
-                              verbose=verbose, debug=debug)
+                              mode=mode, verbose=verbose, debug=debug)
 
-    @multimethod('sc',0)
-    def get (self, fr='', to='', token=None, verbose=True, debug=False):
+    @multimethod('_sc',0)
+    def get (self, fr='', to='', token=None, mode='text', verbose=True,
+             debug=False):
         '''  Usage:  storeClient.get (token, fr, to)
         '''
         return self._get (fr=fr, to=to, token=def_token(token),
-                          verbose=verbose, debug=debug)
+                          mode=mode, verbose=verbose, debug=debug)
 
-    def _get (self, token=None, fr='', to='', verbose=True, debug=False):
+    def _get (self, token=None, fr='', to='', mode='text', verbose=True,
+              debug=False):
         """ Retrieve a file from the store manager service
 
         Parameters
@@ -926,6 +969,14 @@ class storeClient (object):
         to : str
             Name of the file(s) to locally.  If not specified, the contents
             of the file are returned to the caller.
+
+        mode : [binary | text | fileobj]
+            Return data type if note saving to file.  If set to 'text' the
+            file contents are converted to string -- this is appropriate when
+            dealing with unicode but may fail with general binary data.  If
+            set to 'binary' the raw content of the HTTP response is returned --
+            for Python 2 this will be a 'string', for Python 3 it will be a
+            'bytes' data type (the caller is responsible for conversion).
 
         Returns
         -------
@@ -1051,27 +1102,40 @@ class storeClient (object):
             url = requests.get(self.svc_url + "/get?name=%s" % nm,
                                headers=hdrs)
             r = requests.get(url.text, stream=False, headers=hdrs)
-            return scToString (r.content)
+            if mode == 'text':
+                return scToString (r.content)
+            elif mode == 'fileobj':
+                from astropy.utils.data import get_readable_fileobj
+                from io import BytesIO
+                try:
+                    fileobj = BytesIO (r.content)
+                    with get_readable_fileobj (fileobj, encoding='binary',
+                                               cache=True) as f:
+                        return f
+                except Exception as e:
+                    raise storeClientError(str(e))
+            else:
+                return r.content
 
 
     # --------------------------------------------------------------------
     # PUT -- Upload a file to the store manager service
     # --------------------------------------------------------------------
-    @multimethod('sc',3)
+    @multimethod('_sc',3)
     def put (self, token, fr, to, verbose=True, debug=False):
         '''  Usage:  storeClient.put (token, fr, to)
         '''
         return self._put (fr=fr, to=to, token=def_token(token),
                           verbose=verbose, debug=False)
 
-    @multimethod('sc',2)
+    @multimethod('_sc',2)
     def put (self, fr, to, token=None, verbose=True, debug=False):
         '''  Usage:  storeClient.put (fr, to)
         '''
         return self._put (fr=fr, to=to, token=def_token(token),
                           verbose=verbose, debug=False)
 
-    @multimethod('sc',1)
+    @multimethod('_sc',1)
     def put (self, optval, fr='', to='vos://', token=None, verbose=True,
              debug=False):
         '''  Usage:  storeClient.put (fr)
@@ -1085,7 +1149,7 @@ class storeClient (object):
             return self._put (fr=optval, to=to, token=def_token(token),
                               verbose=verbose, debug=False)
 
-    @multimethod('sc',0)
+    @multimethod('_sc',0)
     def put  (self,fr='', to='vos://', token=None, verbose=True, debug=False):
         '''  Usage:  storeClient.put (fr='',to='')
         '''
@@ -1203,13 +1267,13 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # LOAD -- Load a file from a remote endpoint to the store manager service
     # --------------------------------------------------------------------
-    @multimethod('sc',3)
+    @multimethod('_sc',3)
     def load  (self, token, name, endpoint):
         '''  Usage:  storeClient.load (token, name, endpoint)
         '''
         return self._load (name=name, endpoint=endpoint, token=def_token(token))
 
-    @multimethod('sc',2)
+    @multimethod('_sc',2)
     def load  (self, name, endpoint, token=None):
         '''  Usage:  storeClient.load (name, endpoint)
         '''
@@ -1217,13 +1281,13 @@ class storeClient (object):
 
     # Aliases for load() calls.
 
-    @multimethod('sc',3)
+    @multimethod('_sc',3)
     def pull  (self, token, name, endpoint):
         '''  Usage:  storeClient.pull (token, name, endpoint)
         '''
         return self._load (name=name, endpoint=endpoint, token=def_token(token))
 
-    @multimethod('sc',2)
+    @multimethod('_sc',2)
     def pull  (self, name, endpoint, token=None):
         '''  Usage:  storeClient.pull (name, endpoint)
         '''
@@ -1255,33 +1319,34 @@ class storeClient (object):
             # Load a file from a remote URL
             storeClient.load ('mydata.vot', 'http://example.com/data.vot')
         """
+        uri = (name if name.count('://') > 0 else 'vos://' + name)
         r = self.getFromURL(self.svc_url, "/load?name=%s&endpoint=%s" % \
-                       (name, endpoint), def_token(token))
+                       (uri, endpoint), def_token(token))
         return scToString(r.content)
 
 
     # --------------------------------------------------------------------
     # CP -- Copy a file/directory within the store manager service
     # --------------------------------------------------------------------
-    @multimethod('sc',3)
+    @multimethod('_sc',3)
     def cp  (self, token, fr, to, verbose=False):
         '''  Usage:  storeClient.cp (token, fr, to)
         '''
         return self._cp (fr=fr, to=to, token=def_token(token), verbose=verbose)
 
-    @multimethod('sc',2)
+    @multimethod('_sc',2)
     def cp  (self, fr, to, token=None, verbose=False):
         '''  Usage:  storeClient.cp (fr, to)
         '''
         return self._cp (fr=fr, to=to, token=def_token(token), verbose=verbose)
 
-    @multimethod('sc',1)
+    @multimethod('_sc',1)
     def cp  (self, token, fr='', to='', verbose=False):
         '''  Usage:  storeClient.cp (fr, to)
         '''
         return self._cp (fr=fr, to=to, token=def_token(token), verbose=verbose)
 
-    @multimethod('sc',0)
+    @multimethod('_sc',0)
     def cp  (self, token=None, fr='', to='', verbose=False):
         '''  Usage:  storeClient.cp (fr, to)
         '''
@@ -1353,21 +1418,21 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # LN -- Create a link to a file/directory in the store manager service
     # --------------------------------------------------------------------
-    @multimethod('sc',3)
+    @multimethod('_sc',3)
     def ln  (self, token, fr, target, verbose=False):
         '''  Usage:  storeClient.ln (token, fr, target)
         '''
         return self._ln (fr=fr, target=target, token=def_token(token),
                            verbose=verbose)
 
-    @multimethod('sc',2)
+    @multimethod('_sc',2)
     def ln  (self, fr, target, token=None, verbose=False):
         '''  Usage:  storeClient.ln (fr, target)
         '''
         return self._ln (fr=fr, target=target, token=def_token(token),
                            verbose=verbose)
 
-    @multimethod('sc',1)
+    @multimethod('_sc',1)
     def ln  (self, token, fr='', target='', verbose=False):
         '''  Usage:  storeClient.ln (fr, target)
         '''
@@ -1402,8 +1467,10 @@ class storeClient (object):
             storeClient.ln ('vos://foo', 'vos:///new/bar')
         """
         try:
+            fro = (fr if fr.count('://') > 0 else 'vos://' + fr)
+            to = (target if target.count('://') > 0 else 'vos://' + target)
             r = self.getFromURL(self.svc_url, "/ln?from=%s&to=%s" % \
-                                   (fr, target), def_token(token))
+                                   (fro, to), def_token(token))
         except Exception:
             raise storeClientError(r.content)
         else:
@@ -1413,14 +1480,14 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # LS -- Get a file/directory listing from the store manager service
     # --------------------------------------------------------------------
-    @multimethod('sc',2)
+    @multimethod('_sc',2)
     def ls  (self, token, name, format='csv', verbose=False):
         '''  Usage:  storeClient.ls (token, name)
         '''
         return self._ls (name=name, format=format, token=def_token(token),
                          verbose=verbose)
 
-    @multimethod('sc',1)
+    @multimethod('_sc',1)
     def ls  (self, name, token=None, format='csv', verbose=False):
         '''  Usage:  storeClient.ls (name)
              Usage:  storeClient.ls (token, name='foo')
@@ -1433,13 +1500,14 @@ class storeClient (object):
             return self._ls (name=optval, format=format, token=def_token(None),
                              verbose=verbose)
 
-    @multimethod('sc',0)
+    @multimethod('_sc',0)
     def ls  (self, name='vos://', token=None, format='csv', verbose=False):
         '''  Usage:  storeClient.ls ()
         '''
-        return self._ls (name=name, format=format, token=def_token(token))
+        return self._ls (name=name, format=format, token=def_token(token),
+                         verbose=verbose)
 
-    def _ls (self, token=None, name='', format='csv', verbose=False):
+    def _ls (self, token=None, name='vos://', format='csv', verbose=False):
         """
             Get a file/directory listing from the store manager service
 
@@ -1485,13 +1553,13 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # MKDIR -- Create a directory in the store manager service
     # --------------------------------------------------------------------
-    @multimethod('sc',2)
+    @multimethod('_sc',2)
     def mkdir (self, token, name):
         '''  Usage:  storeClient.mkdir (token, name)
         '''
         return self._mkdir (name=name, token=def_token(token))
 
-    @multimethod('sc',1)
+    @multimethod('_sc',1)
     def mkdir (self, optval, name='', token=None):
         '''  Usage:  storeClient.mkdir (name)
         '''
@@ -1537,25 +1605,25 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # MV -- Move/rename a file/directory within the store manager service
     # --------------------------------------------------------------------
-    @multimethod('sc',3)
+    @multimethod('_sc',3)
     def mv  (self, token, fr, to, verbose=False):
         '''  Usage:  storeClient.mv (token, fr, to)
         '''
         return self._mv (fr=fr, to=to, token=def_token(token), verbose=verbose)
 
-    @multimethod('sc',2)
+    @multimethod('_sc',2)
     def mv  (self, fr, to, token=None, verbose=False):
         '''  Usage:  storeClient.mv (fr, to)
         '''
         return self._mv (fr=fr, to=to, token=def_token(token), verbose=verbose)
 
-    @multimethod('sc',1)
+    @multimethod('_sc',1)
     def mv  (self, token, fr='', to='', verbose=False):
         '''  Usage:  storeClient.mv (fr, to)
         '''
         return self._mv (fr=fr, to=to, token=def_token(token), verbose=verbose)
 
-    @multimethod('sc',0)
+    @multimethod('_sc',0)
     def mv  (self, token=None, fr='', to='', verbose=False):
         '''  Usage:  storeClient.mv (fr, to)
         '''
@@ -1629,13 +1697,13 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # RM -- Delete a file from the store manager service
     # --------------------------------------------------------------------
-    @multimethod('sc',2)
+    @multimethod('_sc',2)
     def rm  (self, token, name, verbose=False):
         '''  Usage:  storeClient.rm (token, name)
         '''
         return self._rm (name=name, token=def_token(token), verbose=verbose)
 
-    @multimethod('sc',1)
+    @multimethod('_sc',1)
     def rm  (self, optval, name='', token=None, verbose=False):
         '''  Usage:  storeClient.rm (name)
         '''
@@ -1645,7 +1713,7 @@ class storeClient (object):
         else:
             return self._rm (name=optval,token=def_token(token),verbose=verbose)
 
-    @multimethod('sc',0)
+    @multimethod('_sc',0)
     def rm  (self, name='', token=None, verbose=False):
         '''  Usage:  storeClient.rm (name)
         '''
@@ -1706,13 +1774,13 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # RMDIR -- Delete a directory from the store manager service
     # --------------------------------------------------------------------
-    @multimethod('sc',2)
+    @multimethod('_sc',2)
     def rmdir (self, token, name, verbose=False):
         '''  Usage:  storeClient.rmdir (token, name)
         '''
         return self._rmdir (name=name, token=def_token(token), verbose=verbose)
 
-    @multimethod('sc',1)
+    @multimethod('_sc',1)
     def rmdir (self, optval, name='', token=None, verbose=False):
         '''  Usage:  storeClient.rmdir (name)
         '''
@@ -1723,7 +1791,7 @@ class storeClient (object):
             return self._rmdir (name=optval, token=def_token(token),
                                 verbose=verbose)
 
-    @multimethod('sc',0)
+    @multimethod('_sc',0)
     def rmdir  (self, name='', token=None, verbose=False):
         '''  Usage:  storeClient.rm (name)
         '''
@@ -1775,13 +1843,13 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # SAVEAS -- Save the string representation of a data object as a file.
     # --------------------------------------------------------------------
-    @multimethod('sc',3)
+    @multimethod('_sc',3)
     def saveAs (self, token, data, name):
         '''  Usage:  storeClient.saveAs (token, data, name)
         '''
         return self._saveAs (data=data, name=name, token=def_token(token))
 
-    @multimethod('sc',2)
+    @multimethod('_sc',2)
     def saveAs (self, data, name, token=None):
         '''  Usage:  storeClient.saveAs (data, name)
         '''
@@ -1840,19 +1908,19 @@ class storeClient (object):
     # --------------------------------------------------------------------
     # TAG -- Annotate a file/directory in the store manager service
     # --------------------------------------------------------------------
-    @multimethod('sc',3)
+    @multimethod('_sc',3)
     def tag (self, token, name, tag):
         '''  Usage:  storeClient.tag (token, name, tag)
         '''
         return self._tag (name=name, tag=tag, token=def_token(token))
 
-    @multimethod('sc',2)
+    @multimethod('_sc',2)
     def tag (self, name, tag, token=None):
         '''  Usage:  storeClient.tag (name, tag)
         '''
         return self._tag (name=name, tag=tag, token=def_token(token))
 
-    @multimethod('sc',1)
+    @multimethod('_sc',1)
     def tag  (self, token, name='', tag=''):
         '''  Usage:  storeClient.tag (token, name='foo', tag='bar')
         '''
@@ -2061,17 +2129,21 @@ sc_client = getClient (profile=DEF_PROFILE, svc_url=DEF_SERVICE_URL)
 
 def scToString(s):
     """ scToString -- Force a return value to be type 'string' for all
-                      Python versions.
+                      Python versions.  If there is an error, return the
+                      original.
     """
-    if is_py3:
-        if isinstance(s,bytes):
-            strval = str(s.decode())
-        elif isinstance(s,str):
-            strval = s
-    else:
-        if isinstance(s,bytes) or isinstance(s,unicode):
-            strval = str(s)
+    try:
+        if is_py3:
+            if isinstance(s,bytes):
+                strval = str(s.decode())
+            elif isinstance(s,str):
+                strval = s
         else:
-            strval = s
+            if isinstance(s,bytes) or isinstance(s,unicode):
+                strval = str(s)
+            else:
+                strval = s
+    except Exception as e:
+        return s
 
     return strval

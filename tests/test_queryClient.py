@@ -57,24 +57,24 @@ def list(table):
     dburl = '%s/list?table=%s' % (QM_URL, table)
     r = requests.get(dburl, headers=headers)
     return r.content.decode('utf-8')
-  
+
 def drop(table):
     headers = {'Content-Type': 'text/ascii', 'X-DL-AuthToken': TEST_TOKEN}
     dburl = '%s/delete?table=%s' % (QM_URL, table)
     r = requests.get(dburl, headers=headers)
     return r.content.decode('utf-8')
 
-def sqlquery(qry, fmt='csv', out=None, async=False):
+def sqlquery(qry, fmt='csv', out=None, async_=False):
   qry = quote_plus(qry)
-  dburl = '%s/query?sql=%s&ofmt=%s&out=%s&async=%s' % (QM_URL, qry, fmt, out, async)
+  dburl = '%s/query?sql=%s&ofmt=%s&out=%s&async=%s' % (QM_URL, qry, fmt, out, async_)
   dburl += "&profile=%s" % "default"
   headers = {'Content-Type': 'text/ascii', 'X-DL-AuthToken': TEST_TOKEN}
   r = requests.get(dburl, headers=headers)
   return r.content.decode('utf-8')
 
-def adqlquery(qry, fmt='csv', out=None, async=False):
+def adqlquery(qry, fmt='csv', out=None, async_=False):
   qry = quote_plus(qry)
-  dburl = '%s/query?adql=%s&ofmt=%s&out=%s&async=%s' % (QM_URL, qry, fmt, out, async)
+  dburl = '%s/query?adql=%s&ofmt=%s&out=%s&async=%s' % (QM_URL, qry, fmt, out, async_)
   dburl += "&profile=%s" % "default"
   headers = {'Content-Type': 'text/ascii', 'X-DL-AuthToken': TEST_TOKEN}
   r = requests.get(dburl, headers=headers)
@@ -85,7 +85,7 @@ def qstatus(jobid):
     dburl = '%s/status?jobid=%s' % (QM_URL, jobid)
     r = requests.get(dburl, headers=headers)
     return r.content.decode('utf-8')
-  
+
 def qresults(jobid):
     headers = {'Content-Type': 'text/ascii', 'X-DL-AuthToken': TEST_TOKEN}
     dburl = '%s/results?jobid=%s' % (QM_URL, jobid)
@@ -97,7 +97,7 @@ def fileExists(name):
   r = requests.get(url, headers={'X-DL-AuthToken': TEST_TOKEN})
   res = r.content.decode('utf-8')
   return (True if (name in res) else False)
-  
+
 def get(fr,to=None):
   url = requests.get(SM_URL + "/get?name=%s" % ('vos://'+fr),
                      headers={"X-DL-AuthToken": TEST_TOKEN})
@@ -108,7 +108,7 @@ def get(fr,to=None):
     fd.close()
   else:
     return r.raw.data
-    
+
 def put(fr,to):
   r = requests.get(SM_URL + "/put?name=%s" % 'vos://'+to, headers = {"X-DL-AuthToken": TEST_TOKEN})
   with open(fr, 'rb') as file:
@@ -147,19 +147,19 @@ class TestQuerySql(unittest.TestCase):
     def test_querysqlcsv(self):
         self.qry = qry
         # Run the list command
-        res = queryClient.query(TEST_TOKEN,sql=self.qry,out=None,async=False,fmt='csv')
+        res = queryClient.query(TEST_TOKEN,sql=self.qry,out=None,async_=False,fmt='csv')
         self.assertEqual(res,qryrescsv)
 
     def test_querysqlascii(self):
         self.qry = qry
         # Run the list command
-        res = queryClient.query(TEST_TOKEN,sql=self.qry,out=None,async=False,fmt='ascii')
+        res = queryClient.query(TEST_TOKEN,sql=self.qry,out=None,async_=False,fmt='ascii')
         self.assertEqual(res,qryresascii)
 
     def test_querysqlvotable(self):
         self.qry = qry
         # Run the list command
-        res = queryClient.query(TEST_TOKEN,sql=self.qry,out=None,async=False,fmt='votable')
+        res = queryClient.query(TEST_TOKEN,sql=self.qry,out=None,async_=False,fmt='votable')
         self.assertEqual(res,qryresvotablesql)
 
 class TestQuerySqlToVospaceCsv(unittest.TestCase):
@@ -174,11 +174,11 @@ class TestQuerySqlToVospaceCsv(unittest.TestCase):
         # Delete temporary file
         if fileExists(self.outfile):
           rm(self.outfile)
-  
+
     def test_querysqltovospacecsv(self):
         self.qry = qry
         # Run the list command
-        res = queryClient.query(TEST_TOKEN,sql=self.qry,out='vos://'+self.outfile,async=False,fmt='csv')
+        res = queryClient.query(TEST_TOKEN,sql=self.qry,out='vos://'+self.outfile,async_=False,fmt='csv')
         self.assertEqual(res,'OK')
         self.assertTrue(fileExists(self.outfile))
         # Get the results and compare
@@ -194,18 +194,18 @@ class TestQuerySqlToVospaceFits(unittest.TestCase):
         # Delete local file if it exists
         if os.path.exists(self.outfile):
           os.remove(self.outfile)
-          
+
     def tearDown(self):
         # Delete temporary file
         rm(self.outfile)
         # Delete temporary local file
         if os.path.exists(self.outfile):
           os.remove(self.outfile)
-          
+
     def test_querysqltovospacefits(self):
         self.qry = qry
         # Run the list command
-        res = queryClient.query(TEST_TOKEN,sql=self.qry,out='vos://'+self.outfile,async=False,fmt='fits')
+        res = queryClient.query(TEST_TOKEN,sql=self.qry,out='vos://'+self.outfile,async_=False,fmt='fits')
         self.assertEqual(res,'OK')
         self.assertTrue(fileExists(self.outfile))
         # Get the results and compare
@@ -222,22 +222,22 @@ class TestQuerySqlToMydb(unittest.TestCase):
         # Make sure test table does not exist
         if list(self.table) != 'relation "'+self.table+'" not known':
           drop(self.table)
-          
+
     def tearDown(self):
         # Delete table
         if list(self.table) != 'relation "'+self.table+'" not known':
           drop(self.table)
-          
+
     def test_querysqltomydb(self):
         self.qry = qry
         # Create the mydb table from a query
-        res = queryClient.query(TEST_TOKEN,sql=self.qry,out='mydb://'+self.table,async=False)
+        res = queryClient.query(TEST_TOKEN,sql=self.qry,out='mydb://'+self.table,async_=False)
         self.assertEqual(res,'OK')
         res = list(self.table)
         self.assertNotEqual(res,'relation "'+self.table+'" not known')
         # Get the results and compare
         mydbqry = 'select * from mydb://'+self.table
-        res = sqlquery(mydbqry,fmt='csv',async=False,out=None)
+        res = sqlquery(mydbqry,fmt='csv',async_=False,out=None)
         tab = np.loadtxt(StringIO(res),unpack=False,skiprows=1,delimiter=',')
         self.assertTrue(np.array_equiv(tab[:,0],qryresid.astype('float64')))
         self.assertTrue(np.allclose(tab[:,1],qryresra))
@@ -248,7 +248,7 @@ class TestQueryAdql(unittest.TestCase):
     def test_queryadqlcsv(self):
         self.qry = qryadql
         # Run the query command
-        res = queryClient.query(TEST_TOKEN,adql=self.qry,out=None,async=False,fmt='csv')
+        res = queryClient.query(TEST_TOKEN,adql=self.qry,out=None,async_=False,fmt='csv')
         tab = np.loadtxt(StringIO(res),unpack=False,skiprows=1,delimiter=',')
         self.assertTrue(np.array_equiv(tab[:,0],qryresid.astype('float64')))
         self.assertTrue(np.allclose(tab[:,1],qryresra))
@@ -257,7 +257,7 @@ class TestQueryAdql(unittest.TestCase):
     def test_queryadqlascii(self):
         self.qry = qryadql
         # Run the query command
-        res = queryClient.query(TEST_TOKEN,adql=self.qry,out=None,async=False,fmt='ascii')
+        res = queryClient.query(TEST_TOKEN,adql=self.qry,out=None,async_=False,fmt='ascii')
         tab = np.loadtxt(StringIO(res),unpack=False,skiprows=1,delimiter='\t')
         self.assertTrue(np.array_equiv(tab[:,0],qryresid.astype('float64')))
         self.assertTrue(np.allclose(tab[:,1],qryresra))
@@ -266,10 +266,10 @@ class TestQueryAdql(unittest.TestCase):
     def test_queryadqlvotable(self):
         self.qry = qryadql
         # Run the query command
-        res = queryClient.query(TEST_TOKEN,adql=self.qry,out=None,async=False,fmt='votable')
+        res = queryClient.query(TEST_TOKEN,adql=self.qry,out=None,async_=False,fmt='votable')
         # remove whitespace when comparing the strings
         self.assertEqual("".join(res.split()),"".join(qryresvotableadql.split()))
-        
+
 class TestQueryAdqlToVospaceCsv(unittest.TestCase):
 
     def setUp(self):
@@ -282,11 +282,11 @@ class TestQueryAdqlToVospaceCsv(unittest.TestCase):
         # Delete temporary file
         if fileExists(self.outfile):
           rm(self.outfile)
-  
+
     def test_queryadqltovospacecsv(self):
         self.qry = qryadql
         # Run the list command
-        res = queryClient.query(TEST_TOKEN,adql=self.qry,out='vos://'+self.outfile,async=False,fmt='csv')
+        res = queryClient.query(TEST_TOKEN,adql=self.qry,out='vos://'+self.outfile,async_=False,fmt='csv')
         self.assertEqual(res,'OK')
         self.assertTrue(fileExists(self.outfile))
         # Get the results and compare
@@ -305,18 +305,18 @@ class TestQueryAdqlToVospaceFits(unittest.TestCase):
         # Delete local file if it exists
         if os.path.exists(self.outfile):
           os.remove(self.outfile)
-          
+
     def tearDown(self):
         # Delete temporary file
         rm(self.outfile)
         # Delete temporary local file
         if os.path.exists(self.outfile):
           os.remove(self.outfile)
-          
+
     def test_queryadqltovospacefits(self):
         self.qry = qryadql
         # Run the list command
-        res = queryClient.query(TEST_TOKEN,adql=self.qry,out='vos://'+self.outfile,async=False,fmt='fits')
+        res = queryClient.query(TEST_TOKEN,adql=self.qry,out='vos://'+self.outfile,async_=False,fmt='fits')
         self.assertEqual(res,'OK')
         self.assertTrue(fileExists(self.outfile))
         # Get the results and compare
@@ -333,10 +333,10 @@ class TestQueryAsync(unittest.TestCase):
 
     def tearDown(self):
         pass
-      
+
     def test_queryasync(self):
         # Run the query command
-        jobid = queryClient.query(TEST_TOKEN,sql=self.qry,async=True)
+        jobid = queryClient.query(TEST_TOKEN,sql=self.qry,async_=True)
         if qstatus(jobid) != 'COMPLETED':
           time.sleep(2)
         # Get the results
@@ -353,10 +353,10 @@ class TestQueryStatus(unittest.TestCase):
 
     def tearDown(self):
         pass
-      
+
     def test_querystatus(self):
         # Run the query command
-        jobid = queryClient.query(TEST_TOKEN,sql=self.qry,async=True)
+        jobid = queryClient.query(TEST_TOKEN,sql=self.qry,async_=True)
         res = qstatus(jobid)
         self.assertIn(res,['QUEUED','EXECUTING','COMPLETED'])
         # Wait a little
@@ -371,10 +371,10 @@ class TestQueryResults(unittest.TestCase):
 
     def tearDown(self):
         pass
-      
+
     def test_queryresults(self):
         # Run the query
-        jobid = sqlquery(self.qry,async=True,out=None)
+        jobid = sqlquery(self.qry,async_=True,out=None)
         if qstatus(jobid) != 'COMPLETED':
           time.sleep(2)
         # Get the results
@@ -385,7 +385,7 @@ class TestQueryResults(unittest.TestCase):
         self.assertTrue(np.allclose(tab[:,2],qryresdec))
 
 class TestListProfiles(unittest.TestCase):
-      
+
     def test_listprofilesall(self):
         # Get the profiles
         res = queryClient.list_profiles(TEST_TOKEN)
@@ -405,7 +405,7 @@ class TestListProfiles(unittest.TestCase):
         self.assertIn('type',res.keys())
 
 class TestSchema(unittest.TestCase):
-      
+
     def test_schema(self):
         # Get the schemas
         res = queryClient.schema('','text','default')
@@ -437,7 +437,7 @@ class TestSchema(unittest.TestCase):
         self.assertIn('smash_dr1.object',res)
         self.assertIn('datatype',res)
         self.assertIn('ucd',res)
-        
+
 class TestListNotExists(unittest.TestCase):
 
     def setUp(self):
@@ -448,7 +448,7 @@ class TestListNotExists(unittest.TestCase):
 
     def tearDown(self):
         pass
-      
+
     def test_listnotexist(self):
         # Run the list command
         res = queryClient.list(TEST_TOKEN,self.table)
@@ -463,11 +463,11 @@ class TestListExists(unittest.TestCase):
           drop(self.table)
         # Create table with a query
         res = sqlquery('select * from smash_dr1.object limit 10',out='mydb://'+self.table)
-        
+
     def tearDown(self):
         # Delete temporary table from VOSpace
         drop(self.table)
-      
+
     def test_listexists(self):
         # Run the list command
         res = queryClient.list(TEST_TOKEN,self.table)
@@ -478,7 +478,7 @@ class TestListExists(unittest.TestCase):
         res = queryClient.list(TEST_TOKEN,self.table)
         self.assertIn('ra,double precision',res)
         self.assertIn('umag,real',res)
-                         
+
 class TestDrop(unittest.TestCase):
 
     def setUp(self):
@@ -488,11 +488,11 @@ class TestDrop(unittest.TestCase):
           drop(self.table)
         # Create table with a query
         res = sqlquery('select * from smash_dr1.object limit 10',out='mydb://'+self.table)
-        
+
     def tearDown(self):
         # Delete temporary table from VOSpace
         drop(self.table)
-      
+
     def test_drop(self):
         # Try dropping the table
         res = queryClient.drop(TEST_TOKEN,self.table)
@@ -503,7 +503,7 @@ class TestDrop(unittest.TestCase):
 
 
 # query with WHERE clause with SORT BY and LIMIT
-        
+
 if __name__ == '__main__':
   suite = suite()
   unittest.TextTestRunner(verbosity = 2).run(suite)

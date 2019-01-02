@@ -91,7 +91,7 @@ DEF_PROFILE 	= 'default'
 DEBUG 		= os.path.isfile ('/tmp/QM_DEBUG')
 
 # Default sync query timeout default (120sec)
-TIMEOUT_REQUEST = 120 		
+TIMEOUT_REQUEST = 120
 
 
 
@@ -210,36 +210,37 @@ def services (name=None, svc_type=None, format=None, profile='default'):
 #
 @multimethod('qc',2)
 def query (token, query, adql=None, sql=None, fmt='csv', out=None,
-           async=False, profile='default', **kw):
+           async_=False, profile='default', **kw):
     '''  Usage:  queryClient.query (token)
     '''
     return qc_client._query (token=def_token(token), adql=adql, sql=query,
-                          fmt=fmt, out=out, async=async,
+                          fmt=fmt, out=out, async_=async_,
                           profile=profile, **kw)
 
 @multimethod('qc',1)
-def query (optval, adql=None, sql=None, fmt='csv', out=None, async=False,
+def query (optval, adql=None, sql=None, fmt='csv', out=None, async_=False,
            token=None, profile='default', **kw):
     '''  Usage:  queryClient.query (token)
     '''
     if optval is not None and optval.lower()[:6] == 'select':
         # optval looks like a query string
         return qc_client._query (token=def_token(None), adql=adql, sql=optval,
-                              fmt=fmt, out=out, async=async,
+                              fmt=fmt, out=out, async_=async_,
                               profile=profile, **kw)
     else:
         # optval is (probably) a token
         return qc_client._query (token=def_token(optval), adql=adql, sql=sql,
-                              fmt=fmt, out=out, async=async,
+                              fmt=fmt, out=out, async_=async_,
                               profile=profile, **kw)
 
+
 @multimethod('qc',0)
-def query (token=None, adql=None, sql=None, fmt='csv', out=None, async=False,
+def query (token=None, adql=None, sql=None, fmt='csv', out=None, async_=False,
            profile='default', **kw):
     '''  Usage:  queryClient.query ()
     '''
     return qc_client._query (token=def_token(token), adql=adql, sql=sql, fmt=fmt,
-                          out=out, async=async, profile=profile, **kw)
+                          out=out, async_=async_, profile=profile, **kw)
 
 
 
@@ -957,40 +958,40 @@ class queryClient (object):
 
     @multimethod('_qc',2)
     def query (self, token, query, adql=None, sql=None, fmt='csv', out=None,
-               async=False, profile='default', **kw):
+               async_=False, profile='default', **kw):
         '''  Usage:  queryClient.query (token)
         '''
         return self._query (token=def_token(token), adql=adql, sql=query,
-                            fmt=fmt, out=out, async=async,
+                            fmt=fmt, out=out, async_=async_,
                             profile=profile, **kw)
 
     @multimethod('_qc',1)
     def query (self, optval, adql=None, sql=None, fmt='csv', out=None,
-               async=False, token=None, profile='default', **kw):
+               async_=False, token=None, profile='default', **kw):
         '''  Usage:  queryClient.client.query (token, ...)
         '''
         if optval is not None and optval.lower()[:6] == 'select':
             # optval looks like a query string
             return self._query (token=def_token(None), adql=adql, sql=optval,
-                                fmt=fmt, out=out, async=async,
+                                fmt=fmt, out=out, async_=async_,
                                 profile=profile, **kw)
         else:
             # optval is (probably) a token
             return self._query (token=def_token(optval), adql=adql, sql=sql,
-                                fmt=fmt, out=out, async=async,
+                                fmt=fmt, out=out, async_=async_,
                                 profile=profile, **kw)
 
     @multimethod('_qc',0)
     def query (self, token=None, adql=None, sql=None, fmt='csv', out=None,
-               async=False, profile='default', **kw):
+               async_=False, profile='default', **kw):
         '''  Usage:  queryClient.client.query (...)
         '''
         return self._query (token=def_token(token), adql=adql, sql=sql,
-                            fmt=fmt, out=out, async=async,
+                            fmt=fmt, out=out, async_=async_,
                             profile=profile, **kw)
 
     def _query (self, token=None, adql=None, sql=None, fmt='csv', out=None,
-              async=False, profile='default', **kw):
+              async_=False, profile='default', **kw):
         """ Send an SQL or ADQL query to the database or TAP service.
 
         Parameters
@@ -1036,13 +1037,17 @@ class queryClient (object):
             VOSpace or MyDB resource to create, or ``None`` if the result is
             to be returned directly to the caller.
 
-        async : bool
+        async_ : bool
             If ``True``, the query is Asynchronous, i.e. a job is submitted to
             the DB, and a jobID token is returned the caller. The jobID must
             be then used to check the query's status and to retrieve the result
             (when the job status is ``COMPLETED``) or the error message (when
             the job status is ``ERROR``). Default is ``False``, i.e. the task
             runs a Synchroneous query.
+
+            ``async_`` replaces the previous ``async`` parameter, because ``async``
+            was promoted to a keyword in Python 3.7. Users of Python versions
+            prior to 3.7 can continue to use the ``async`` keyword.
 
         profile : str or None
             The Query Manager profile to use for this call.  If ``None`` then
@@ -1107,6 +1112,9 @@ class queryClient (object):
         """
 
         # Process optional keyword arguments.
+        if 'async' in kw:
+            async_ = kw['async']
+
         if 'timeout' in kw: 		# set requested timeout on the query
             timeout = int(kw['timeout'])
         else:
@@ -1114,15 +1122,15 @@ class queryClient (object):
         self.set_timeout_request (timeout)
 
         wait = self.async_wait 		# see if we wait for an Async result
-        if async and 'wait' in kw:
+        if async_ and 'wait' in kw:
             self.async_wait = wait = kw['wait']
 
         poll_time = 1 			# see if we wait for an Async result
-        if async and 'poll' in kw:
+        if async_ and 'poll' in kw:
             self.async_poll = poll_time = int(kw['poll'])
 
         verbose = False 		# see if we wait for an Async result
-        if async and 'poll' in kw:
+        if async_ and 'poll' in kw:
             verbose = kw['verbose']
 
 
@@ -1153,12 +1161,12 @@ class queryClient (object):
 
             query = quote_plus(adql)		# URL-encode the query string
             dburl = '%s/query?adql=%s&ofmt=%s&out=%s&async=%s' % (
-                self.svc_url, query, qfmt, out, async)
+                self.svc_url, query, qfmt, out, async_)
 
         elif sql is not None and sql != '':
             query = quote_plus(sql)		# URL-encode the query string
             dburl = '%s/query?sql=%s&ofmt=%s&out=%s&async=%s' % (
-                self.svc_url, query, qfmt, out, async)
+                self.svc_url, query, qfmt, out, async_)
         else:
             raise queryClientError("No query specified")
 
@@ -1173,7 +1181,7 @@ class queryClient (object):
             raise queryClientError (r.text)
         resp = r.content
 
-        if async and wait:
+        if async_ and wait:
             # Sync query timeouts are handled on the server.  If waiting
             # for an async query, loop until job is completed or the timeout
             # expires.
@@ -1214,7 +1222,7 @@ class queryClient (object):
                     print ('Retrieving results')
                 resp = self._results (token=token, jobId=jobId).lower()
 
-        if (out is not None and out != '') and not async:
+        if (out is not None and out != '') and not async_:
             # If we're saving to a local file (e.g. in a notebook directory),
             # the file here.  Results saved to VOSpace or MyDB are handled on
             # the server side.

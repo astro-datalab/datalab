@@ -781,17 +781,18 @@ class Query2 (Task):
             if self.profile.value != "" and self.profile.value is not None:
                 queryClient.set_profile (profile=self.profile.value)
 
+        # Workarounds for the "async" option to the query using getattr().
         try:
             res = queryClient.query (token, adql=adql, sql=sql,
                         fmt=self.fmt.value, out=self.out.value,
-                        async=self.async.value, timeout=self.timeout.value)
+                        async_=getattr(self,"async").value, timeout=self.timeout.value)
 
-            if self.async.value:
+            if getattr(self,"async").value:
                 print (res)                         # Return the JobID
             elif self.out.value== '' or self.out.value is None:
                 print (res)                         # Return the results
         except Exception as e:
-            if not self.async.value and str(e) is not None:
+            if not getattr(self,"async").value and str(e) is not None:
                 err = str(e)
                 if err.find("Time-out") > 0:
                     print ("Error: Sync query timeout, try an async query")

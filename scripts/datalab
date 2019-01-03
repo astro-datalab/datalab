@@ -98,6 +98,8 @@ if __name__ == "__main__":
                'status' : dl.Status,            # summarize login status
              'profiles' : dl.QueryProfiles,	# list query profiles
              'svc_urls' : dl.SvcURLs,		# list service URLs
+              'version' : dl.Version,		# print task version
+             'services' : dl.Services,		# list data services
 #                'init' : dl.Init,              # initialize config file
 #               'reset' : dl.Reset,             # reset user record field
 #          'userRecord' : dl.UserRecord,        # print user record
@@ -147,7 +149,6 @@ if __name__ == "__main__":
              }
 
     help_opts = ['--help', '--h', '-h', 'help', '-help']
-    version_opts = ['--version', '-v', 'version', '-version']
 
     # List tasks
     if len(sys.argv) == 1 or sys.argv[1] in help_opts:
@@ -156,9 +157,6 @@ if __name__ == "__main__":
         for task in sorted(tasks):
             print ('    %15s - %s' % (task, tasks[task](datalab).description))
         print (' ')
-
-    elif sys.argv[1] in version_opts:
-        print ("Version:  " + dlver.version)
 
     # Parse arguments
     elif sys.argv[1] in tasks:

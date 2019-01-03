@@ -158,6 +158,9 @@ if __name__ == "__main__":
             print ('    %15s - %s' % (task, tasks[task](datalab).description))
         print (' ')
 
+    elif sys.argv[1] in ['--version', '-version', '-v']:
+        print ("Task Version:  " + dlver.version)
+
     # Parse arguments
     elif sys.argv[1] in tasks:
         datalab = dl.DataLab()

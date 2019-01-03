@@ -30,7 +30,7 @@ def my_test_suite():
     test_suite = test_loader.discover('tests', pattern='test_*.py')
     return test_suite
 
-setup(name="datalab-client",
+setup(name="noaodatalab",
       version=dl_version,
       url="https://github.com/noaodatalab/datalab/",
       description="Tools for interacting with NOAO Data Lab.",
@@ -44,15 +44,16 @@ setup(name="datalab-client",
       scripts=['scripts/datalab', 'scripts/mountvofs'],
       test_suite='setup.my_test_suite',
       classifiers=[
-        'Development Status :: 4 - Beta',
-        'Environment :: Console',
-        'Intended Audience :: Developers',
-        'Intended Audience :: End Users/Desktop',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: GNU Affero General Public License v3',
-        'Operating System :: POSIX',
-        'Programming Language :: Python',
+          'Development Status :: 5 - Production/Stable',
+          'Environment :: Console',
+          'Intended Audience :: Developers',
+          'Intended Audience :: End Users/Desktop',
+          'Intended Audience :: Science/Research',
+          'License :: OSI Approved :: GNU Affero General Public License v3',
+          'Operating System :: POSIX',
+          'Programming Language :: Python',
+          'Topic :: Scientific/Engineering :: Astronomy',
         ], 
-      install_requires=['requests>=2.7', 'argparse', 'lxml', 'httplib2', 'numpy', 'astropy', 'pyvo', 'matplotlib', 'html2text'],
-      requires=['requests (>=2.7)', 'argparse', 'lxml', 'httplib2', 'numpy', 'astropy', 'pyvo', 'matplotlib', 'html2text']
+      install_requires=['requests>=2.7', 'httplib2', 'numpy', 'astropy', 'pyvo', 'matplotlib', 'html2text'],
+      requires=['requests (>=2.7)', 'httplib2', 'numpy', 'astropy', 'pyvo', 'matplotlib', 'html2text']
       )

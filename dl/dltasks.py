@@ -348,6 +348,35 @@ class Task:
 #  Print Current Service URLs Tasks
 ################################################
 
+class Version(Task):
+    '''
+        Print the task version.
+    '''
+    def __init__(self, datalab):
+        Task.__init__(self, datalab, 'version', 'Print task version')
+        self.addStdOptions()
+
+    def run(self):
+        from dl import __version__ as dlver
+        print ("Task Version:  " + dlver.version)
+
+
+class Services(Task):
+    '''
+        Print the available data services.
+    '''
+    def __init__(self, datalab):
+        Task.__init__(self, datalab, 'services',
+                      'Print available data services')
+        self.addOption("svc_type",
+            Option("svc_type", "", "Service type (vos|scs|sia|ssa)",
+                required=False, default=None))
+        self.addStdOptions()
+
+    def run(self):
+        print (queryClient.services (svc_type=self.svc_type.value))
+
+
 class SvcURLs(Task):
     '''
         Print the current service URLS in use.

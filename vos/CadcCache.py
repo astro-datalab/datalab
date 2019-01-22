@@ -21,6 +21,7 @@ from SharedLock import SharedLock as SharedLock
 from CacheMetaData import CacheMetaData as CacheMetaData
 from logExceptions import logExceptions
 import utils
+from six import reraise
 
 libcPath = ctypes.util.find_library('c')
 libc = ctypes.cdll.LoadLibrary(libcPath)
@@ -245,9 +246,9 @@ class Cache(object):
                 # are propegated.
                 if not (isinstance(fileHandle.readException[1], EnvironmentError) and
                                 fileHandle.readException[1].errno == errno.ENOENT and not mustExist):
-                    raise fileHandle.readException[0], \
+                    reraise (fileHandle.readException[0], \
                         fileHandle.readException[1], \
-                        fileHandle.readException[2]
+                        fileHandle.readException[2])
                 # The file didn't exist on the backing store but its ok
                 fileHandle.fullyCached = True
                 fileHandle.gotHeader = True
@@ -926,8 +927,8 @@ class FileHandle(object):
 
             # Look for write failures.
             if self.flushException is not None:
-                raise self.flushException[0], self.flushException[1], \
-                    self.flushException[2]
+                reraise (self.flushException[0], self.flushException[1], \
+                    self.flushException[2])
 
             return 0
 

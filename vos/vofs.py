@@ -1,5 +1,6 @@
 #!/usr/bin/env python2.7
 """A FUSE based filesystem view of VOSpace."""
+from __future__ import print_function
 import time
 import vos
 import sys
@@ -345,7 +346,7 @@ class VOFS(Operations):
 
         node = self.getNode(path)
         parent = self.getNode(os.path.dirname(path))
-        print node, parent
+        print (node, parent)
         # Force inheritance of group settings.
         node.groupread = parent.groupread
         node.groupwrite = parent.groupwrite
@@ -439,7 +440,7 @@ class VOFS(Operations):
         There is no distinction in VOSpace between hard and symbolic links.
         """
         try:
-            if target[0] != '/': target = '/' + target # MJG URL hack 
+            if target[0] != '/': target = '/' + target # MJG URL hack
             self.client.link(target, name)
         except OSError as os_error:
             raise FuseOSError(getattr(os_error, 'errno', EFAULT))

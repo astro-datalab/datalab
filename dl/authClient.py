@@ -671,7 +671,6 @@ class authClient (object):
         url = self.svc_url + "/passwordReset?"
         args = urlencode({"token": token,
                           "username": username,
-                          "password": password,
                           "debug": self.debug})
         url = url + args
 
@@ -693,14 +692,14 @@ class authClient (object):
             raise Exception("Error: Invalid user or non-root token")
 
         try:
-            # Add the auth token to the reauest header.
-            headers = {'X-DL-AuthToken': token}
+            # Add the auth token and password to the reauest header.
+            headers = {'X-DL-AuthToken': token,
+                       'X-DL-Password': password}
 
             r = requests.get(url, params=args, headers=headers)
             response = acToString(r.content)
 
             if r.status_code != 200:
-                #raise Exception(r.text)
                 raise Exception(r.content)
 
         except Exception:

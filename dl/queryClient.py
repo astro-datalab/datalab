@@ -47,11 +47,6 @@ else:						# use distribution copy
     from dl.Util import multimethod
     from dl.Util import def_token
 
-# Turn off some annoying astropy warnings
-import warnings
-from astropy.utils.exceptions import AstropyWarning
-warnings.simplefilter('ignore', AstropyWarning)
-
 is_py3 = sys.version_info.major == 3
 
 

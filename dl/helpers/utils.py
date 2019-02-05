@@ -28,6 +28,11 @@ from astropy.utils.data import get_readable_fileobj
 from astropy.extern.six import BytesIO, string_types
 import astropy.units as u
 
+# Turn off some annoying astropy warnings
+import warnings
+from astropy.utils.exceptions import AstropyWarning
+warnings.simplefilter('ignore', AstropyWarning)
+
 from .. import storeClient
 from .. import authClient
 

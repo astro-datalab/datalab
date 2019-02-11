@@ -510,30 +510,34 @@ def tag  (token, name='', tag=''):
 # LOAD/PULL -- Load a file from a remote endpoint to the store manager service
 #
 @multimethod('sc',3)
-def load  (token, name, endpoint):
+def load  (token, name, endpoint, is_vospace=False):
     '''  Usage:  storeClient.load (token, name, endpoint)
     '''
-    return sc_client._load (name=name, endpoint=endpoint, token=def_token(token))
+    return sc_client._load (name=name, endpoint=endpoint,
+                            token=def_token(token), is_vospace=is_vospace)
 
 @multimethod('sc',2)
-def load  (name, endpoint, token=None):
+def load  (name, endpoint, token=None, is_vospace=False):
     '''  Usage:  storeClient.load (name, endpoint)
     '''
-    return sc_client._load (name=name, endpoint=endpoint, token=def_token(token))
+    return sc_client._load (name=name, endpoint=endpoint,
+                            token=def_token(token), is_vospace=is_vospace)
 
 # Aliases for load() calls.
 
 @multimethod('sc',3)
-def pull  (token, name, endpoint):
+def pull  (token, name, endpoint, is_vospace=False):
     '''  Usage:  storeClient.pull (token, name, endpoint)
     '''
-    return sc_client._load (name=name, endpoint=endpoint, token=def_token(token))
+    return sc_client._load (name=name, endpoint=endpoint,
+                            token=def_token(token), is_vospace=is_vospace)
 
 @multimethod('sc',2)
-def pull  (name, endpoint, token=None):
+def pull  (name, endpoint, token=None, is_vospace=False):
     '''  Usage:  storeClient.pull (name, endpoint)
     '''
-    return sc_client._load (name=name, endpoint=endpoint, token=def_token(token))
+    return sc_client._load (name=name, endpoint=endpoint,
+                            token=def_token(token), is_vospace=is_vospace)
 
 
 
@@ -1268,32 +1272,36 @@ class storeClient (object):
     # LOAD -- Load a file from a remote endpoint to the store manager service
     # --------------------------------------------------------------------
     @multimethod('_sc',3)
-    def load  (self, token, name, endpoint):
+    def load  (self, token, name, endpoint, is_vospace=False):
         '''  Usage:  storeClient.load (token, name, endpoint)
         '''
-        return self._load (name=name, endpoint=endpoint, token=def_token(token))
+        return self._load (name=name, endpoint=endpoint,
+                           token=def_token(token), is_vospace=is_vospace)
 
     @multimethod('_sc',2)
-    def load  (self, name, endpoint, token=None):
+    def load  (self, name, endpoint, token=None, is_vospace=False):
         '''  Usage:  storeClient.load (name, endpoint)
         '''
-        return self._load (name=name, endpoint=endpoint, token=def_token(token))
+        return self._load (name=name, endpoint=endpoint,
+                           token=def_token(token), is_vospace=is_vospace)
 
     # Aliases for load() calls.
 
     @multimethod('_sc',3)
-    def pull  (self, token, name, endpoint):
+    def pull  (self, token, name, endpoint, is_vospace=False):
         '''  Usage:  storeClient.pull (token, name, endpoint)
         '''
-        return self._load (name=name, endpoint=endpoint, token=def_token(token))
+        return self._load (name=name, endpoint=endpoint,
+                           token=def_token(token), is_vospace=is_vospace)
 
     @multimethod('_sc',2)
-    def pull  (self, name, endpoint, token=None):
+    def pull  (self, name, endpoint, token=None, is_vospace=False):
         '''  Usage:  storeClient.pull (name, endpoint)
         '''
-        return self._load (name=name, endpoint=endpoint, token=def_token(token))
+        return self._load (name=name, endpoint=endpoint,
+                           token=def_token(token), is_vospace=is_vospace)
 
-    def _load (self, token=None, name='', endpoint=''):
+    def _load (self, token=None, name='', endpoint='', is_vospace=False):
         """ Load a file from a remote endpoint to the Store Manager service
 
         Parameters
@@ -1319,9 +1327,16 @@ class storeClient (object):
             # Load a file from a remote URL
             storeClient.load ('mydata.vot', 'http://example.com/data.vot')
         """
+        try:
+            from urllib import quote_plus               # Python 2
+        except ImportError:
+            from urllib.parse import quote_plus         # Python 3
+
         uri = (name if name.count('://') > 0 else 'vos://' + name)
-        r = self.getFromURL(self.svc_url, "/load?name=%s&endpoint=%s" % \
-                       (uri, endpoint), def_token(token))
+        r = self.getFromURL(self.svc_url,
+                            "/load?name=%s&endpoint=%s&is_vospace=%s" % \
+                            (uri, quote_plus(endpoint), str(is_vospace)),
+                            def_token(token))
         return scToString(r.content)
 
 

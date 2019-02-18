@@ -667,7 +667,6 @@ class authClient (object):
         args = urlencode({"token": token,
                           "username": username,
                           "debug": self.debug})
-        url = url + args
 
         if self.debug:
             print ("passwdReset: token = '%s'" % token)

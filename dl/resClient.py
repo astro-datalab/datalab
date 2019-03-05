@@ -100,7 +100,7 @@ def deleteResource (resource):
 
 # Service methods
 def set_svc_url (svc_url):
-    return client.set_svc_url (svc_url)
+    return client.set_svc_url (svc_url.strip('/'))
 
 def get_svc_url ():
     return client.get_svc_url ()
@@ -173,7 +173,7 @@ class resClient (object):
             resMgr.client.set_svc_url ("http://localhost:7001/")
         """
 
-        self.svc_url = svc_url
+        self.svc_url = svc_url.strip('/')
 
 
     def get_svc_url (self):

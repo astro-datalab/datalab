@@ -553,7 +553,7 @@ class storeClient (object):
     def __init__ (self, profile=DEF_PROFILE, svc_url=DEF_SERVICE_URL):
         """ Initialize the store client object.
         """
-        self.svc_url = svc_url                  # StoreMgr service URL
+        self.svc_url = svc_url.strip('/')       # StoreMgr service URL
         self.qm_svc_url = QM_SERVICE_URL        # QueryMgr service URL
         self.svc_profile = profile              # StoreMgr service profile
 
@@ -595,7 +595,7 @@ class storeClient (object):
             svc_url = self.svc_url
 
         try:
-            r = requests.get (svc_url, timeout=timeout)
+            r = requests.get (svc_url.strip('/'), timeout=timeout)
             resp = scToString(r.content)
             if r.status_code != 200:
                 return False

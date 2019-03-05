@@ -130,7 +130,7 @@ def whoAmI():
 
 def isAlive(svc_url=DEF_SERVICE_URL):
     try:
-        response = ac_client.isAlive(svc_url)
+        response = ac_client.isAlive(svc_url.strip('/'))
     except Exception as e:
         response = str(e)
     return (True if response.lower() == 'true' else False)
@@ -217,7 +217,7 @@ def passwordReset(token, username, password):
 
 # Standard Service Methods
 def set_svc_url(svc_url):
-    return ac_client.set_svc_url(svc_url)
+    return ac_client.set_svc_url(svc_url.strip('/'))
 
 
 def get_svc_url():
@@ -351,7 +351,7 @@ class authClient (object):
             authClient.set_svc_url ("http://localhost:7001/")
         """
 
-        self.svc_url = acToString(svc_url)
+        self.svc_url = acToString(svc_url.strip('/'))
 
     def get_svc_url(self):
         """ Return the currently-used Authentication Service URL.

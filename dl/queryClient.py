@@ -605,7 +605,7 @@ class queryClient (object):
     def __init__ (self, profile=DEF_PROFILE, svc_url=DEF_SERVICE_URL):
         """ Initialize the query client. """
 
-        self.svc_url = svc_url                  # QueryMgr service URL
+        self.svc_url = svc_url.strip('/')       # QueryMgr service URL
         self.svc_profile = profile  		# QueryMgr service profile
 
         self.sm_svc_url = SM_SERVICE_URL        # StorageMgr service URL
@@ -675,7 +675,7 @@ class queryClient (object):
 
             queryClient.set_svc_url ("http://localhost:7002")
         """
-        self.svc_url = qcToString(svc_url)
+        self.svc_url = qcToString(svc_url.strip('/'))
 
     def get_svc_url (self):
         """ Return the currently-used Query Service URL.

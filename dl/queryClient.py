@@ -83,8 +83,8 @@ DEF_PROFILE 	= 'default'
 # Use a /tmp/QM_DEBUG file as a way to turn on debugging in the client code.
 DEBUG 		= os.path.isfile ('/tmp/QM_DEBUG')
 
-# Default sync query timeout default (120sec)
-TIMEOUT_REQUEST = 120
+# Default sync query timeout default (300sec)
+TIMEOUT_REQUEST = 300
 
 
 
@@ -605,7 +605,7 @@ class queryClient (object):
     def __init__ (self, profile=DEF_PROFILE, svc_url=DEF_SERVICE_URL):
         """ Initialize the query client. """
 
-        self.svc_url = svc_url                  # QueryMgr service URL
+        self.svc_url = svc_url.strip('/')       # QueryMgr service URL
         self.svc_profile = profile  		# QueryMgr service profile
 
         self.sm_svc_url = SM_SERVICE_URL        # StorageMgr service URL
@@ -675,7 +675,7 @@ class queryClient (object):
 
             queryClient.set_svc_url ("http://localhost:7002")
         """
-        self.svc_url = qcToString(svc_url)
+        self.svc_url = qcToString(svc_url.strip('/'))
 
     def get_svc_url (self):
         """ Return the currently-used Query Service URL.
@@ -1057,7 +1057,7 @@ class queryClient (object):
                    the default is to return the job ID immediately and let
                    the client poll for job status and return results.
 
-               timeout = 120
+               timeout = 300
                    Requested timeout (in seconds) for a query. For a Sync
                    query, this value sets a session timeout request in the
                    database that will abort the query at the specified time.

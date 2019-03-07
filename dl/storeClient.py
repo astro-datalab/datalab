@@ -125,7 +125,7 @@ def get_profile ():
 # SERVICES -- List public storage services
 #
 def services (name=None, svc_type='vos', format=None, profile='default'):
-    return sc_client.services (name=name, svc_type=svc_type, format=format, 
+    return sc_client.services (name=name, svc_type=svc_type, format=format,
                                profile=profile)
 
 # --------------------------------------------------------------------
@@ -553,7 +553,7 @@ class storeClient (object):
     def __init__ (self, profile=DEF_PROFILE, svc_url=DEF_SERVICE_URL):
         """ Initialize the store client object.
         """
-        self.svc_url = svc_url                  # StoreMgr service URL
+        self.svc_url = svc_url.strip('/')       # StoreMgr service URL
         self.qm_svc_url = QM_SERVICE_URL        # QueryMgr service URL
         self.svc_profile = profile              # StoreMgr service profile
 
@@ -595,7 +595,7 @@ class storeClient (object):
             svc_url = self.svc_url
 
         try:
-            r = requests.get (svc_url, timeout=timeout)
+            r = requests.get (svc_url.strip('/'), timeout=timeout)
             resp = scToString(r.content)
             if r.status_code != 200:
                 return False
@@ -746,7 +746,7 @@ class storeClient (object):
     #
     def services (self, name=None, svc_type='vos', format=None,
                   profile='default'):
-        return self._services (name=name, svc_type=svc_type, format=format, 
+        return self._services (name=name, svc_type=svc_type, format=format,
                                    profile=profile)
 
     def _services (self, name=None, svc_type='vos', format=None,
@@ -1486,10 +1486,12 @@ class storeClient (object):
             to = (target if target.count('://') > 0 else 'vos://' + target)
             r = self.getFromURL(self.svc_url, "/ln?from=%s&to=%s" % \
                                    (fro, to), def_token(token))
+            if r.status_code != requests.codes.created:
+                return scToString(r.content)
+            else:
+                return 'OK'
         except Exception:
             raise storeClientError(r.content)
-        else:
-            return 'OK'
 
 
     # --------------------------------------------------------------------

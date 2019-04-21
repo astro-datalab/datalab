@@ -1,23 +1,85 @@
 #!/usr/bin/env python
 #
 # QUERYCLIENT -- Client routines for the Data Lab Query Manager Service
-#
+
 
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Matthew Graham <graham@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20180907'  # yyyymmdd
+__version__ = '20190422'  # yyyymmdd
 
 
-"""
+'''
     Client methods for the DataLab Query Manager Service.
+
+
+Query Manager Client Interface
+------------------------------
+               isAlive  (svc_url=DEF_SERVICE_URL, timeout=2)
+           set_svc_url  (svc_url)
+           get_svc_url  ()
+           set_profile  (profile)
+           get_profile  ()
+         list_profiles  (optval, token=None, profile=None, format='text')
+         list_profiles  (token=None, profile=None, format='text')
+
+   set_timeout_request  (nsec)
+   get_timeout_request  ()
+                schema  (value, format='text', profile=None)
+                schema  (value='', format='text', profile=None)
+              services  (name=None, svc_type=None, format=None,
+                         profile='default')
+
+                 query  (token, query, adql=None, sql=None, fmt='csv', out=None,
+                         async_=False, profile='default', **kw)
+                 query  (optval, adql=None, sql=None, fmt='csv', out=None,
+                         async_=False, profile='default', **kw)
+                 query  (token=None, adql=None, sql=None, fmt='csv', out=None,
+                         async_=False, profile='default', **kw)
+                status  (token, jobId)
+                status  (optval, jobId=None)
+                status  (token=None, jobId=None)
+               results  (token, jobId, delete=True)
+               results  (optval, jobId=None, delete=True)
+               results  (token=None, jobId=None, delete=True)
+                 error  (token, jobId)
+                 error  (optval, jobId=None)
+                 error  (token=None, jobId=None)
+                 abort  (token, jobId)
+                 abort  (optval, jobId=None)
+                 abort  (token=None, jobId=None)
+                  list  (token, table)
+                  list  (optval, table=None)
+                  list  (table=None, token=None)
+                  drop  (token, table)
+                  drop  (optval, table=None)
+                  drop  (table=None, token=None)
+             mydb_list  (optval, table=None)
+             mydb_list  (table=None, token=None)
+           mydb_create  (token, table, schema, **kw)
+           mydb_create  (table, schema, token=None, **kw)
+           mydb_insert  (token, table, data, **kw)
+           mydb_insert  (table, data, token=None, **kw)
+           mydb_import  (token, table, data, **kw)
+           mydb_import  (table, data, token=None, **kw)
+         mydb_truncate  (token, table)
+         mydb_truncate  (table, token=None)
+            mydb_index  (token, table, column)
+            mydb_index  (table, column, token=None)
+             mydb_drop  (token, table)
+             mydb_drop  (table, token=None)
+           mydb_rename  (token, source, target)
+           mydb_rename  (source, target, token=None)
+             mydb_copy  (token, source, target)
+             mydb_copy  (source, target, token=None)
+
 
 Import via
 
 .. code-block:: python
 
     from dl import queryClient
-"""
+'''
 
 import requests
 try:
@@ -40,7 +102,7 @@ from tempfile import NamedTemporaryFile
 
 from dl import storeClient
 from dl.helpers.utils import convert
-if os.path.isfile ('./Util.py'):		# use local dev copy
+if os.path.isfile('./Util.py'):			# use local dev copy
     from Util import multimethod
     from Util import def_token
 else:						# use distribution copy
@@ -59,29 +121,27 @@ is_py3 = sys.version_info.major == 3
 # The URL of the QueryManager service to contact.  This may be changed by
 # passing a new URL into the set_svc_url() method before beginning.
 
-DEF_SERVICE_URL = 'https://datalab.noao.edu/query'
-SM_SERVICE_URL  = 'https://datalab.noao.edu/storage'
+DEF_SERVICE_ROOT = 'https://datalab.noao.edu'
 DAL_SERVICE_URL = 'https://datalab.noao.edu' 	# The base DAL service URL
-
 
 # Allow the service URL for dev/test systems to override the default.
 THIS_HOST = socket.gethostname()			# host name
 THIS_IP	  = socket.gethostbyname(socket.gethostname())	# host IP address
 
 if THIS_HOST[:5] == 'dldev':
-    DEF_SERVICE_URL = 'http://dldev.datalab.noao.edu/query'
-    SM_SERVICE_URL  = 'http://dldev.datalab.noao.edu/storage'
+    DEF_SERVICE_ROOT = 'http://dldev.datalab.noao.edu'
 elif THIS_HOST[:6] == 'dltest':
-    DEF_SERVICE_URL = 'http://dltest.datalab.noao.edu/query'
-    SM_SERVICE_URL  = 'http://dltest.datalab.noao.edu/storage'
+    DEF_SERVICE_ROOT = 'http://dltest.datalab.noao.edu'
 
+DEF_SERVICE_URL = DEF_SERVICE_ROOT + '/query'
+SM_SERVICE_URL  = DEF_SERVICE_ROOT + '/storage'
 
 # The requested query 'profile'.  A profile refers to the specific
 # machines and services used by the QueryManager on the server.
 DEF_PROFILE 	= 'default'
 
 # Use a /tmp/QM_DEBUG file as a way to turn on debugging in the client code.
-DEBUG 		= os.path.isfile ('/tmp/QM_DEBUG')
+DEBUG 		= os.path.isfile('/tmp/QM_DEBUG')
 
 # Default sync query timeout default (300sec)
 TIMEOUT_REQUEST = 300
@@ -93,10 +153,10 @@ TIMEOUT_REQUEST = 300
 # ####################################################################
 
 class queryClientError(Exception):
-    def __init__ (self, message):
+    def __init__(self, message):
         self.message = message
 
-    def __str__ (self):
+    def __str__(self):
         return self.message
 
 
@@ -107,33 +167,33 @@ class queryClientError(Exception):
 # --------------------------------------------------------------------
 # ISALIVE -- Ping the Query Manager service to see if it responds.
 #
-def isAlive (svc_url=DEF_SERVICE_URL, timeout=2):
-    return qc_client.isAlive (svc_url=svc_url, timeout=timeout)
+def isAlive(svc_url=DEF_SERVICE_URL, timeout=5):
+    return qc_client.isAlive(svc_url=svc_url, timeout=timeout)
 
 
 # --------------------------------------------------------------------
 # SET_SVC_URL -- Set the Query Manager ServiceURL to call.
 #
-def set_svc_url (svc_url):
-    return qc_client.set_svc_url (svc_url)
+def set_svc_url(svc_url):
+    return qc_client.set_svc_url(svc_url)
 
 # --------------------------------------------------------------------
 # GET_SVC_URL -- Get the Query Manager ServiceURL being called.
 #
-def get_svc_url ():
-    return qc_client.get_svc_url ()
+def get_svc_url():
+    return qc_client.get_svc_url()
 
 # --------------------------------------------------------------------
 # SET_PROFILE -- Set the Query Manager service profile to be used.
 #
-def set_profile (profile):
-    return qc_client.set_profile (profile)
+def set_profile(profile):
+    return qc_client.set_profile(profile)
 
 # --------------------------------------------------------------------
 # GET_PROFILE -- Get the Query Manager service profile being used.
 #
-def get_profile ():
-    return qc_client.get_profile ()
+def get_profile():
+    return qc_client.get_profile()
 
 
 # -----------------------------
@@ -143,10 +203,8 @@ def get_profile ():
 # --------------------------------------------------------------------
 # LIST_PROFILES -- List the available service profiles.
 #
-@multimethod('qc',1)
-def list_profiles (optval, token=None, profile=None, format='text'):
-    '''  Usage:  queryClient.list_profiles (token)
-    '''
+@multimethod('qc',1,False)
+def list_profiles(optval, token=None, profile=None, format='text'):
     if optval is not None and len(optval.split('.')) >= 4:
         # optval looks like a token
         return qc_client._list_profiles (token=def_token(optval),
@@ -156,9 +214,42 @@ def list_profiles (optval, token=None, profile=None, format='text'):
         return qc_client._list_profiles (token=def_token(token), profile=optval,
                                          format=format)
 
-@multimethod('qc',0)
+@multimethod('qc',0,False)
 def list_profiles (token=None, profile=None, format='text'):
-    '''  Usage:  queryClient.list_profiles ()
+    '''Retrieve the profiles supported by the query manager service.
+
+    Usage:
+        list_profiles (token=None, profile=None, format='text')
+
+    MultiMethod Usage:  
+    ------------------
+            queryClient.list_profiles (token)
+            queryClient.list_profiles ()
+
+    Parameters
+    ----------
+    token : str
+        Authentication token (see function :func:`authClient.login()`)
+
+    profile : str
+        A specific profile configuration to list.  If None, a list of
+        profiles available to the given auth token is returned.
+
+    format : str
+        Result format: One of 'text' or 'json'
+
+    Returns
+    -------
+    profiles : list/dict
+        A list of the names of the supported profiles or a dictionary of
+        the specific profile
+
+    Example
+    -------
+    .. code-block:: python
+
+        profiles = queryClient.list_profiles()
+        profiles = queryClient.list_profiles(token)
     '''
     return qc_client._list_profiles (token=def_token(token), profile=profile,
                                  format=format)
@@ -178,12 +269,49 @@ def get_timeout_request ():
 # --------------------------------------------------------------------
 # SCHEMA -- Return information about a data service schema value.
 #
-@multimethod('qc',1)
+@multimethod('qc',1,False)
 def schema (value, format='text', profile=None):
     return qc_client._schema (value=value, format=format, profile=profile)
 
-@multimethod('qc',0)
+@multimethod('qc',0,False)
 def schema (value='', format='text', profile=None):
+    '''Return information about a data service schema.
+
+    Usage:
+        schema (value='', format='text', profile=None)
+
+    Parameters
+    ----------
+    value : str
+        Schema object to return: Of the form <schema>[.<table>[.<column]]
+
+    profile : str
+        The name of the service profile to use. The list of available
+        profiles can be retrieved from the service (see function
+        :func:`queryClient.list_profiles()`)
+
+    format : str
+        Result format:  One of 'text' or 'json'  (NOT CURRENTLY USED)
+
+    Returns
+    -------
+
+    Example
+    -------
+    .. code-block:: python
+
+        # List the available schema
+        queryClient.schema("", "text", "default")
+
+        # List the tables in the USNO schema
+        queryClient.schema("usno", "text", "default")
+
+        # List the columns of the USNO-A2 table
+        queryClient.schema("usno.a2", "text", "default")
+
+        # List the attributes of the USNO-A2 'raj2000' column
+        queryClient.schema("usno.a2.raj2000", "text", "default")
+    '''
     return qc_client._schema (value=value, format=format, profile=profile)
 
 # --------------------------------------------------------------------
@@ -201,20 +329,16 @@ def services (name=None, svc_type=None, format=None, profile='default'):
 # --------------------------------------------------------------------
 # QUERY -- Send a query to the Query Manager service
 #
-@multimethod('qc',2)
+@multimethod('qc',2,False)
 def query (token, query, adql=None, sql=None, fmt='csv', out=None,
            async_=False, profile='default', **kw):
-    '''  Usage:  queryClient.query (token)
-    '''
     return qc_client._query (token=def_token(token), adql=adql, sql=query,
                           fmt=fmt, out=out, async_=async_,
                           profile=profile, **kw)
 
-@multimethod('qc',1)
+@multimethod('qc',1,False)
 def query (optval, adql=None, sql=None, fmt='csv', out=None, async_=False,
            token=None, profile='default', **kw):
-    '''  Usage:  queryClient.query (token)
-    '''
     if optval is not None and optval.lower()[:6] == 'select':
         # optval looks like a query string
         return qc_client._query (token=def_token(None), adql=adql, sql=optval,
@@ -226,31 +350,150 @@ def query (optval, adql=None, sql=None, fmt='csv', out=None, async_=False,
                               fmt=fmt, out=out, async_=async_,
                               profile=profile, **kw)
 
-
-@multimethod('qc',0)
+@multimethod('qc',0,False)
 def query (token=None, adql=None, sql=None, fmt='csv', out=None, async_=False,
            profile='default', **kw):
-    '''  Usage:  queryClient.query ()
+    '''Send an SQL or ADQL query to the database or TAP service.
+
+    Usage:
+        query (token=None, adql=None, sql=None, fmt='csv', out=None,
+               async_=False, profile='default', **kw):
+
+    MultiMethod Usage:
+    ------------------
+        queryClient.query (token, query, <args>)
+        queryClient.query (token | query, <args>)
+
+    Parameters
+    ----------
+    token : str
+        Secure token obtained via :func:`authClient.login()`
+
+    adql : str or None
+        ADQL query string that will be passed to the DB query manager, e.g.
+
+        .. code-block:: python
+
+            adql='select top 3 ra,dec from gaia_dr1.gaia_source'
+
+    sql : str or None
+        SQL query string that will be passed to the DB query manager, e.g.
+
+        .. code-block:: python
+
+            sql='select ra,dec from gaia_dr1.gaia_source limit 3'
+
+    fmt : str
+        Format of result to be returned by the query. Permitted values are:
+
+          * 'csv'          The returned result is a comma-separated string
+                           that looks like a csv file (newlines at the end
+                           of every row) [DEFAULT]
+          * 'ascii'        Same, but the column separator is a tab \t
+          * 'array'        Returns a NumPy array
+          * 'pandas'       Returns a Pandas DataFrame
+          * 'structarray'  Numpy structured array (aka 'record array')
+          * 'table'        Returns an Astropy Table object
+
+            The following formats may be used when saving a file to
+            virtual storage on the server:
+
+          * 'fits'         FITS binary
+          * 'hdf5'         HDF5 file                (NOT YET IMPLEMENTED)
+          * 'votable'      An XML-formatted VOTable
+
+    out : str or None
+        The output filename to create on the local machine, the URI of a
+        VOSpace or MyDB resource to create, or ``None`` if the result is
+        to be returned directly to the caller.
+
+    async_ : bool
+        If ``True``, the query is Asynchronous, i.e. a job is submitted to
+        the DB, and a jobID token is returned the caller. The jobID must
+        be then used to check the query's status and to retrieve the result
+        (when the job status is ``COMPLETED``) or the error message (when
+        the job status is ``ERROR``). Default is ``False``, i.e. the task
+        runs a Synchroneous query.
+
+        ``async_`` replaces the previous ``async`` parameter, because ``async``
+        was promoted to a keyword in Python 3.7. Users of Python versions
+        prior to 3.7 can continue to use the ``async`` keyword.
+
+    profile : str or None
+        The Query Manager profile to use for this call.  If ``None`` then
+        the default profile is used.  Available profiles may be listed
+        using the :func:`queryClient.list_profiles()`
+
+    **kw : dict
+        Optional keyword arguments.  Supported keywords currently include:
+
+           wait = False
+               Wait for asynchronous queries to complete? If enabled,
+               the query() method will submit the job in async mode
+               and then poll for results internally before returning.
+               the default is to return the job ID immediately and let
+               the client poll for job status and return results.
+
+           timeout = 300
+               Requested timeout (in seconds) for a query. For a Sync
+               query, this value sets a session timeout request in the
+               database that will abort the query at the specified time.
+               A maximum value of 600 seconds is permitted.  If the
+               ``wait`` option is enabled for an ASync query, this is the
+               maximum time the query will be allowed to run before an
+               abort() is issued on the job.  The maximum timeout for
+               an ASync job is 24-hrs (86400 sec).
+
+           poll = 1
+               ASync job polling time in seconds.
+
+           verbose = False
+               Print verbose messages during ASync job.
+
+    Returns
+    -------
+    result : str
+        If ``async=False``, the return value is the result of the
+        query as a formatted string (see ``fmt``). Otherwise the
+        result string is a job token, with which later the
+        Asynchroneaous query's status can be checked
+        (:func:`queryClient.status()`), and the result retrieved (see
+        :func:`queryClient.result()`.
+
+    Example
+    -------
+    Get security token first, see :func:`authClient.login()`. Then:
+
+    .. code-block:: python
+
+        query = 'select ra,dec from gaia_dr1.gaia_source limit 3'
+        response = queryClient.query(token, adql=query, fmt='csv')
+        print response
+
+    This prints
+
+    .. code::
+
+          ra,dec
+          315.002571989537842,35.2662974820284489
+          315.00408275885701,35.2665448169895797
+          314.996334457679438,35.2673478725552698
     '''
-    return qc_client._query (token=def_token(token), adql=adql, sql=sql, fmt=fmt,
-                          out=out, async_=async_, profile=profile, **kw)
+    return qc_client._query (token=def_token(token), adql=adql, sql=sql, 
+                             fmt=fmt, out=out, async_=async_, profile=profile,
+                             **kw)
 
 
 
 # --------------------------------------------------------------------
 # STATUS -- Get the status of an Asynchronous query
 #
-@multimethod('qc',2)
+@multimethod('qc',2,False)
 def status (token, jobId):
-    '''  Usage:  queryClient.status (token, jobId)
-    '''
     return qc_client._status (token=def_token(token), jobId=jobId)
 
-@multimethod('qc',1)
+@multimethod('qc',1,False)
 def status (optval, jobId=None):
-    '''  Usage:  queryClient.status (jobId)
-                 queryClient.status (token, jobId=<id>)
-    '''
     if optval is not None and len(optval.split('.')) >= 4:
         # optval looks like a token
         return qc_client._status (token=def_token(optval), jobId=jobId)
@@ -258,9 +501,66 @@ def status (optval, jobId=None):
         # optval is probably a jobId
         return qc_client._status (token=def_token(None), jobId=optval)
 
-@multimethod('qc',0)
+@multimethod('qc',0,False)
 def status (token=None, jobId=None):
-    '''  Usage:  queryClient.status (jobId=<str>)
+    '''Get the status of an asynchronous query.
+
+    Usage:
+        status (token=None, jobId=None)
+
+    MultiMethod Usage:
+    ------------------
+        queryClient.status (jobId)
+        queryClient.status (token, jobId)
+        queryClient.status (token, jobId=<id>)
+        queryClient.status (jobId=<str>)
+
+    Use the authentication token and the jobId of a previously issued
+    asynchronous query to check the query's current status.
+
+    Parameters
+    ----------
+    token : str
+        Authentication token (see function :func:`authClient.login()`)
+
+    jobId : str
+        The jobId returned when issuing an asynchronous query via
+        :func:`queryClient.query()` with ``async=True``.
+
+    Returns
+    -------
+    status : str
+
+        Either 'QUEUED' or 'EXECUTING' or 'COMPLETED'. If the token &
+        jobId combination does not correspond to an actual job, then a
+        HTML-formatted error message is returned. If there is a
+        problem with the backend, the returned value can be 'ERROR'.
+
+        When status is 'COMPLETED', you can retrieve the results of
+        the query via :func:`queryClient.results()`
+
+    Example
+    -------
+    .. code-block:: python
+
+        import time
+        query = 'select ra,dec from gaia_dr1.gaia_source limit 200000'
+        jobId = queryClient.query(token, adql=query, fmt='csv', async=True)
+        while True:
+            status = queryClient.status(token, jobId)
+            print "time index =", time.localtime()[5], "   status =", status
+            if status == 'COMPLETED':
+                break
+            time.sleep(1)
+
+    This prints
+
+    .. code::
+
+        time index = 16    status = EXECUTING
+        time index = 17    status = EXECUTING
+        time index = 18    status = COMPLETED
+
     '''
     return qc_client._status (token=def_token(token), jobId=jobId)
 
@@ -268,17 +568,12 @@ def status (token=None, jobId=None):
 # --------------------------------------------------------------------
 # RESULTS -- Get the results of an Asynchronous query
 #
-@multimethod('qc',2)
+@multimethod('qc',2,False)
 def results (token, jobId, delete=True):
-    '''  Usage:  queryClient.results (token, jobId)
-    '''
     return qc_client._results (token=def_token(token), jobId=jobId, delete=True)
 
-@multimethod('qc',1)
+@multimethod('qc',1,False)
 def results (optval, jobId=None, delete=True):
-    '''  Usage:  queryClient.results (jobId)
-                 queryClient.results (token, jobId=<id>)
-    '''
     if optval is not None and len(optval.split('.')) >= 4:
         # optval looks like a token
         return qc_client._results (token=def_token(optval), jobId=jobId,
@@ -288,9 +583,57 @@ def results (optval, jobId=None, delete=True):
         return qc_client._results (token=def_token(None), jobId=optval,
                                 delete=delete)
 
-@multimethod('qc',0)
+@multimethod('qc',0,False)
 def results (token=None, jobId=None, delete=True):
-    '''  Usage:  queryClient.results (jobId=<str>)
+    '''Retrieve the results of an asynchronous query, once completed.
+
+    Usage:
+        results (token=None, jobId=None, delete=True)
+
+    MultiMethod Usage:
+    ------------------
+        queryClient.results (jobId)
+        queryClient.results (token, jobId)
+        queryClient.results (token, jobId=<id>)
+        queryClient.results (jobId=<str>)
+
+    Parameters
+    ----------
+    token : str
+        Authentication token (see function :func:`authClient.login()`)
+
+    jobId : str
+        The jobId returned when issuing an asynchronous query via
+        :func:`queryClient.query()` with ``async=True``.
+
+    Returns
+    -------
+    results : str
+
+    Example
+    -------
+    .. code-block:: python
+
+        # issue an async query (here a tiny one just for this example)
+        query = 'select ra,dec from gaia_dr1.gaia_source limit 3'
+        jobId = queryClient.query(token, adql=query, fmt='csv', async=True)
+
+        # ensure job completes...then check status and retrieve results
+        time.sleep(4)
+        if queryClient.status(token, jobId) == 'COMPLETED':
+            results = queryClient.results(token,jobId)
+            print type(results)
+            print results
+
+    This prints
+
+    .. code::
+
+        <type 'str'>
+        ra,dec
+        301.37502633933002,44.4946851014515588
+        301.371102372343785,44.4953207577355698
+        301.385106974224186,44.4963443903961604
     '''
     return qc_client._results (token=def_token(token), jobId=jobId, delete=True)
 
@@ -298,17 +641,12 @@ def results (token=None, jobId=None, delete=True):
 # --------------------------------------------------------------------
 # ERROR -- Get the error message of a failed Asynchronous query
 #
-@multimethod('qc',2)
+@multimethod('qc',2,False)
 def error (token, jobId):
-    '''  Usage:  queryClient.error (token, jobId)
-    '''
     return qc_client._error (token=def_token(token), jobId=jobId)
 
-@multimethod('qc',1)
+@multimethod('qc',1,False)
 def error (optval, jobId=None):
-    '''  Usage:  queryClient.error (jobId)
-                 queryClient.error (token, jobId=<id>)
-    '''
     if optval is not None and len(optval.split('.')) >= 4:
         # optval looks like a token
         return qc_client._error (token=def_token(optval), jobId=jobId)
@@ -316,9 +654,57 @@ def error (optval, jobId=None):
         # optval is probably a jobId
         return qc_client._error (token=def_token(None), jobId=optval)
 
-@multimethod('qc',0)
+@multimethod('qc',0,False)
 def error (token=None, jobId=None):
-    '''  Usage:  queryClient.error (jobId=<str>)
+    '''Retrieve the error of an asynchronous query, once completed.
+
+    Usage:
+        error (token=None, jobId=None)
+
+    MultiMethod Usage:
+    ------------------
+        queryClient.error (jobId)
+        queryClient.error (token, jobId)
+        queryClient.error (token, jobId=<id>)
+        queryClient.error (jobId=<str>)
+
+    Parameters
+    ----------
+    token : str
+        Authentication token (see function :func:`authClient.login()`)
+
+    jobId : str
+        The jobId returned when issuing an asynchronous query via
+        :func:`queryClient.query()` with ``async=True``.
+
+    Returns
+    -------
+    error : str
+
+    Example
+    -------
+    .. code-block:: python
+
+        # issue an async query (here a tiny one just for this example)
+        query = 'select ra,dec from gaia_dr1.gaia_source limit 3'
+        jobId = queryClient.query(token, adql=query, fmt='csv', async=True)
+
+        # ensure job completes...then check status and retrieve error
+        time.sleep(4)
+        if queryClient.status(token, jobId) == 'ERROR':
+            error = queryClient.error(token,jobId)
+            print type(error)
+            print error
+
+    This prints
+
+    .. code::
+
+        <type 'str'>
+        ra,dec
+        301.37502633933002,44.4946851014515588
+        301.371102372343785,44.4953207577355698
+        301.385106974224186,44.4963443903961604
     '''
     return qc_client._error (token=def_token(token), jobId=jobId)
 
@@ -326,17 +712,12 @@ def error (token=None, jobId=None):
 # --------------------------------------------------------------------
 # ABORT -- Abort the specified Asynchronous job.
 #
-@multimethod('qc',2)
+@multimethod('qc',2,False)
 def abort (token, jobId):
-    '''  Usage:  queryClient.abort (token, jobId)
-    '''
     return qc_client._abort (token=def_token(token), jobId=jobId)
 
-@multimethod('qc',1)
+@multimethod('qc',1,False)
 def abort (optval, jobId=None):
-    '''  Usage:  queryClient.abort (jobId)
-                 queryClient.abort (token, jobId=<id>)
-    '''
     if optval is not None and len(optval.split('.')) >= 4:
         # optval looks like a token
         return qc_client._abort (token=def_token(optval), jobId=jobId)
@@ -344,9 +725,56 @@ def abort (optval, jobId=None):
         # optval is probably a jobId
         return qc_client._abort (token=def_token(None), jobId=optval)
 
-@multimethod('qc',0)
+@multimethod('qc',0,False)
 def abort (token=None, jobId=None):
-    '''  Usage:  queryClient.abort (jobId=<str>)
+    '''Abort the specified asynchronous job.
+
+    Usage:
+        abort (token=None, jobId=None)
+
+    MultiMethod Usage:
+    ------------------
+        queryClient.abort (token, jobId)
+        queryClient.abort (jobId)
+        queryClient.abort (token, jobId=<id>)
+        queryClient.abort (jobId=<str>)
+
+    Parameters
+    ----------
+    token : str
+        Authentication token (see function :func:`authClient.login()`)
+
+    jobId : str
+        The jobId to abort.
+
+    Returns
+    -------
+    results : str
+
+    Example
+    -------
+    .. code-block:: python
+
+        # issue an async query (here a tiny one just for this example)
+        query = 'select ra,dec from gaia_dr1.gaia_source limit 3'
+        jobId = queryClient.query(token, adql=query, fmt='csv', async=True)
+
+        # ensure job completes...then check status and retrieve results
+        time.sleep(4)
+        if queryClient.status(token, jobId) == 'COMPLETED':
+            results = queryClient.results(token,jobId)
+            print type(results)
+            print results
+
+    This prints
+
+    .. code::
+
+        <type 'str'>
+        ra,dec
+        301.37502633933002,44.4946851014515588
+        301.371102372343785,44.4953207577355698
+        301.385106974224186,44.4963443903961604
     '''
     return qc_client._abort (token=def_token(token), jobId=jobId)
 
@@ -359,17 +787,12 @@ def abort (token=None, jobId=None):
 # --------------------------------------------------------------------
 # LIST -- List the tables or table schema in a user's MyDB.
 #
-@multimethod('qc',2)
+@multimethod('qc',2,False)
 def list (token, table):
-    '''  Usage:  queryClient.list (token, table)
-    '''
     return qc_client._list (token=def_token(token), table=table)
 
-@multimethod('qc',1)
+@multimethod('qc',1,False)
 def list (optval, table=None):
-    '''  Usage:  queryClient.list (table)
-                 queryClient.list (token, table=<id>)
-    '''
     if optval is not None and len(optval.split('.')) >= 4:
         # optval looks like a token
         return qc_client._list (token=def_token(optval), table=table)
@@ -377,9 +800,41 @@ def list (optval, table=None):
         # optval is likely a table
         return qc_client._list (token=def_token(None), table=optval)
 
-@multimethod('qc',0)
+@multimethod('qc',0,False)
 def list (table=None, token=None):
-    '''  Usage:  queryClient.list ()
+    '''List the tables or table schema in the user's MyDB.
+
+    Usage:
+        list (table=None, token=None)
+
+    MultiMethod Usage:
+    ------------------
+        queryClient.list (token, table)
+        queryClient.list (table)
+        queryClient.list (token, table=<id>)
+        queryClient.list ()
+
+    Parameters
+    ----------
+    token : str
+        Authentication token (see function :func:`authClient.login()`)
+
+    table: str
+        The specific table to list (returns the table schema), or
+        an empty string to return a list of the names of all tables.
+
+    Returns
+    -------
+    listing : str
+        The list of tables in the user's MyDB or the schema of the
+        named table
+
+    Example
+    -------
+    .. code-block:: python
+
+        # List the tables
+        queryClient.list()
     '''
     return qc_client._list (token=def_token(token), table=table)
 
@@ -387,17 +842,12 @@ def list (table=None, token=None):
 # --------------------------------------------------------------------
 # DROP -- Drop the named table from a user's MyDB.
 #
-@multimethod('qc',2)
+@multimethod('qc',2,False)
 def drop (token, table):
-    '''  Usage:  queryClient.drop (token, table)
-    '''
     return qc_client._drop (token=def_token(token), table=table)
 
-@multimethod('qc',1)
+@multimethod('qc',1,False)
 def drop (optval, table=None):
-    '''  Usage:  queryClient.drop (table)
-                 queryClient.drop (token, table=<id>)
-    '''
     if optval is not None and len(optval.split('.')) >= 4:
         # optval looks like a token
         return qc_client._drop (token=def_token(optval), table=table)
@@ -405,9 +855,37 @@ def drop (optval, table=None):
         # optval is likely a table
         return qc_client._drop (token=def_token(None), table=optval)
 
-@multimethod('qc',0)
+@multimethod('qc',0,False)
 def drop (table=None, token=None):
-    '''  Usage:  queryClient.drop (table=<str>)
+    '''Drop the specified table from the user's MyDB
+
+    Usage:
+        drop (table=None, token=None)
+
+    MultiMethod Usage:
+    ------------------
+        queryClient.drop (token, table)
+        queryClient.drop (table)
+        queryClient.drop (token, table=<id>)
+        queryClient.drop (table=<str>)
+
+    Parameters
+    ----------
+    token : str
+        Authentication token (see function :func:`authClient.login()`)
+
+    table: str
+        The specific table to drop
+
+    Returns
+    -------
+
+    Example
+    -------
+    .. code-block:: python
+
+        # List the tables
+        queryClient.drop('foo1')
     '''
     return qc_client._drop (token=def_token(token), table=table)
 
@@ -420,11 +898,8 @@ def drop (table=None, token=None):
 # --------------------------------------------------------------------
 # MYDB_LIST -- List the tables or table schema in a user's MyDB.
 #
-@multimethod('qc',1)
+@multimethod('qc',1,False)
 def mydb_list (optval, table=None):
-    '''  Usage:  queryClient.mydb_list (table)
-                 queryClient.mydb_list (token, table=<str>)
-    '''
     if optval is not None and len(optval.split('.')) >= 4:
         # optval looks like a token
         return qc_client._mydb_list (token=def_token(optval), table=table)
@@ -432,9 +907,40 @@ def mydb_list (optval, table=None):
         # optval is likely a table name
         return qc_client._mydb_list (token=def_token(None), table=optval)
 
-@multimethod('qc',0)
+@multimethod('qc',0,False)
 def mydb_list (table=None, token=None):
-    '''  Usage:  queryClient.mydb_list (table=<str>)
+    '''List the tables or table schema in the user's MyDB.
+
+    Usage:
+        mydb_list (table=None, token=None)
+
+    MultiMethod Usage:
+    ------------------
+        queryClient.mydb_list (table)
+        queryClient.mydb_list (token, table=<str>)
+        queryClient.mydb_list (table=<str>)
+
+    Parameters
+    ----------
+    token : str
+        Authentication token (see function :func:`authClient.login()`)
+
+    table: str
+        The specific table to list (returns the table schema), or
+        an empty string to return a list of the names of all tables.
+
+    Returns
+    -------
+    listing : str
+        The list of tables in the user's MyDB or the schema of the
+        named table
+
+    Example
+    -------
+    .. code-block:: python
+
+        # List the tables
+        queryClient.mydb_list()
     '''
     return qc_client._mydb_list (token=def_token(token), table=table)
 
@@ -443,16 +949,56 @@ def mydb_list (table=None, token=None):
 # MYDB_CREATE -- Create a table in the user's MyDB from a local file
 # or python data object.
 #
-@multimethod('qc',3)
+@multimethod('qc',3,False)
 def mydb_create (token, table, schema, **kw):
-    """  Usage:  queryClient.mydb_create (token, table, <schema_dict>)
-    """
     return qc_client._mydb_create (token=def_token(None), table=table,
                               schema=schema, **kw)
 
-@multimethod('qc',2)
+@multimethod('qc',2,False)
 def mydb_create (table, schema, token=None, **kw):
-    '''  Usage:  queryClient.mydb_create (table, <schema_dict>)
+    '''Create a table in the user's MyDB
+
+    Usage:
+        mydb_create (table, schema, token=None, **kw)
+
+    MultiMethod Usage:
+    ------------------
+        queryClient.mydb_create (token, table, <schema_dict>)
+        queryClient.mydb_create (table, <schema_dict>)
+
+    Parameters
+    ----------
+    token : str
+        Authentication token (see function :func:`authClient.login()`)
+
+    table: str
+        The name of the table to create
+
+    schema: str or dict
+        The schema is CSV text containing the name of the column and
+        it's PostgreSQL data type.  If set as a 'str' type it is either
+        a CSV string, or the name of a file containing the CSV.  If passed
+        as a 'dict' type, it is a dictionary object where keys are the
+        column names and values are the data types.
+
+    drop: bool   (optional)
+        Drop any existing table of the same name before creating new one.
+
+    Returns
+    -------
+
+    Example
+    -------
+    .. code-block:: python
+
+        # Create table in MyDB named 'foo' with columns defined by
+        # the file 'schema.txt'.  The schema file contains:
+        #
+        #     id,text
+        #     ra,double precision
+        #     dec,double precision
+        #
+        queryClient.mydb_create ('foo', 'schema.txt')
     '''
     return qc_client._mydb_create (token=def_token(None), table=table,
                               schema=schema, **kw)
@@ -461,18 +1007,54 @@ def mydb_create (table, schema, token=None, **kw):
 # MYDB_INSERT -- Insert data into a table in the user's MyDB from a local
 # file or python data object.
 #
-@multimethod('qc',3)
+@multimethod('qc',3,False)
 def mydb_insert (token, table, data, **kw):
-    '''  Usage:  queryClient.mydb_insert (token, table, <filename>)
-                 queryClient.mydb_insert (token, table, <data_object>)
-    '''
     return qc_client._mydb_insert (token=def_token(token), table=table,
                                    data=data, **kw)
 
-@multimethod('qc',2)
+@multimethod('qc',2,False)
 def mydb_insert (table, data, token=None, **kw):
-    '''  Usage:  queryClient.mydb_insert (table, <filename>)
-                 queryClient.mydb_insert (table, <data_object>)
+    '''Insert data into a table in the user's MyDB
+
+    Usage:
+        mydb_insert (table, data, token=None, **kw)
+
+    MultiMethod Usage:
+    ------------------
+        queryClient.mydb_insert (token, table, <filename>)
+        queryClient.mydb_insert (token, table, <data_object>)
+        queryClient.mydb_insert (table, <filename>)
+        queryClient.mydb_insert (table, <data_object>)
+
+    Parameters
+    ----------
+    token : str
+        Authentication token (see function :func:`authClient.login()`)
+
+    table: str
+        The name of the table to append
+
+    data: str or data object
+        The schema is CSV text containing the name of the column and
+        it's PostgreSQL data type.  If set as a 'str' type it is either
+        a CSV string, or the name of a file containing the CSV data. If
+        passed as a tabular data object, it is converted to CSV and sent
+        to the service.
+
+    csv_header: bool        [OPTIONAL]
+        If True, then the CSV data object contains a CSV header line, i.e.
+        the first line is a row of column names.  Otherwise, no column
+        names are assumed and the column order must match the table schema.
+
+    Returns
+    -------
+
+    Example
+    -------
+    .. code-block:: python
+
+        # Insert data into a MyDB table named 'foo'.
+        queryClient.mydb_insert ('foo', 'data.csv')
     '''
     return qc_client._mydb_insert (token=def_token(token), table=table,
                                    data=data, **kw)
@@ -481,10 +1063,8 @@ def mydb_insert (table, data, token=None, **kw):
 # --------------------------------------------------------------------
 # MYDB_IMPORT -- Import a file or Python object to a MyDB table.
 #
-@multimethod('qc',3)
+@multimethod('qc',3,False)
 def mydb_import (token, table, data, **kw):
-    '''  Usage:  queryClient.mydb_import (token, table, data)
-    '''
     try:
         result = qc_client._mydb_import (token=def_token(token), table=table,
                                          data=data, **kw)
@@ -493,9 +1073,62 @@ def mydb_import (token, table, data, **kw):
 
     return result
 
-@multimethod('qc',2)
+@multimethod('qc',2,False)
 def mydb_import (table, data, token=None, **kw):
-    '''  Usage:  queryClient.mydb_import (table, data)
+    '''Import data into a table in the user's MyDB
+
+    Usage:
+        mydb_import (table, data, token=None, **kw)
+
+    MultiMethod Usage:
+    ------------------
+        queryClient.mydb_import (token, table, data)
+        queryClient.mydb_import (table, data)
+
+    Parameters
+    ----------
+    token : str
+        Authentication token (see function :func:`authClient.login()`)
+
+    table: str
+        The name of the table to be loaded
+
+    data: str or data object
+        The data file or python object to be loaded.  The 'data' value
+        may be one of the following types:
+
+            filename	    A CSV file of data
+            string		    A string containing CSV data
+            Pandas DataFrame    A Pandas DataFrame object
+                :                   :        :       :
+
+        Additional object types can be added provided the data can be
+        converted to a CSV format.
+
+    schema: str	[OPTIONAL]
+        If set, this is a filename or string containing a schema for the
+        data table to be created.  A schema contains a comma-delimited row
+        for each column containing the column name and it's Postgres data
+        type.  If not set, the schema is determined automatically from
+        the data.
+
+    drop: bool   	[Optional]
+        Drop any existing table of the same name before creating new one.
+
+    verbose: bool   [Optional]
+        Be verbose about operations.
+
+    Returns
+    -------
+        schema	A string containing the table schema
+        data_obj	The CSV data to be imported (possibly converted)
+
+    Example
+    -------
+    .. code-block:: python
+
+        # Import data into a MyDB table named 'foo' from file 'data.csv'.
+        schema, data = queryClient.mydb_import ('foo', 'data.csv')
     '''
     try:
         result = qc_client._mydb_import (token=def_token(token), table=table,
@@ -509,31 +1142,56 @@ def mydb_import (table, data, token=None, **kw):
 # --------------------------------------------------------------------
 # MYDB_TRUNCATE -- Truncate a table in the user's MyDB.
 #
-@multimethod('qc',2)
+@multimethod('qc',2,False)
 def mydb_truncate (token, table):
-    '''  Usage:  queryClient.mydb_truncate (token, table)
-    '''
     return qc_client._mydb_truncate (token=def_token(token), table=table)
 
-@multimethod('qc',1)
+@multimethod('qc',1,False)
 def mydb_truncate (table, token=None):
-    '''  Usage:  queryClient.mydb_truncate (table)
+    '''Truncate the specified table in the user's MyDB
+
+    Usage:
+        mydb_truncate (table, token=None)
+
+    MultiMethod Usage:
+    ------------------
+        queryClient.mydb_truncate (token, table)
+        queryClient.mydb_truncate (table)
+        queryClient.mydb_truncate (token, table=<id>)
+
+    Parameters
+    ----------
+    token : str
+        Authentication token (see function :func:`authClient.login()`)
+
+    table: str
+        The specific table to drop
+
+    Returns
+    -------
+
+    Example
+    -------
+    .. code-block:: python
+
+        # List the tables
+        queryClient.drop('foo1')
     '''
     return qc_client._mydb_truncate (token=def_token(token), table=table)
 
 # --------------------------------------------------------------------
 # MYDB_INDEX -- Index a column in a user's MyDB table.
 #
-@multimethod('qc',3)
+@multimethod('qc',3,False)
 def mydb_index (token, table, column):
-    '''  Usage:  queryClient.mydb_index (token, table, column)
+    '''Usage:  queryClient.mydb_index (token, table, column)
     '''
     return qc_client._mydb_index (token=def_token(token), table=table,
                                column=column)
 
-@multimethod('qc',2)
+@multimethod('qc',2,False)
 def mydb_index (table, column, token=None):
-    '''  Usage:  queryClient.mydb_index (table, colunm)
+    '''Usage:  queryClient.mydb_index (table, colunm)
     '''
     pass
     return qc_client._mydb_index (table, column, token=def_token(token))
@@ -541,16 +1199,40 @@ def mydb_index (table, column, token=None):
 # --------------------------------------------------------------------
 # MYDB_DROP -- Drop the named table from a user's MyDB.
 #
-@multimethod('qc',2)
+@multimethod('qc',2,False)
 def mydb_drop (token, table):
-    '''  Usage:  queryClient.mydb_drop (token, table)
-    '''
     return qc_client._mydb_drop (token=def_token(token), table=table)
 
-@multimethod('qc',1)
+@multimethod('qc',1,False)
 def mydb_drop (table, token=None):
-    '''  Usage:  queryClient.mydb_drop (table)
-                 queryClient.mydb_drop (token, table=<id>)
+    '''Drop the specified table from the user's MyDB
+
+    Usage:
+        mydb_drop (table, token=None)
+
+    MultiMethod Usage:
+    ------------------
+        queryClient.mydb_drop (token, table)
+        queryClient.mydb_drop (table)
+        queryClient.mydb_drop (token, table=<id>)
+
+    Parameters
+    ----------
+    token : str
+        Authentication token (see function :func:`authClient.login()`)
+
+    table: str
+        The specific table to drop
+
+    Returns
+    -------
+
+    Example
+    -------
+    .. code-block:: python
+
+        # List the tables
+        queryClient.drop('foo1')
     '''
     return qc_client._mydb_drop (token=def_token(token), table=table)
 
@@ -558,16 +1240,43 @@ def mydb_drop (table, token=None):
 # --------------------------------------------------------------------
 # MYDB_RENAME -- Rename a table in the user's MyDB.
 #
-@multimethod('qc',3)
+@multimethod('qc',3,False)
 def mydb_rename (token, source, target):
-    '''  Usage:  queryClient.mydb_rename (token, source, target)
-    '''
     return qc_client._mydb_rename (token=def_token(token),
                                 source=source, target=target)
 
-@multimethod('qc',2)
+@multimethod('qc',2,False)
 def mydb_rename (source, target, token=None):
-    '''  Usage:  queryClient.mydb_rename (source, target)
+    '''Rename a table in the user's MyDB to a new name
+
+    Usage:
+        mydb_rename (source, target, token=None)
+
+    MultiMethod Usage:
+    ------------------
+        queryClient.mydb_rename (token, source, target)
+        queryClient.mydb_rename (source, target)
+
+    Parameters
+    ----------
+    token : str
+        Authentication token (see function :func:`authClient.login()`)
+
+    source: str
+        The old table name
+
+    target: str
+        The new table name
+
+    Returns
+    -------
+
+    Example
+    -------
+    .. code-block:: python
+
+        # Copy table 'foo' to a new table, 'bar'
+        queryClient.mydb_rename ('foo', 'bar')
     '''
     return qc_client._mydb_rename (source, target, token=def_token(token))
 
@@ -575,20 +1284,45 @@ def mydb_rename (source, target, token=None):
 # --------------------------------------------------------------------
 # MYDB_COPY -- Copy a table in the user's MyDB.
 #
-@multimethod('qc',3)
+@multimethod('qc',3,False)
 def mydb_copy (token, source, target):
-    '''  Usage:  queryClient.mydb_copy (token, source, target)
-    '''
     return qc_client._mydb_copy (token=def_token(token),
                               source=source, target=target)
 
-@multimethod('qc',2)
+@multimethod('qc',2,False)
 def mydb_copy (source, target, token=None):
-    '''  Usage:  queryClient.mydb_copy (source, target)
+    '''Copy a table in the user's MyDB to a new name
+
+    Usage:
+        mydb_copy (source, target, token=None)
+
+    MultiMethod Usage:
+    ------------------
+        queryClient.mydb_copy (token, source, target)
+        queryClient.mydb_copy (source, target)
+
+    Parameters
+    ----------
+    token : str
+        Authentication token (see function :func:`authClient.login()`)
+
+    source: str
+        The old table name, i.e. the table to be copied
+
+    target: str
+        The new table name, i.e. the table to be created
+
+    Returns
+    -------
+
+    Example
+    -------
+    .. code-block:: python
+
+        # Copy table 'foo' to a new table, 'bar'
+        queryClient.mydb_copy ('foo', 'bar')
     '''
     return qc_client._mydb_copy (source, target, token=def_token(token))
-
-
 
 
 
@@ -598,12 +1332,12 @@ def mydb_copy (source, target, token=None):
 # ###################################
 
 class queryClient (object):
-    """
+    '''
          QUERYCLIENT -- Client-side methods to access the Data Lab
                         Query Manager Service.
-    """
+    '''
     def __init__ (self, profile=DEF_PROFILE, svc_url=DEF_SERVICE_URL):
-        """ Initialize the query client. """
+        '''Initialize the query client. '''
 
         self.svc_url = svc_url.strip('/')       # QueryMgr service URL
         self.svc_profile = profile  		# QueryMgr service profile
@@ -620,15 +1354,17 @@ class queryClient (object):
         self.debug = DEBUG                      # interface debug flag
 
 
-    def isAlive (self, svc_url=None, timeout=2):
-        """ Check whether the QueryManager service at the given URL is
-            alive and responding.  This is a simple call to the root
-            service URL or ping() method.
+    def isAlive (self, svc_url=None, timeout=5):
+        '''Check whether the QueryManager service at the given URL is
+           alive and responding.  This is a simple call to the root
+           service URL or ping() method.
 
         Parameters
         ----------
-        service_url : str
+        svc_url : str
             The Query Service URL to ping.
+        timeout : int
+            Call will assume to have failed if 'timeout' seconds pass.
 
         Returns
         -------
@@ -641,7 +1377,7 @@ class queryClient (object):
 
             if queryClient.isAlive():
                 print ("Query Manager is alive")
-        """
+        '''
         if svc_url is None:
             svc_url = self.svc_url
 
@@ -658,7 +1394,7 @@ class queryClient (object):
         return True
 
     def set_svc_url (self, svc_url):
-        """ Set the Query Manager service URL.
+        '''Set the Query Manager service URL.
 
         Parameters
         ----------
@@ -674,11 +1410,11 @@ class queryClient (object):
         .. code-block:: python
 
             queryClient.set_svc_url ("http://localhost:7002")
-        """
+        '''
         self.svc_url = qcToString(svc_url.strip('/'))
 
     def get_svc_url (self):
-        """ Return the currently-used Query Service URL.
+        '''Get the currently-used Query Manager serice URL.
 
         Parameters
         ----------
@@ -694,18 +1430,18 @@ class queryClient (object):
         .. code-block:: python
 
             print (queryClient.get_svc_url())
-        """
+        '''
         return qcToString(self.svc_url)
 
     def set_profile (self, profile):
-        """ Set the service profile to be used.
+        '''Set the service profile to be used.
 
         Parameters
         ----------
         profile : str
             The name of the profile to use. The list of available profiles
             can be retrieved from the service (see function
-           func:`queryClient.list_profiles()`)
+            func:`queryClient.list_profiles()`)
 
         Returns
         -------
@@ -716,11 +1452,11 @@ class queryClient (object):
         .. code-block:: python
 
             queryClient.set_profile('test')
-        """
+        '''
         self.svc_profile = qcToString(profile)
 
     def get_profile (self):
-        """ Get the profile
+        '''Get the current query profile.
 
         Parameters
         ----------
@@ -736,11 +1472,11 @@ class queryClient (object):
         .. code-block:: python
 
             print ("Query Service profile = " + queryClient.get_profile())
-        """
+        '''
         return qcToString(self.svc_profile)
 
     def set_timeout_request (self, nsec):
-        """ Set the requested Sync query timeout value (in seconds).
+        '''Set the requested Sync query timeout value (in seconds).
 
         Parameters
         ----------
@@ -759,11 +1495,11 @@ class queryClient (object):
             # set the sync query timeout request to 30 seconds
             queryClient.set_timeout_request(30)
 
-        """
+        '''
         self.timeout_request = nsec
 
     def get_timeout_request (self):
-        """ Get the current Sync query timeout value.
+        '''Get the current Sync query timeout value.
 
         Parameters
         ----------
@@ -781,7 +1517,7 @@ class queryClient (object):
             # get the current timeout value
             print (queryClient.get_timeout_request())
 
-        """
+        '''
         return self.timeout_request
 
 
@@ -789,9 +1525,9 @@ class queryClient (object):
     #  Utility Methods
     # ###########################
 
-    @multimethod('_qc',1)
+    @multimethod('_qc',1,True)
     def list_profiles (self, optval, token=None, profile=None, format='text'):
-        '''  Usage:  queryClient.client.list_profiles (token, ...)
+        '''Usage:  queryClient.client.list_profiles (token, ...)
         '''
         if optval is not None and len(optval.split('.')) >= 4:
             # optval looks like a token
@@ -802,41 +1538,16 @@ class queryClient (object):
             return self._list_profiles (token=def_token(token), profile=optval,
                                         format=format)
 
-    @multimethod('_qc',0)
+    @multimethod('_qc',0,True)
     def list_profiles (self, token=None, profile=None, format='text'):
-        '''  Usage:  queryClient.client.list_profiles (...)
+        '''Usage:  queryClient.client.list_profiles (...)
         '''
         return self._list_profiles(token=def_token(token), profile=profile,
                              format=format)
 
     def _list_profiles (self, token=None, profile=None, format='text'):
-        """ Retrieve the profiles supported by the query manager service.
-
-        Parameters
-        ----------
-        token : str
-            Authentication token (see function :func:`authClient.login()`)
-
-        profile : str
-            A specific profile configuration to list.  If None, a list of
-            profiles available to the given auth token is returned.
-
-        format : str
-            Result format: One of 'text' or 'json'
-
-        Returns
-        -------
-        profiles : list/dict
-            A list of the names of the supported profiles or a dictionary of
-            the specific profile
-
-        Example
-        -------
-        .. code-block:: python
-
-            profiles = queryClient.list_profiles()
-            profiles = queryClient.list_profiles(token)
-        """
+        '''Implementation of the list_profiles() method.
+        '''
 
         headers = self.getHeaders (token)
 
@@ -853,55 +1564,22 @@ class queryClient (object):
         return qcToString(profiles)
 
 
-    @multimethod('_qc',1)
+    @multimethod('_qc',1,True)
     def schema (self, value, format='text', profile=None):
-        '''  Usage:  queryClient.schema ([value])
+        '''Usage:  queryClient.schema ([value])
         '''
         return self._schema (value=value, format=format, profile=profile)
 
-    @multimethod('_qc',0)
+    @multimethod('_qc',0,True)
     def schema (self, value='', format='text', profile=None):
-        '''  Usage:  queryClient.schema ([value])
+        '''Usage:  queryClient.schema ([value])
         '''
         return self._schema (value=value, format=format, profile=profile)
 
 
     def _schema (self, value='', format='text', profile=None, **kw):
-        """ Return information about a data service schema.
-
-        Parameters
-        ----------
-        value : str
-            Schema object to return: Of the form <schema>[.<table>[.<column]]
-
-        profile : str
-            The name of the service profile to use. The list of available
-            profiles can be retrieved from the service (see function
-            :func:`queryClient.list_profiles()`)
-
-        format : str
-            Result format:  One of 'text' or 'json'  (NOT CURRENTLY USED)
-
-        Returns
-        -------
-
-        Example
-        -------
-        .. code-block:: python
-
-            # List the available schema
-            queryClient.schema("", "text", "default")
-
-            # List the tables in the USNO schema
-            queryClient.schema("usno", "text", "default")
-
-            # List the columns of the USNO-A2 table
-            queryClient.schema("usno.a2", "text", "default")
-
-            # List the attributes of the USNO-A2 'raj2000' column
-            queryClient.schema("usno.a2.raj2000", "text", "default")
-        """
-
+        '''Implementation of the schema() method.
+        '''
         if profile is None:
            profile = self.svc_profile
 
@@ -924,8 +1602,8 @@ class queryClient (object):
 
     def _services (self, name=None, svc_type='vos', format=None,
                   profile='default'):
-        """
-        """
+        '''
+        '''
         dburl = '/services?'
         if profile is not None and profile != 'None' and profile != '':
             dburl += ("profile=%s" % profile)
@@ -949,19 +1627,19 @@ class queryClient (object):
     #  Query Methods
     # ###########################
 
-    @multimethod('_qc',2)
+    @multimethod('_qc',2,True)
     def query (self, token, query, adql=None, sql=None, fmt='csv', out=None,
                async_=False, profile='default', **kw):
-        '''  Usage:  queryClient.query (token)
+        '''Usage:  queryClient.query (token)
         '''
         return self._query (token=def_token(token), adql=adql, sql=query,
                             fmt=fmt, out=out, async_=async_,
                             profile=profile, **kw)
 
-    @multimethod('_qc',1)
+    @multimethod('_qc',1,True)
     def query (self, optval, adql=None, sql=None, fmt='csv', out=None,
                async_=False, token=None, profile='default', **kw):
-        '''  Usage:  queryClient.client.query (token, ...)
+        '''Usage:  queryClient.client.query (token, ...)
         '''
         if optval is not None and optval.lower()[:6] == 'select':
             # optval looks like a query string
@@ -974,10 +1652,10 @@ class queryClient (object):
                                 fmt=fmt, out=out, async_=async_,
                                 profile=profile, **kw)
 
-    @multimethod('_qc',0)
+    @multimethod('_qc',0,True)
     def query (self, token=None, adql=None, sql=None, fmt='csv', out=None,
                async_=False, profile='default', **kw):
-        '''  Usage:  queryClient.client.query (...)
+        '''Usage:  queryClient.client.query (...)
         '''
         return self._query (token=def_token(token), adql=adql, sql=sql,
                             fmt=fmt, out=out, async_=async_,
@@ -985,124 +1663,8 @@ class queryClient (object):
 
     def _query (self, token=None, adql=None, sql=None, fmt='csv', out=None,
               async_=False, profile='default', **kw):
-        """ Send an SQL or ADQL query to the database or TAP service.
-
-        Parameters
-        ----------
-        token : str
-            Secure token obtained via :func:`authClient.login()`
-
-        adql : str or None
-            ADQL query string that will be passed to the DB query manager, e.g.
-
-            .. code-block:: python
-
-                adql='select top 3 ra,dec from gaia_dr1.gaia_source'
-
-        sql : str or None
-            SQL query string that will be passed to the DB query manager, e.g.
-
-            .. code-block:: python
-
-                sql='select ra,dec from gaia_dr1.gaia_source limit 3'
-
-        fmt : str
-            Format of result to be returned by the query. Permitted values are:
-
-              * 'csv'          The returned result is a comma-separated string
-                               that looks like a csv file (newlines at the end
-                               of every row) [DEFAULT]
-              * 'ascii'        Same, but the column separator is a tab \t
-              * 'array'        Returns a NumPy array
-              * 'pandas'       Returns a Pandas DataFrame
-              * 'structarray'  Numpy structured array (aka 'record array')
-              * 'table'        Returns an Astropy Table object
-
-                The following formats may be used when saving a file to
-                virtual storage on the server:
-
-              * 'fits'         FITS binary
-              * 'hdf5'         HDF5 file  		(NOT YET IMPLEMENTED)
-              * 'votable'      An XML-formatted VOTable
-
-        out : str or None
-            The output filename to create on the local machine, the URI of a
-            VOSpace or MyDB resource to create, or ``None`` if the result is
-            to be returned directly to the caller.
-
-        async_ : bool
-            If ``True``, the query is Asynchronous, i.e. a job is submitted to
-            the DB, and a jobID token is returned the caller. The jobID must
-            be then used to check the query's status and to retrieve the result
-            (when the job status is ``COMPLETED``) or the error message (when
-            the job status is ``ERROR``). Default is ``False``, i.e. the task
-            runs a Synchroneous query.
-
-            ``async_`` replaces the previous ``async`` parameter, because ``async``
-            was promoted to a keyword in Python 3.7. Users of Python versions
-            prior to 3.7 can continue to use the ``async`` keyword.
-
-        profile : str or None
-            The Query Manager profile to use for this call.  If ``None`` then
-            the default profile is used.  Available profiles may be listed
-            using the :func:`queryClient.list_profiles()`
-
-        **kw : dict
-            Optional keyword arguments.  Supported keywords currently include:
-
-               wait = False
-                   Wait for asynchronous queries to complete? If enabled,
-                   the query() method will submit the job in async mode
-                   and then poll for results internally before returning.
-                   the default is to return the job ID immediately and let
-                   the client poll for job status and return results.
-
-               timeout = 300
-                   Requested timeout (in seconds) for a query. For a Sync
-                   query, this value sets a session timeout request in the
-                   database that will abort the query at the specified time.
-                   A maximum value of 600 seconds is permitted.  If the
-                   ``wait`` option is enabled for an ASync query, this is the
-                   maximum time the query will be allowed to run before an
-                   abort() is issued on the job.  The maximum timeout for
-                   an ASync job is 24-hrs (86400 sec).
-
-               poll = 1
-                   ASync job polling time in seconds.
-
-               verbose = False
-                   Print verbose messages during ASync job.
-
-        Returns
-        -------
-        result : str
-            If ``async=False``, the return value is the result of the
-            query as a formatted string (see ``fmt``). Otherwise the
-            result string is a job token, with which later the
-            Asynchroneaous query's status can be checked
-            (:func:`queryClient.status()`), and the result retrieved (see
-            :func:`queryClient.result()`.
-
-        Example
-        -------
-        Get security token first, see :func:`authClient.login()`. Then:
-
-        .. code-block:: python
-
-            query = 'select ra,dec from gaia_dr1.gaia_source limit 3'
-            response = queryClient.query(token, adql=query, fmt='csv')
-            print response
-
-        This prints
-
-        .. code::
-
-              ra,dec
-              315.002571989537842,35.2662974820284489
-              315.00408275885701,35.2665448169895797
-              314.996334457679438,35.2673478725552698
-
-        """
+        '''Implementation of the query() method.
+        '''
 
         # Process optional keyword arguments.
         if 'async' in kw:
@@ -1239,16 +1801,16 @@ class queryClient (object):
     # Async jobs status()
     # --------------------------
 
-    @multimethod('_qc',2)
+    @multimethod('_qc',2,True)
     def status (self, token, jobId):
-        '''  Usage:  queryClient.status (token, jobID)
+        '''Usage:  queryClient.status (token, jobID)
         '''
         return self._status (token=def_token(token), jobId=jobId)
 
-    @multimethod('_qc',1)
+    @multimethod('_qc',1,True)
     def status (self, optval, jobId=None):
-        '''  Usage:  queryClient.status (jobID)
-                     queryClient.status (token, jobId=<id>)
+        '''Usage:  queryClient.status (jobID)
+                   queryClient.status (token, jobId=<id>)
         '''
         if optval is not None and len(optval.split('.')) >= 4:
             # optval looks like a token
@@ -1257,65 +1819,20 @@ class queryClient (object):
             # optval is probably a jobId
             return self._status (token=def_token(None), jobId=optval)
 
-    @multimethod('_qc',0)
+    @multimethod('_qc',0,True)
     def status (self, token=None, jobId=None):
-        '''  Usage:  queryClient.status (jobID=<str>)
+        '''Usage:  queryClient.status (jobID=<str>)
         '''
         return self._status (token=def_token(token), jobId=jobId)
 
     def _status(self, token=None, jobId=None):
-        """ Get the status of an asynchronous query.
-
-        Use the authentication token and the jobId of a previously issued
-        asynchronous query to check the query's current status.
-
-        Parameters
-        ----------
-        token : str
-            Authentication token (see function :func:`authClient.login()`)
-
-        jobId : str
-            The jobId returned when issuing an asynchronous query via
-            :func:`queryClient.query()` with ``async=True``.
-
-        Returns
-        -------
-        status : str
-
-            Either 'QUEUED' or 'EXECUTING' or 'COMPLETED'. If the token &
-            jobId combination does not correspond to an actual job, then a
-            HTML-formatted error message is returned. If there is a
-            problem with the backend, the returned value can be 'ERROR'.
-
-            When status is 'COMPLETED', you can retrieve the results of
-            the query via :func:`queryClient.results()`
-
-        Example
-        -------
-        .. code-block:: python
-
-            import time
-            query = 'select ra,dec from gaia_dr1.gaia_source limit 200000'
-            jobId = queryClient.query(token, adql=query, fmt='csv', async=True)
-            while True:
-                status = queryClient.status(token, jobId)
-                print "time index =", time.localtime()[5], "   status =", status
-                if status == 'COMPLETED':
-                    break
-                time.sleep(1)
-
-        This prints
-
-        .. code::
-
-            time index = 16    status = EXECUTING
-            time index = 17    status = EXECUTING
-            time index = 18    status = COMPLETED
-
-        """
-
+        '''Implementation of the status() method.
+        '''
         headers = self.getHeaders (token)
+
         dburl = '%s/status?jobid=%s' % (self.svc_url, jobId)
+        if self.svc_profile != "default":
+            dburl += "&profile=%s" % self.svc_profile
 
         r = requests.get (dburl, headers=headers)
         return qcToString(r.content)
@@ -1325,17 +1842,17 @@ class queryClient (object):
     # Async jobs results()
     # --------------------------
 
-    @multimethod('_qc',2)
+    @multimethod('_qc',2,True)
     def results (self, token, jobId, delete=True):
-        '''  Usage:  queryClient.results (token, jobID)
+        '''Usage:  queryClient.results (token, jobID)
         '''
         return self._results (token=def_token(token), jobId=jobId,
                               delete=delete)
 
-    @multimethod('_qc',1)
+    @multimethod('_qc',1,True)
     def results (self, optval, jobId=None, delete=True):
-        '''  Usage:  queryClient.results (jobID)
-                     queryClient.results (token, jobId=<id>)
+        '''Usage:  queryClient.results (jobID)
+                   queryClient.results (token, jobId=<id>)
         '''
         if optval is not None and len(optval.split('.')) >= 4:
             # optval looks like a token
@@ -1346,55 +1863,16 @@ class queryClient (object):
             return self._results (token=def_token(None), jobId=optval,
                                   delete=delete)
 
-    @multimethod('_qc',0)
+    @multimethod('_qc',0,True)
     def results (self, token=None, jobId=None, delete=True):
-        '''  Usage:  queryClient.results (jobID=<str>)
+        '''Usage:  queryClient.results (jobID=<str>)
         '''
         return self._results (token=def_token(token), jobId=jobId,
                               delete=delete)
 
     def _results(self, token=None, jobId=None, delete=True):
-        """Retrieve the results of an asynchronous query, once completed.
-
-        Parameters
-        ----------
-        token : str
-            Authentication token (see function :func:`authClient.login()`)
-
-        jobId : str
-            The jobId returned when issuing an asynchronous query via
-            :func:`queryClient.query()` with ``async=True``.
-
-        Returns
-        -------
-        results : str
-
-        Example
-        -------
-        .. code-block:: python
-
-            # issue an async query (here a tiny one just for this example)
-            query = 'select ra,dec from gaia_dr1.gaia_source limit 3'
-            jobId = queryClient.query(token, adql=query, fmt='csv', async=True)
-
-            # ensure job completes...then check status and retrieve results
-            time.sleep(4)
-            if queryClient.status(token, jobId) == 'COMPLETED':
-                results = queryClient.results(token,jobId)
-                print type(results)
-                print results
-
-        This prints
-
-        .. code::
-
-            <type 'str'>
-            ra,dec
-            301.37502633933002,44.4946851014515588
-            301.371102372343785,44.4953207577355698
-            301.385106974224186,44.4963443903961604
-        """
-
+        '''Implementation of the results() method.
+        '''
         headers = self.getHeaders (token)
 
         dburl = '%s/results?jobid=%s&delete=%s' % (self.svc_url, jobId, delete)
@@ -1409,15 +1887,15 @@ class queryClient (object):
     # Async jobs error()
     # --------------------------
 
-    @multimethod('_qc',2)
+    @multimethod('_qc',2,True)
     def error (self, token, jobId):
-        '''  Usage:  queryClient.error (token, jobID)
+        '''Usage:  queryClient.error (token, jobID)
         '''
         return self._error (token=def_token(token), jobId=jobId)
 
-    @multimethod('_qc',1)
+    @multimethod('_qc',1,True)
     def error (self, optval, jobId=None):
-        '''  Usage:  queryClient.error (jobID)
+        '''Usage:  queryClient.error (jobID)
                      queryClient.error (token, jobId=<id>)
         '''
         if optval is not None and len(optval.split('.')) >= 4:
@@ -1427,54 +1905,15 @@ class queryClient (object):
             # optval is probably a jobId
             return self._error (token=def_token(None), jobId=optval)
 
-    @multimethod('_qc',0)
+    @multimethod('_qc',0,True)
     def error (self, token=None, jobId=None):
-        '''  Usage:  queryClient.error (jobID=<str>)
+        '''Usage:  queryClient.error (jobID=<str>)
         '''
         return self._error (token=def_token(token), jobId=jobId)
 
     def _error(self, token=None, jobId=None):
-        """Retrieve the error of an asynchronous query, once completed.
-
-        Parameters
-        ----------
-        token : str
-            Authentication token (see function :func:`authClient.login()`)
-
-        jobId : str
-            The jobId returned when issuing an asynchronous query via
-            :func:`queryClient.query()` with ``async=True``.
-
-        Returns
-        -------
-        error : str
-
-        Example
-        -------
-        .. code-block:: python
-
-            # issue an async query (here a tiny one just for this example)
-            query = 'select ra,dec from gaia_dr1.gaia_source limit 3'
-            jobId = queryClient.query(token, adql=query, fmt='csv', async=True)
-
-            # ensure job completes...then check status and retrieve error
-            time.sleep(4)
-            if queryClient.status(token, jobId) == 'ERROR':
-                error = queryClient.error(token,jobId)
-                print type(error)
-                print error
-
-        This prints
-
-        .. code::
-
-            <type 'str'>
-            ra,dec
-            301.37502633933002,44.4946851014515588
-            301.371102372343785,44.4953207577355698
-            301.385106974224186,44.4963443903961604
-        """
-
+        '''Implementation of the error() method.
+        '''
         headers = self.getHeaders (token)
 
         dburl = '%s/error?jobid=%s' % (self.svc_url, jobId)
@@ -1489,16 +1928,16 @@ class queryClient (object):
     # Async jobs abort()
     # --------------------------
 
-    @multimethod('_qc',2)
+    @multimethod('_qc',2,True)
     def abort (self, token, jobId):
-        '''  Usage:  queryClient.abort (token, jobID)
+        '''Usage:  queryClient.abort (token, jobID)
         '''
         return self._abort (token=def_token(token), jobId=jobId)
 
-    @multimethod('_qc',1)
+    @multimethod('_qc',1,True)
     def abort (self, optval, jobId=None):
-        '''  Usage:  queryClient.abort (jobID)
-                     queryClient.abort (token, jobId=<id>)
+        '''Usage:  queryClient.abort (jobID)
+                   queryClient.abort (token, jobId=<id>)
         '''
         if optval is not None and len(optval.split('.')) >= 4:
             # optval looks like a token
@@ -1507,52 +1946,15 @@ class queryClient (object):
             # optval is probably a jobId
             return self._abort (token=def_token(None), jobId=optval)
 
-    @multimethod('_qc',0)
+    @multimethod('_qc',0,True)
     def abort (self, token=None, jobId=None):
-        '''  Usage:  queryClient.abort (jobID=<str>)
+        '''Usage:  queryClient.abort (jobID=<str>)
         '''
+        return self._abort (token=def_token(token), jobId=jobId)
 
     def _abort(self, token=None, jobId=None):
-        """ Abort the specified asynchronous job.
-
-        Parameters
-        ----------
-        token : str
-            Authentication token (see function :func:`authClient.login()`)
-
-        jobId : str
-            The jobId to abort.
-
-        Returns
-        -------
-        results : str
-
-        Example
-        -------
-        .. code-block:: python
-
-            # issue an async query (here a tiny one just for this example)
-            query = 'select ra,dec from gaia_dr1.gaia_source limit 3'
-            jobId = queryClient.query(token, adql=query, fmt='csv', async=True)
-
-            # ensure job completes...then check status and retrieve results
-            time.sleep(4)
-            if queryClient.status(token, jobId) == 'COMPLETED':
-                results = queryClient.results(token,jobId)
-                print type(results)
-                print results
-
-        This prints
-
-        .. code::
-
-            <type 'str'>
-            ra,dec
-            301.37502633933002,44.4946851014515588
-            301.371102372343785,44.4953207577355698
-            301.385106974224186,44.4963443903961604
-        """
-
+        '''Implementation of the abort() method.
+        '''
         headers = self.getHeaders (token)
 
         dburl = '%s/abort?jobid=%s' % (self.svc_url, jobId)
@@ -1571,15 +1973,15 @@ class queryClient (object):
 
     # LIST -- List the tables or table schema in the user's MyDB.
     #
-    @multimethod('_qc',2)
+    @multimethod('_qc',2,True)
     def list (self, token, table):
-        '''  Usage:  queryClient.list (token, table)
+        '''Usage:  queryClient.list (token, table)
         '''
         return self._list (token=def_token(token), table=table)
 
-    @multimethod('_qc',1)
+    @multimethod('_qc',1,True)
     def list (self, optval, table=None):
-        '''  Usage:  queryClient.list (table)
+        '''Usage:  queryClient.list (table)
                      queryClient.list (token, table=<id>)
         '''
         if optval is not None and len(optval.split('.')) >= 4:
@@ -1589,38 +1991,15 @@ class queryClient (object):
             # optval is probably a table
             return self._list (token=def_token(None), table=optval)
 
-    @multimethod('_qc',0)
+    @multimethod('_qc',0,True)
     def list (self, token=None, table=None):
-        '''  Usage:  queryClient.list (table=<str>)
+        '''Usage:  queryClient.list (table=<str>)
         '''
         return self._list (token=def_token(token), table=table)
 
     def _list(self, token=None, table=''):
-        """ List the tables or table schema in the user's MyDB.
-
-        Parameters
-        ----------
-        token : str
-            Authentication token (see function :func:`authClient.login()`)
-
-        table: str
-            The specific table to list (returns the table schema), or
-            an empty string to return a list of the names of all tables.
-
-        Returns
-        -------
-        listing : str
-            The list of tables in the user's MyDB or the schema of the
-            named table
-
-        Example
-        -------
-        .. code-block:: python
-
-            # List the tables
-            queryClient.list()
-        """
-
+        '''Implementation of the list() method.
+        '''
         headers = self.getHeaders (token)
 
         if table is None:
@@ -1633,15 +2012,15 @@ class queryClient (object):
 
     # DROP -- Drop the specified table from the user's MyDB
     #
-    @multimethod('_qc',2)
+    @multimethod('_qc',2,True)
     def drop (self, token, table):
-        '''  Usage:  queryClient.drop (token, table)
+        '''Usage:  queryClient.drop (token, table)
         '''
         return self._drop (token=def_token(token), table=table)
 
-    @multimethod('_qc',1)
+    @multimethod('_qc',1,True)
     def drop (self, optval, table=None):
-        '''  Usage:  queryClient.drop (table)
+        '''Usage:  queryClient.drop (table)
                      queryClient.drop (token, table=<id>)
         '''
         if optval is not None and len(optval.split('.')) >= 4:
@@ -1651,33 +2030,15 @@ class queryClient (object):
             # optval is probably a table
             return self._drop (token=def_token(None), table=optval)
 
-    @multimethod('_qc',0)
+    @multimethod('_qc',0,True)
     def drop (self, token=None, table=None):
-        '''  Usage:  queryClient.drop (table=<str>)
+        '''Usage:  queryClient.drop (table=<str>)
         '''
         return self._drop (token=def_token(token), table=table)
 
     def _drop(self, token=None, table=''):
-        """ Drop the specified table from the user's MyDB
-
-        Parameters
-        ----------
-        token : str
-            Authentication token (see function :func:`authClient.login()`)
-
-        table: str
-            The specific table to drop
-
-        Returns
-        -------
-
-        Example
-        -------
-        .. code-block:: python
-
-            # List the tables
-            queryClient.drop('foo1')
-        """
+        '''Implementation of the list() method.
+        '''
 
         headers = self.getHeaders (token)
         dburl = '%s/delete?table=%s' % (self.svc_url, table)
@@ -1696,9 +2057,9 @@ class queryClient (object):
     # --------------------------------------------------------------------
     # MYDB_LIST -- List the tables or table schema in a user's MyDB.
     #
-    @multimethod('_qc',1)
+    @multimethod('_qc',1,True)
     def mydb_list (self, optval, table=None):
-        '''  Usage:  queryClient.mydb_list (table)
+        '''Usage:  queryClient.mydb_list (table)
                      queryClient.mydb_list (token, table=<str>)
         '''
         if optval is not None and len(optval.split('.')) >= 4:
@@ -1708,38 +2069,15 @@ class queryClient (object):
             # optval is probably a table
             return self._mydb_list (token=def_token(None), table=optval)
 
-    @multimethod('_qc',0)
+    @multimethod('_qc',0,True)
     def mydb_list (self, token=None, table=None):
-        '''  Usage:  queryClient.mydb_list (table=<str>)
+        '''Usage:  queryClient.mydb_list (table=<str>)
         '''
         return self._mydb_list (token=def_token(token), table=table)
 
     def _mydb_list (self, token=None, table=None):
-        """ List the tables or table schema in the user's MyDB.
-
-        Parameters
-        ----------
-        token : str
-            Authentication token (see function :func:`authClient.login()`)
-
-        table: str
-            The specific table to list (returns the table schema), or
-            an empty string to return a list of the names of all tables.
-
-        Returns
-        -------
-        listing : str
-            The list of tables in the user's MyDB or the schema of the
-            named table
-
-        Example
-        -------
-        .. code-block:: python
-
-            # List the tables
-            queryClient.mydb_list()
-        """
-
+        '''Implementation of the mydb_list() method.
+        '''
         headers = self.getHeaders (token)
 
         if table is None:
@@ -1753,58 +2091,23 @@ class queryClient (object):
     # --------------------------------------------------------------------
     # MYDB_CREATE -- Copy a table in the user's MyDB.
     #
-    @multimethod('_qc',3)
+    @multimethod('_qc',3,True)
     def mydb_create (self, token, table, schema, **kw):
-        '''  Usage:  queryClient.mydb_create (token, table, <schema_dict>)
+        '''Usage:  queryClient.mydb_create (token, table, <schema_dict>)
         '''
         return self._mydb_create (token=def_token(None), table=table,
                                   schema=schema, **kw)
 
-    @multimethod('_qc',2)
+    @multimethod('_qc',2,True)
     def mydb_create (self, table, schema, token=None, **kw):
-        '''  Usage:  queryClient.mydb_create (table, <schema_dict>)
+        '''Usage:  queryClient.mydb_create (table, <schema_dict>)
         '''
         return self._mydb_create (token=def_token(None), table=table,
                                   schema=schema, **kw)
 
     def _mydb_create(self, token, table, schema, **kw):
-        """ Create a table in the user's MyDB
-
-        Parameters
-        ----------
-        token : str
-            Authentication token (see function :func:`authClient.login()`)
-
-        table: str
-            The name of the table to create
-
-        schema: str or dict
-            The schema is CSV text containing the name of the column and
-            it's PostgreSQL data type.  If set as a 'str' type it is either
-            a CSV string, or the name of a file containing the CSV.  If passed
-            as a 'dict' type, it is a dictionary object where keys are the
-            column names and values are the data types.
-
-        drop: bool   (optional)
-            Drop any existing table of the same name before creating new one.
-
-        Returns
-        -------
-
-        Example
-        -------
-        .. code-block:: python
-
-            # Create table in MyDB named 'foo' with columns defined by
-            # the file 'schema.txt'.  The schema file contains:
-            #
-            #     id,text
-            #     ra,double precision
-            #     dec,double precision
-            #
-            queryClient.mydb_create ('foo', 'schema.txt')
-        """
-
+        '''Implementation of the mydb_create() method.
+        '''
         # Set the request headers.
         headers = self.getHeaders (token)
         headers['Content'] = 'text/ascii'
@@ -1851,56 +2154,25 @@ class queryClient (object):
     # MYDB_INSERT -- Insert data into a table in the user's MyDB from a local
     # file or python data object.
     #
-    @multimethod('_qc',3)
+    @multimethod('_qc',3,True)
     def mydb_insert (self, token, table, data, **kw):
-        '''  Usage:  queryClient.mydb_insert (token, table, <filename>)
-                     queryClient.mydb_insert (token, table, <data_object>)
+        '''Usage:  queryClient.mydb_insert (token, table, <filename>)
+                   queryClient.mydb_insert (token, table, <data_object>)
         '''
         return self._mydb_insert (token=def_token(token), table=table,
                                   data=data, **kw)
 
-    @multimethod('_qc',2)
+    @multimethod('_qc',2,True)
     def mydb_insert (self, table, data, token=None, **kw):
-        '''  Usage:  queryClient.mydb_insert (table, <filename>)
-                     queryClient.mydb_insert (table, <data_object>)
+        '''Usage:  queryClient.mydb_insert (table, <filename>)
+                   queryClient.mydb_insert (table, <data_object>)
         '''
         return self._mydb_insert (token=def_token(token), table=table,
                                   data=data, **kw)
 
     def _mydb_insert(self, token=None, table=None, data=None, **kw):
-        """ Insert data into a table in the user's MyDB
-
-        Parameters
-        ----------
-        token : str
-            Authentication token (see function :func:`authClient.login()`)
-
-        table: str
-            The name of the table to append
-
-        data: str or data object
-            The schema is CSV text containing the name of the column and
-            it's PostgreSQL data type.  If set as a 'str' type it is either
-            a CSV string, or the name of a file containing the CSV data. If
-            passed as a tabular data object, it is converted to CSV and sent
-            to the service.
-
-        csv_header: bool	[OPTIONAL]
-            If True, then the CSV data object contains a CSV header line, i.e.
-            the first line is a row of column names.  Otherwise, no column
-            names are assumed and the column order must match the table schema.
-
-        Returns
-        -------
-
-        Example
-        -------
-        .. code-block:: python
-
-            # Insert data into a MyDB table named 'foo'.
-            queryClient.mydb_insert ('foo', 'data.csv')
-        """
-
+        '''Implementation of the mydb_create() method.
+        '''
         # Get optional parameters.
         csv_header = (kw['csv_header'] if 'csv_header' in kw else True)
         verbose = (kw['drop'] if 'drop' in kw else False)
@@ -1965,69 +2237,23 @@ class queryClient (object):
     # --------------------------------------------------------------------
     # MYDB_IMPORT -- Import a file or Python object to a MyDB table.
     #
-    @multimethod('_qc',3)
+    @multimethod('_qc',3,True)
     def mydb_import (self, token, table, data, **kw):
-        '''  Usage:  queryClient.mydb_import (token, table, data)
+        '''Usage:  queryClient.mydb_import (token, table, data)
         '''
         return self._mydb_import (token=def_token(token), table=table,
                                   data=data, **kw)
 
-    @multimethod('_qc',2)
+    @multimethod('_qc',2,True)
     def mydb_import (self, table, data, token=None, **kw):
-        '''  Usage:  queryClient.mydb_import (table, data)
+        '''Usage:  queryClient.mydb_import (table, data)
         '''
         return self._mydb_import (token=def_token(token), table=table,
                                   data=data, **kw)
 
     def _mydb_import (self, token=None, table=None, data=None, **kw):
-        """ Import data into a table in the user's MyDB
-
-        Parameters
-        ----------
-        token : str
-            Authentication token (see function :func:`authClient.login()`)
-
-        table: str
-            The name of the table to be loaded
-
-        data: str or data object
-            The data file or python object to be loaded.  The 'data' value
-            may be one of the following types:
-
-                filename	    A CSV file of data
-                string		    A string containing CSV data
-                Pandas DataFrame    A Pandas DataFrame object
-                    :                   :        :       :
-
-            Additional object types can be added provided the data can be
-            converted to a CSV format.
-
-        schema: str	[OPTIONAL]
-            If set, this is a filename or string containing a schema for the
-            data table to be created.  A schema contains a comma-delimited row
-            for each column containing the column name and it's Postgres data
-            type.  If not set, the schema is determined automatically from
-            the data.
-
-        drop: bool   	[Optional]
-            Drop any existing table of the same name before creating new one.
-
-        verbose: bool   [Optional]
-            Be verbose about operations.
-
-        Returns
-        -------
-            schema	A string containing the table schema
-            data_obj	The CSV data to be imported (possibly converted)
-
-        Example
-        -------
-        .. code-block:: python
-
-            # Import data into a MyDB table named 'foo' from file 'data.csv'.
-            schema, data = queryClient.mydb_import ('foo', 'data.csv')
-        """
-
+        '''Implementation of the mydb_create() method.
+        '''
         # Get optional parameters.
         csv_header = (kw['csv_header'] if 'csv_header' in kw else True)
         verbose = (kw['drop'] if 'drop' in kw else False)
@@ -2100,20 +2326,20 @@ class queryClient (object):
     # --------------------------------------------------------------------
     # MYDB_TRUNCATE -- Truncate a table in the user's MyDB.
     #
-    @multimethod('_qc',2)
+    @multimethod('_qc',2,True)
     def mydb_truncate (self, token, table):
-        '''  Usage:  queryClient.mydb_truncate (token, table)
+        '''Usage:  queryClient.mydb_truncate (token, table)
         '''
         return self._mydb_truncate (token=def_token(token), table=table)
 
-    @multimethod('_qc',1)
+    @multimethod('_qc',1,True)
     def mydb_truncate (self, table, token=None):
-        '''  Usage:  queryClient.mydb_truncate (table)
+        '''Usage:  queryClient.mydb_truncate (table)
         '''
         return self._mydb_truncate (token=def_token(token), table=table)
 
     def _mydb_truncate (self, token=None, table=None):
-        '''
+        '''Implementation of the mydb_truncate() method.
         '''
         headers = self.getHeaders (token)
 
@@ -2130,15 +2356,15 @@ class queryClient (object):
     # --------------------------------------------------------------------
     # MYDB_INDEX -- Index a column in a user's MyDB table.
     #
-    @multimethod('_qc',3)
+    @multimethod('_qc',3,True)
     def mydb_index (self, token, table, column):
-        '''  Usage:  queryClient.mydb_index (token, table, column)
+        '''Usage:  queryClient.mydb_index (token, table, column)
         '''
         pass
 
-    @multimethod('_qc',2)
+    @multimethod('_qc',2,True)
     def mydb_index (self, table, column, token=None):
-        '''  Usage:  queryClient.mydb_index (table, colunm)
+        '''Usage:  queryClient.mydb_index (table, colunm)
         '''
         pass
 
@@ -2147,41 +2373,22 @@ class queryClient (object):
     # --------------------------------------------------------------------
     # MYDB_DROP -- Drop the named table from a user's MyDB.
     #
-    @multimethod('_qc',2)
+    @multimethod('_qc',2,True)
     def mydb_drop (self, token, table):
-        '''  Usage:  queryClient.mydb_drop (token, table)
+        '''Usage:  queryClient.mydb_drop (token, table)
         '''
         return self._mydb_drop (token=def_token(token), table=table)
 
-    @multimethod('_qc',1)
+    @multimethod('_qc',1,True)
     def mydb_drop (self, table, token=None):
-        '''  Usage:  queryClient.mydb_drop (table)
+        '''Usage:  queryClient.mydb_drop (table)
                      queryClient.mydb_drop (token, table=<id>)
         '''
         return self._mydb_drop (token=def_token(token), table=table)
 
     def _mydb_drop (self, token=None, table=None):
-        """ Drop the specified table from the user's MyDB
-
-        Parameters
-        ----------
-        token : str
-            Authentication token (see function :func:`authClient.login()`)
-
-        table: str
-            The specific table to drop
-
-        Returns
-        -------
-
-        Example
-        -------
-        .. code-block:: python
-
-            # List the tables
-            queryClient.drop('foo1')
-        """
-
+        '''Implementation of the mydb_drop() method.
+        '''
         headers = self.getHeaders (token)
 
         dburl = '%s/delete?table=%s' % (self.svc_url, table)
@@ -2196,45 +2403,23 @@ class queryClient (object):
     # --------------------------------------------------------------------
     # MYDB_RENAME -- Rename a table in the user's MyDB.
     #
-    @multimethod('_qc',3)
+    @multimethod('_qc',3,True)
     def mydb_rename (self, token, source, target):
-        '''  Usage:  queryClient.mydb_rename (token, source, target)
+        '''Usage:  queryClient.mydb_rename (token, source, target)
         '''
         return self._mydb_rename (token=def_token(token),
                                     source=source, target=target)
 
-    @multimethod('_qc',2)
+    @multimethod('_qc',2,True)
     def mydb_rename (self, source, target, token=None):
-        '''  Usage:  queryClient.mydb_rename (source, target)
+        '''Usage:  queryClient.mydb_rename (source, target)
         '''
         return self._mydb_rename (source=source, target=target,
                                   token=def_token(token))
 
     def _mydb_rename (self, source='', target='', token=None):
-        """ Rename a table in the user's MyDB to a new name
-
-        Parameters
-        ----------
-        token : str
-            Authentication token (see function :func:`authClient.login()`)
-
-        source: str
-            The old table name
-
-        target: str
-            The new table name
-
-        Returns
-        -------
-
-        Example
-        -------
-        .. code-block:: python
-
-            # Copy table 'foo' to a new table, 'bar'
-            queryClient.mydb_rename ('foo', 'bar')
-        """
-
+        '''Implementation of the mydb_rename() method.
+        '''
         headers = self.getHeaders (token)
 
         dburl = '%s/rename?source=%s&target=%s' % (self.svc_url, source, target)
@@ -2248,45 +2433,23 @@ class queryClient (object):
     # --------------------------------------------------------------------
     # MYDB_COPY -- Copy a table in the user's MyDB.
     #
-    @multimethod('_qc',3)
+    @multimethod('_qc',3,True)
     def mydb_copy (self, token, source, target):
-        '''  Usage:  queryClient.mydb_copy (token, source, target)
+        '''Usage:  queryClient.mydb_copy (token, source, target)
         '''
         return self._mydb_copy (token=def_token(token),
                                   source=source, target=target)
 
-    @multimethod('_qc',2)
+    @multimethod('_qc',2,True)
     def mydb_copy (self, source, target, token=None):
-        '''  Usage:  queryClient.mydb_copy (source, target)
+        '''Usage:  queryClient.mydb_copy (source, target)
         '''
         return self._mydb_copy (source=source, target=target,
                                 token=def_token(token))
 
     def _mydb_copy (self, source='', target='', token=None):
-        """ Copy a table in the user's MyDB to a new name
-
-        Parameters
-        ----------
-        token : str
-            Authentication token (see function :func:`authClient.login()`)
-
-        source: str
-            The old table name, i.e. the table to be copied
-
-        target: str
-            The new table name, i.e. the table to be created
-
-        Returns
-        -------
-
-        Example
-        -------
-        .. code-block:: python
-
-            # Copy table 'foo' to a new table, 'bar'
-            queryClient.mydb_copy ('foo', 'bar')
-        """
-
+        '''Implementation of the mydb_copy() method.
+        '''
         headers = self.getHeaders (token)
 
         dburl = '%s/copy?source=%s&target=%s' % (self.svc_url, source, target)
@@ -2300,14 +2463,14 @@ class queryClient (object):
 
     @staticmethod
     def pretty_print_POST(req):
-        """
+        '''
         At this point it is completely built and ready
         to be fired; it is "prepared".
 
         However pay attention at the formatting used in
         this function because it is programmed to be pretty
         printed and may differ from the actual request.
-        """
+        '''
         print('{}\n{}\n{}\n\n{}'.format(
             '-----------START-----------',
             req.method + ' ' + req.url,
@@ -2323,8 +2486,8 @@ class queryClient (object):
     # SIAQUERY -- Send a SIA query to the query manager service
     #
     def siaquery(self, token, input=None, out=None, search=0.5):
-        """Send a SIA (Simple Image Access) query to the query manager service
-        """
+        '''Send a SIA (Simple Image Access) query to the query manager service
+        '''
 
         headers = self.getHeaders (token)
         user, uid, gid, hash = token.strip().split('.', 3)
@@ -2357,8 +2520,8 @@ class queryClient (object):
     # CONEQUERY -- Send a cone search query to the query manager service
     #
     def conequery(self, token, input=None, out=None, schema=None, table=None, ra=None, dec=None, search=0.5):
-        """Send a cone search query to the consearch service
-        """
+        '''Send a cone search query to the consearch service
+        '''
 
         headers = self.getHeaders (token)
         user, uid, gid, hash = token.strip().split('.', 3)
@@ -2389,11 +2552,12 @@ class queryClient (object):
 
 
     # -------------------------------------------------------
-    #  Utility Methods
+    #  Private Utility Methods
     # -------------------------------------------------------
 
-    # Get default tracking headers,
     def getHeaders (self, token):
+        '''Get default tracking headers,
+        '''
         tok = def_token(token)
         user, uid, gid, hash = tok.strip().split('.', 3)
         hdrs = {#'Content-Type': 'text/ascii',
@@ -2405,8 +2569,9 @@ class queryClient (object):
 
         return hdrs
 
-    # Get something from a URL.  Return a 'response' object
     def getFromURL (self, svc_url, path, token):
+        '''Get something from a URL.  Return a 'response' object
+        '''
         try:
             hdrs = self.getHeaders (token)
             resp = requests.get("%s%s" % (svc_url, path), headers=hdrs)
@@ -2415,10 +2580,9 @@ class queryClient (object):
             raise queryClientError(str(e))
         return resp
 
-
     def chunked_upload (self, token, local_file, remote_file):
-        """ A streaming file uploader.
-        """
+        '''A streaming file uploader.
+        '''
         debug = False
         init = True
         CHUNK_SIZE = 4 * 1024 * 1024                   # 16MB chunks
@@ -2443,8 +2607,9 @@ class queryClient (object):
             except Exception as e:
                 raise queryClientError ('Upload error: ' + str(e))
 
-    # Lexically scan a value to determine the datatype.
     def dataType (self, val, current_type):
+        '''Lexically scan a value to determine the datatype.
+        '''
         try:
             # Evaluates numbers to an appropriate type, and strings an error
             t = ast.literal_eval(val)
@@ -2466,8 +2631,9 @@ class queryClient (object):
         else:
             return 'text'
 
-    # Generate a schema for mydb_create() from a CSV file or data object.
     def getSchema (self, data, **kw):
+        '''Generate a schema for mydb_create() from a CSV file or data object.
+        '''
         data_obj = data
         if isinstance (data, str):
             # If a file, assume it is CSV but allow the 'delimiter' et al opts
@@ -2521,10 +2687,8 @@ class queryClient (object):
 #  Query Client Handles
 # ###################################
 
-# GET_CLIENT -- Get a new queryClient object
-#
 def getClient (profile=DEF_PROFILE, svc_url=DEF_SERVICE_URL):
-    '''  Create a new queryClient object and set a default profile.
+    '''Create a new queryClient object and set a default profile.
     '''
     return queryClient (profile=profile, svc_url=svc_url)
 
@@ -2533,14 +2697,29 @@ qc_client = getClient (profile=DEF_PROFILE, svc_url=DEF_SERVICE_URL)
 
 
 
+# ##########################################
+#  Patch the docstrings for module functions
+#  that aren't MultiMethods.
+# ##########################################
+
+isAlive.__doc__ = qc_client.isAlive.__doc__
+services.__doc__ = qc_client.services.__doc__
+set_svc_url.__doc__ = qc_client.set_svc_url.__doc__
+get_svc_url.__doc__ = qc_client.get_svc_url.__doc__
+set_profile.__doc__ = qc_client.set_profile.__doc__
+get_profile.__doc__ = qc_client.get_profile.__doc__
+set_timeout_request.__doc__ = qc_client.set_timeout_request.__doc__
+get_timeout_request.__doc__ = qc_client.get_timeout_request.__doc__
+
+
 # ####################################################################
 #  Py2/Py3 Compatability Utilities
 # ####################################################################
 
 def qcToString(s):
-    """ qcToString -- Force a return value to be type 'string' for all
+    '''qcToString -- Force a return value to be type 'string' for all
                       Python versions.
-    """
+    '''
     strval = s
     if is_py3 and isinstance(s,bytes):
         strval = str(s.decode())

@@ -1,6 +1,9 @@
 
 import os
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except:
+    import pickle
 
 import BitVector
 import logging

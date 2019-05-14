@@ -7,10 +7,26 @@ import sys
 import stat
 import time
 import threading
-from Queue import Queue
+try:
+    from Queue import Queue
+except:
+    from queue import Queue
 import traceback
 import errno
-from contextlib import nested
+try:
+    from contextlib import nested  # Python 2
+except ImportError:
+    from contextlib import ExitStack, contextmanager
+
+    @contextmanager
+    def nested(*contexts):
+        """
+        Reimplementation of nested in python 3.
+        """
+        with ExitStack() as stack:
+            for ctx in contexts:
+                stack.enter_context(ctx)
+            yield contexts
 from errno import EACCES, EIO, ENOENT, EISDIR, ENOTDIR, ENOTEMPTY, EPERM, \
     EEXIST, ENODATA, ECONNREFUSED, EAGAIN, ENOTCONN
 import ctypes
@@ -245,9 +261,12 @@ class Cache(object):
                 # are propegated.
                 if not (isinstance(fileHandle.readException[1], EnvironmentError) and
                                 fileHandle.readException[1].errno == errno.ENOENT and not mustExist):
-                    raise fileHandle.readException[0], \
-                        fileHandle.readException[1], \
-                        fileHandle.readException[2]
+                    if sys.version_info.major == 3:
+                        raise fileHandle.readException[0]
+                    else:
+                        raise Exception([fileHandle.readException[0], \
+                            fileHandle.readException[1], \
+                            fileHandle.readException[2] ])
                 # The file didn't exist on the backing store but its ok
                 fileHandle.fullyCached = True
                 fileHandle.gotHeader = True
@@ -926,8 +945,12 @@ class FileHandle(object):
 
             # Look for write failures.
             if self.flushException is not None:
-                raise self.flushException[0], self.flushException[1], \
-                    self.flushException[2]
+                if sys.version_info.major == 3:
+                    raise self.flushException[0]
+                else:
+                    raise Exception([self.flushException[0], \
+                                     self.flushException[1], \
+                                     self.flushException[2] ])
 
             return 0
 

@@ -345,7 +345,6 @@ class VOFS(Operations):
 
         node = self.getNode(path)
         parent = self.getNode(os.path.dirname(path))
-        print node, parent
         # Force inheritance of group settings.
         node.groupread = parent.groupread
         node.groupwrite = parent.groupwrite

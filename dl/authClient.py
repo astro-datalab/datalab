@@ -269,6 +269,7 @@ def list_profiles(token, profile=None, format='text'):
     return "None"
 
 
+
 #####################################
 #  Authentication client procedures
 #####################################
@@ -300,8 +301,10 @@ class authClient(object):
         '''
         self.config = ConfigParser.RawConfigParser(allow_no_value=True)
         if os.path.exists('%s/dl.conf' % self.home):
+            print ('loading dl.conf')
             self.config.read('%s/dl.conf' % self.home)
         else:
+            print ('building default dl.conf')
             self.config.add_section('datalab')
             self.config.set('datalab', 'created', strftime(
                 '%Y-%m-%d %H:%M:%S', gmtime()))
@@ -326,13 +329,13 @@ class authClient(object):
             self.config.set('vospace', 'mount', '')
 
             self.writeConfig()
-            pass
 
     def setConfig(self, section, param, value):
         '''Set a value and save the configuration file.
         '''
         if not self.config.has_section(section):
             self.config.add_section(section)
+        print ('setConfig: [%s] %s = %s' % (section,param,value))
         self.config.set(section, param, value)
         self.writeConfig()
 
@@ -345,6 +348,7 @@ class authClient(object):
         '''Write out the configuration file to disk.
         '''
         with open('%s/dl.conf' % self.home, 'w') as configfile:
+            print ('writing dl.conf')
             self.config.write(configfile)
 
     def whoAmI():
@@ -649,6 +653,7 @@ class authClient(object):
             self.config.set('login', 'status', 'loggedin')
             self.config.set('login', 'user', username)
             self.config.set('login', 'authtoken', self.auth_token)
+            print('login writing config')
             self.writeConfig()
 
         return acToString(self.auth_token)
@@ -681,6 +686,7 @@ class authClient(object):
             print("logout: token = '%s'" % token)
             print("logout: auth_token = '%s'" % self.auth_token)
             print("logout: url = '%s'" % url)
+            print("logout: logged in = " + self.isTokenLoggedIn(token))
 
 
         try:
@@ -688,8 +694,10 @@ class authClient(object):
         except Exception as e:
             raise dlAuthError('Error: Invalid user token')
 
-        if not self.isValidToken(token):
-            return "Error: Invalid user token"
+        if not isValidToken(token):
+            raise dlAuthError("Error: Invalid user token")
+        if not isTokenLoggedIn(token):
+            raise dlAuthError("Error: User token is not logged in")
 
         try:
             # Add the auth token to the reauest header.
@@ -1133,3 +1141,4 @@ def acToString(s):
             strval = s
 
     return strval
+

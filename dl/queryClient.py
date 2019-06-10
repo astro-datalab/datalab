@@ -319,8 +319,49 @@ def schema(value='', format='text', profile=None):
 # --------------------------------------------------------------------
 # SERVICES -- List public storage services
 #
-def services(name=None, svc_type=None, format=None, profile='default'):
-    return qc_client.services (name=name, svc_type=svc_type, format=format,
+def services(name=None, svc_type=None, mode='list', profile='default'):
+    '''Search or list available data services.
+
+    Usage:
+        services (name=None, svc_type=None, mode='list', profile='default')
+
+    Parameters
+    ----------
+    name : str
+        Schema object to return: Of the form <schema>[.<table>[.<column]]
+
+    svc_type : str
+        Limit results to specified service type.  Supported options are
+	'tap', 'sia', 'scs', or 'vos'.
+
+    mode : str
+	Query mode:  
+
+    profile : str
+        The name of the service profile to use. The list of available
+        profiles can be retrieved from the service (see function
+        :func:`queryClient.list_profiles()`)
+
+    Returns
+    -------
+	If mode is 'list' then a human-readable list of matching services is
+	returned.  If mode is 'resolve' then a JSON string of matching services
+	is returned un the form "{<svc_name> : <svc_url>, ....}"
+
+    Example
+    -------
+    .. code-block:: python
+
+        # List the available SIA services
+        queryClient.services(svc_type="sia")
+
+        # List the available USNO services, note the '%' matching metacharacter
+        queryClient.services(name="usno%")
+
+        # Get the serviceURL of the USNO-A2 table
+        queryClient.services(name="usno/a2", mode="resolve")
+    '''
+    return qc_client.services (name=name, svc_type=svc_type, mode=mode,
                                profile=profile)
 
 
@@ -1651,14 +1692,16 @@ class queryClient (object):
         return qcToString(resp)
 
 
-    def services(self, name=None, svc_type='vos', format=None,
+    def services(self, name=None, svc_type=None, mode='list',
                   profile='default'):
-        return self._services (name=name, svc_type=svc_type, format=format,
+        '''Usage:  queryClient.services ()
+        '''
+        return self._services (name=name, svc_type=svc_type, mode=mode,
                                    profile=profile)
 
-    def _services(self, name=None, svc_type='vos', format=None,
+    def _services(self, name=None, svc_type=None, mode='list',
                   profile='default'):
-        '''
+        '''Implementation of the services() method.
         '''
         dburl = '/services?'
         if profile is not None and profile != 'None' and profile != '':
@@ -1667,15 +1710,12 @@ class queryClient (object):
             dburl += ("&name=%s" % name.replace('%','%25'))
         if svc_type is not None and svc_type != 'None' and svc_type != '':
             dburl += ("&type=%s" % svc_type)
-        if format is not None and format != 'None' and format != '':
-            dburl += "&format=%s" % format
+        dburl += "&mode=%s" % mode
 
         r = self.getFromURL(self.svc_url, dburl, def_token(None))
         svcs = qcToString(r.content)
-        if '{' in svcs:
-            svcs = json.loads(svcs)
 
-        return qcToString(svcs)
+        return svcs
 
 
 

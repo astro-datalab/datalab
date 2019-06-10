@@ -82,59 +82,60 @@ DEBUG = False
 #
 # ######################################################################
 
-def createUser(username, password, email, name, institute):
+def createUser(username, password, email, name, institute, profile='default'):
     try:
-        resp = client.createUser(username, password, email, name, institute)
+        resp = client.createUser(username, password, email, name, institute,
+                                 profile=profile)
     except dlResError as e:
         resp = str(e)
 
     return resp
 
-def deleteUser(token, username):
-    return client.deleteUser(token, username)
+def deleteUser(token, username, profile='default'):
+    return client.deleteUser(token, username, profile=profile)
 
-def getUser(token, keyword):
-    return client.getUser(token, keyword)
+def getUser(token, keyword, profile='default'):
+    return client.getUser(token, keyword, profile=profile)
 
-def setUser(token, keyword, value):
-    return client.setUser(token, keyword, value)
+def setUser(token, keyword, value, profile='default'):
+    return client.setUser(token, keyword, value, profile=profile)
 
-def passwordReset(token, user, password):
-    return client.passwordReset(token, user, password)
+def passwordReset(token, user, password, profile='default'):
+    return client.passwordReset(token, user, password, profile=profile)
 
-def sendPasswordLink(token, user):
-    return client.sendPasswordLink(token, user)
+def sendPasswordLink(token, user, profile='default'):
+    return client.sendPasswordLink(token, user, profile=profile)
 
-def listFields():
-    return client.listFields()
+def listFields(profile='default'):
+    return client.listFields(profile=profile)
 
 
 # Group functions
-def createGroup(token, groupName):
-    return client.createGroup(token, groupName)
+def createGroup(token, groupName, profile='default'):
+    return client.createGroup(token, groupName, profile=profile)
 
-def getGroup(token, keyword):
-    return client.getGroup(token, keyword)
+def getGroup(token, keyword, profile='default'):
+    return client.getGroup(token, keyword, profile=profile)
 
-def setGroup(token, keyword, value):
-    return client.setGroup(token, keyword, value)
+def setGroup(token, keyword, value, profile='default'):
+    return client.setGroup(token, keyword, value, profile=profile)
 
-def deleteGroup(token, groupName):
-    return client.deleeteGroup(token, groupName)
+def deleteGroup(token, groupName, profile='default'):
+    return client.deleeteGroup(token, groupName, profile=profile)
 
 
 # Resource functions
-def createResource(token, resource):
-    return client.createResource(token, resource)
+def createResource(token, resource, profile='default'):
+    return client.createResource(token, resource, profile=profile)
 
-def getResource(token, keyword):
-    return client.getResource(token, keyword)
+def getResource(token, keyword, profile='default'):
+    return client.getResource(token, keyword, profile=profile)
 
-def setResource(token, keyword, value):
-    return client.setResource(token, keyword, value)
+def setResource(token, keyword, value, profile='default'):
+    return client.setResource(token, keyword, value, profile=profile)
 
-def deleteResource(token, resource):
-    return client.deleteResource(token, resource)
+def deleteResource(token, resource, profile='default'):
+    return client.deleteResource(token, resource, profile=profile)
 
 
 # Service methods
@@ -330,7 +331,8 @@ class resClient(object):
     #  USER MANAGEMENT
     ###################################################
 
-    def createUser(self, username, password, email, name, institute):
+    def createUser(self, username, password, email, name, institute,
+                   profile='default'):
         '''Create a new user in the system.
 
         Parameters
@@ -357,7 +359,7 @@ class resClient(object):
                       "email" : email,
                       "name" : name,
                       "institute" : institute,
-                      "profile" : self.svc_profile,
+                      "profile" : (profile if profile != 'default' else self.svc_profile),
                       "debug" : self.debug}
         try:
             headers = {'X-DL-AuthToken': self.auth_token}
@@ -373,7 +375,7 @@ class resClient(object):
 
         return response
 
-    def getUser(self, keyword):
+    def getUser(self, keyword, profile='default'):
         '''Read info about a user in the system.
 
         Parameters
@@ -392,9 +394,9 @@ class resClient(object):
             from dl import resClient
             resClient.client.set_svc_url("http://localhost:7001/")
         '''
-        return self.clientRead("user", keyword)
+        return self.clientRead("user", keyword, profile=profile)
 
-    def setUser(self, keyword, value):
+    def setUser(self, keyword, value, profile='default'):
         '''Update info about a user in the system.
 
         Parameters
@@ -408,9 +410,9 @@ class resClient(object):
         -------
         Service response
         '''
-        return self.clientUpdate("user", keyword)
+        return self.clientUpdate("user", keyword, profile=profile)
 
-    def deleteUser(self, token, username):
+    def deleteUser(self, token, username, profile='default'):
         '''Delete a user in the system.
 
         Parameters
@@ -425,7 +427,7 @@ class resClient(object):
         Service response
         '''
         query_args = {"username" : username,
-                      "profile" : self.svc_profile,
+                      "profile" : (profile if profile != 'default' else self.svc_profile),
                       "debug" : self.debug}
 
         return self.clientDelete(token, "user", query_args)
@@ -470,7 +472,7 @@ class resClient(object):
         return response
 
 
-    def passwordReset(self, token, user, password):
+    def passwordReset(self, token, user, password, profile='default'):
         '''Change a user's password.
 
         Parameters
@@ -493,7 +495,7 @@ class resClient(object):
             from dl import resClient
             resClient.client.set_svc_url("http://localhost:7001/")
         '''
-        url = self.svc_url + ("/pwReset?user=%s&password=%s" % (user, password))
+        url = self.svc_url + ("/pwReset?user=%s&password=%s&profile=%s" % (user,password,profile))
 
         try:
             resp = self.svcGet(token, url)
@@ -508,7 +510,7 @@ class resClient(object):
                 os.remove(tok_file)
 
 
-    def sendPasswordLink(self, token, user):
+    def sendPasswordLink(self, token, user, profile='default'):
         '''Send a password-reset link to the user.
 
         Parameters
@@ -522,7 +524,7 @@ class resClient(object):
         -------
         Service response
         '''
-        url = self.svc_url + ("/pwResetLink?user=%s" % user)
+        url = self.svc_url + ("/pwResetLink?user=%s&profile=%s" % (user,profile))
 
         try:
             # Add the auth token to the reauest header.
@@ -538,7 +540,7 @@ class resClient(object):
             raise Exception(str(e))
 
 
-    def listFields(self):
+    def listFields(self, profile='default'):
         '''List available user fields.
 
         Parameters
@@ -549,7 +551,7 @@ class resClient(object):
         -------
         Service response
         '''
-        url = self.svc_url + ("/listFields")
+        url = self.svc_url + ("/listFields?profile=%s" % profile)
 
         try:
             return self.svcGet(self.auth_token, url)
@@ -558,7 +560,7 @@ class resClient(object):
 
         pass
 
-    def approveUser(self, token, user):
+    def approveUser(self, token, user, profile='default'):
         '''Approve a pending user request.
 
         Parameters
@@ -572,7 +574,7 @@ class resClient(object):
         -------
         Service response
         '''
-        url = self.svc_url + "/approveUser?approve=True&user=" + user
+        url = self.svc_url + "/approveUser?approve=True&user=%s&profile=%s" % (user,profile)
 
         try:
             return self.svcGet(token, url)
@@ -580,7 +582,7 @@ class resClient(object):
             raise Exception(str(e))
 
 
-    def disapproveUser(self, token, user):
+    def disapproveUser(self, token, user, profile='default'):
         '''Disapprove a pending user request.
 
         Parameters
@@ -594,7 +596,7 @@ class resClient(object):
         -------
         Service response
         '''
-        url = self.svc_url + "/approveUser?approve=False&user=" + user
+        url = self.svc_url + "/approveUser?approve=False&user=%s&profile=%s" % (user,profile)
 
         try:
             return self.svcGet(token, url)
@@ -602,7 +604,7 @@ class resClient(object):
             raise Exception(str(e))
 
 
-    def userRecord(self, token, user, value, format):
+    def userRecord(self, token, user, value, format, profile='default'):
         '''Get a value from the User record.  
 
         Parameters
@@ -623,7 +625,7 @@ class resClient(object):
         User record
         '''
         url = self.svc_url + \
-                ("/userRecord?user=%s&value=%s&fmt=%s" % (user,value,format))
+                ("/userRecord?user=%s&value=%s&fmt=%s&profile=%s" % (user,value,format,profile))
 
         try:
             resp = self.svcGet(token, url)
@@ -635,7 +637,7 @@ class resClient(object):
         return "OK"
 
 
-    def listPending(self, token, verbose=False):
+    def listPending(self, token, verbose=False, profile='default'):
         '''List all pending user accounts.
 
         Parameters
@@ -649,7 +651,7 @@ class resClient(object):
         -------
         List of use accounts pending approval
         '''
-        url = self.svc_url + "/pending?verbose=" + str(verbose)
+        url = self.svc_url + "/pending?verbose=%s&profile=%s" % (str(verbose),profile)
 
         try:
             resp = self.svcGet(token, url)
@@ -661,7 +663,7 @@ class resClient(object):
         return "OK"
 
 
-    def setField(self, token, user, field, value):
+    def setField(self, token, user, field, value, profile='default'):
         '''Set a specific user record field
 
         Parameters
@@ -680,8 +682,7 @@ class resClient(object):
         -------
         'OK' is field was set, else a service error message.
         '''
-        url = self.svc_url + "/setField?user=%s&field=%s&value=%s" % \
-                       (user, field, value)
+        url = self.svc_url + "/setField?user=%s&field=%s&value=%s&profile=%s" % (user, field, value, profile)
 
         try:
             resp = self.svcGet(token, url)
@@ -698,7 +699,7 @@ class resClient(object):
     #  GROUP MANAGEMENT
     ###################################################
 
-    def createGroup(self, token, name):
+    def createGroup(self, token, name, profile='default'):
         '''Create a new Group in the system.
 
         Parameters
@@ -714,7 +715,7 @@ class resClient(object):
         url = self.svc_url + "/create?what=group&"
 
         query_args = {"name" : name,
-                      "profile" : self.svc_profile,
+                      "profile" : (profile if profile != 'default' else self.svc_profile),
                       "debug" : self.debug}
         try:
             if self.debug:
@@ -736,7 +737,7 @@ class resClient(object):
 
         return response
 
-    def getGroup(self, token, keyword):
+    def getGroup(self, token, keyword, profile='default'):
         '''Read info about a Group in the system.
 
         Parameters
@@ -749,9 +750,9 @@ class resClient(object):
         value : str
             Value of record field
         '''
-        return self.clientRead("group", keyword)
+        return self.clientRead("group", keyword, profile=profile)
 
-    def setGroup(self, token, keyword, value):
+    def setGroup(self, token, keyword, value, profile='default'):
         '''Update info about a Group in the system.
 
         Parameters
@@ -764,9 +765,9 @@ class resClient(object):
         Returns
         -------
         '''
-        return self.clientUpdate("group", keyword, value)
+        return self.clientUpdate("group", keyword, value, profile=profile)
 
-    def deleteGroup(self, token, group):
+    def deleteGroup(self, token, group, profile='default'):
         '''Delete a Group in the system.
 
         Parameters
@@ -781,10 +782,10 @@ class resClient(object):
         -------
         '''
         query_args = {"group" : group,
-                      "profile" : self.svc_profile,
+                      "profile" : (profile if profile != 'default' else self.svc_profile),
                       "debug" : self.debug}
 
-        return self.clientDelete(token, "group", query_args)
+        return self.clientDelete(token, "group", query_args, profile=profile)
 
 
 
@@ -793,7 +794,7 @@ class resClient(object):
     #  RESOURCE MANAGEMENT
     ###################################################
 
-    def createResource(self, token, resource):
+    def createResource(self, token, resource, profile='default'):
         '''Create a new Resource in the system.
 
         Parameters
@@ -809,7 +810,7 @@ class resClient(object):
         url = self.svc_url + "/create?what=resource&"
 
         query_args = {"resource" : resource,
-                      "profile" : self.svc_profile,
+                      "profile" : (profile if profile != 'default' else self.svc_profile),
                       "debug" : self.debug}
         try:
             if self.debug:
@@ -831,7 +832,7 @@ class resClient(object):
 
         return response
 
-    def getResource(self, token, keyword):
+    def getResource(self, token, keyword, profile='default'):
         '''Read info about a Resource in the system.
 
         Parameters
@@ -844,9 +845,9 @@ class resClient(object):
         value : str
             Resource record value
         '''
-        return self.clientRead("resource", keyword)
+        return self.clientRead("resource", keyword, profile=profile)
 
-    def setResource(self, token, keyword, value):
+    def setResource(self, token, keyword, value, profile='default'):
         '''Update info about a Resource in the system.
 
         Parameters
@@ -861,9 +862,9 @@ class resClient(object):
         status : str
             'OK' is record was set
         '''
-        return self.clientUpdate("resource", keyword, value)
+        return self.clientUpdate("resource", keyword, value, profile=profile)
 
-    def deleteResource(self, token, resource):
+    def deleteResource(self, token, resource, profile='default'):
         '''Delete a Resource in the system.
 
         Parameters
@@ -879,7 +880,7 @@ class resClient(object):
         -------
         '''
         query_args = {"resource" : resource,
-                      "profile" : self.svc_profile,
+                      "profile" : (profile if profile != 'default' else self.svc_profile),
                       "debug" : self.debug}
 
         return self.clientDelete(token, "resource", query_args)

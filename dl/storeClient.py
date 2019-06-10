@@ -1630,6 +1630,7 @@ class storeClient(object):
 
             if not os.path.exists(f):
                 # Skip files that don't exist
+                resp.append("Error: Local file '%s' does not exist" % f)
                 if verbose:
                     print("Error: Local file '%s' does not exist" % f)
                 continue

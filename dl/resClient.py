@@ -42,7 +42,7 @@ Import via
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20180422'  # yyyymmdd
+__version__ = '20190624'  # yyyymmdd
 
 
 import requests
@@ -605,7 +605,7 @@ class resClient(object):
 
 
     def userRecord(self, token, user, value, format, profile='default'):
-        '''Get a value from the User record.  
+        '''Get a value from the User record.
 
         Parameters
         ----------
@@ -616,7 +616,7 @@ class resClient(object):
             or be a root token to access other records
         value : str
             Value to retrieve.  The special 'all' value will return all
-            fields accessible to the token.  
+            fields accessible to the token.
         format : str
             'text' for a single value, or 'json' for a complete record
 

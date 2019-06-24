@@ -1897,6 +1897,7 @@ class storeClient(object):
         '''Implementation of the mkdir() method.
         '''
         nm = (name if name.count("://") > 0 else ("vos://" + name))
+        if nm and nm[-1] == '/': nm = nm[:-1]
 
         try:
             r = self.getFromURL(self.svc_url, "/mkdir?dir=%s" % nm,

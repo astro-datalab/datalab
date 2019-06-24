@@ -1487,7 +1487,7 @@ class storeClient(object):
                 else:
                     r = requests.get(res.text, stream=True)
                     if r.status_code != 200:
-                        resp.append(scToString(r.text))
+                        resp.append(scToString(r.content))
                     else:
                         clen = r.headers.get('content-length')
                         total_length = (0 if clen is None else int(clen))

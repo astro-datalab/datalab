@@ -5,7 +5,7 @@
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Matthew Graham <graham@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20190422'  # yyyymmdd
+__version__ = '20190701'  # yyyymmdd
 
 
 '''
@@ -1149,7 +1149,7 @@ class storeClient(object):
         try:
             r = requests.get(svc_url.strip('/'), timeout=timeout)
             resp = scToString(r.content)
-            if r.status_code != 200:
+            if r.status_code != requests.codes.ok:
                 return False
             elif resp is not None and r.text.lower()[:11] != "hello world":
                 return False
@@ -1336,7 +1336,7 @@ class storeClient(object):
         url = self.svc_url + ("/access?name=%s&mode=%s&verbose=%s" % \
                          (uri,mode,verbose))
         r = requests.get(url, headers={'X-DL-AuthToken': def_token(token)})
-        if r.status_code != 200:
+        if r.status_code != requests.codes.ok:
             return False
         else:
             val = scToString(r.content).lower()
@@ -1367,7 +1367,7 @@ class storeClient(object):
         uri = (path if path.count('://') > 0 else 'vos://' + path)
         url = self.svc_url + ("/stat?name=%s&verbose=%s" % (uri,verbose))
         r = requests.get(url, headers={'X-DL-AuthToken': def_token(token)})
-        if r.status_code != 200:
+        if r.status_code != requests.codes.ok:
             return {}
         else:
             return json.loads(scToString(r.content))
@@ -1453,14 +1453,12 @@ class storeClient(object):
         if debug:
             print("get(): nm = %s" % nm)
         if hasmeta(fr):
+            if to == '' or to is None:
+                raise storeClientError("Multi-file requests require a download location")
             if not os.path.exists(to):
                 raise storeClientError("Download directory does not exist")
             if not os.path.isdir(to):
-                raise storeClientError(
-                          "Location must be specified as a directory")
-            if to == '' or to is None:
-                raise storeClientError(
-                          "Multi-file requests require a download location")
+                raise storeClientError("Location must be specified as a directory")
 
         if to != '' and to is not None:
             # Expand metacharacters to create a file list for download.
@@ -1469,6 +1467,8 @@ class storeClient(object):
                 print("get: flist = %s" % flist)
 
             nfiles = len(flist)
+            if nfiles < 1:
+                return 'A Node does not exist with the requested URI.'
             fnum = 1
             resp = []
             for f in flist:
@@ -1480,44 +1480,46 @@ class storeClient(object):
                     dlname = ((to + "/" + fn) if hasmeta(fr) else to)
 
                 # Get a single file.
-                res = requests.get(self.svc_url + "/get?name=%s" % f,
-                                   headers=hdrs)
+                res = requests.get(self.svc_url + "/get?name=%s" % f, headers=hdrs)
 
                 if res.status_code != 200:
                     resp.append("Error: " + scToString(res.text))
                 else:
                     r = requests.get(res.text, stream=True)
-                    clen = r.headers.get('content-length')
-                    total_length = (0 if clen is None else int(clen))
+                    if r.status_code != 200:
+                        resp.append(scToString(r.content))
+                    else:
+                        clen = r.headers.get('content-length')
+                        total_length = (0 if clen is None else int(clen))
 
-                    # Download the file in chunks so we can have a progress
-                    # indicator on each.
-                    dl = 0
-                    done = 0
-                    with open(dlname, 'wb', 0) as fd:
-                        for chunk in r.iter_content(chunk_size=1024):
-                            dl += len(chunk)
-                            if chunk:
-                                fd.write(chunk)
-                            if total_length > 0:
-                                done = int(20 * dl / total_length)
+                        # Download the file in chunks so we can have a progress
+                        # indicator on each.
+                        dl = 0
+                        done = 0
+                        with open(dlname, 'wb', 0) as fd:
+                            for chunk in r.iter_content(chunk_size=1024):
+                                dl += len(chunk)
+                                if chunk:
+                                    fd.write(chunk)
+                                if total_length > 0:
+                                    done = int(20 * dl / total_length)
 
+                                if verbose:
+                                    # Print a progress indicator
+                                    sys.stdout.write("\r(%d/%d) [%s%s] [%7s] %s" % \
+                                        (fnum, nfiles, '=' * done, ' ' * (20-done),
+                                        sizeof_fmt(dl), f[6:]))
+                                    sys.stdout.flush()
+
+                            # Handle a zero-length file download.
                             if verbose:
-                                # Print a progress indicator
-                                sys.stdout.write("\r(%d/%d) [%s%s] [%7s] %s" % \
-                                    (fnum, nfiles, '=' * done, ' ' * (20-done),
-                                    sizeof_fmt(dl), f[6:]))
-                                sys.stdout.flush()
-
-                        # Handle a zero-length file download.
-                        if verbose:
-                            if dl == 0:
-                                print("\r(%d/%d) [%s] [%7s] %s" % \
-                                    (fnum, nfiles, '=' * 20, "0 B", f[6:]))
-                            else:
-                                print('')
-                    fd.close()
-                    resp.append('OK')
+                                if dl == 0:
+                                    print("\r(%d/%d) [%s] [%7s] %s" % \
+                                        (fnum, nfiles, '=' * 20, "0 B", f[6:]))
+                                else:
+                                    print('')
+                        fd.close()
+                        resp.append('OK')
                 fnum += 1
 
             return resp
@@ -1540,7 +1542,7 @@ class storeClient(object):
                 except Exception as e:
                     raise storeClientError(str(e))
             else:
-                return r.content
+                return scToString(r.content)
 
 
     # --------------------------------------------------------------------
@@ -1582,7 +1584,7 @@ class storeClient(object):
                           verbose=verbose, debug=debug)
 
     def _put(self, token=None, fr='', to='vos://', verbose=True, debug=False):
-        '''Implementation of the get() method.
+        '''Implementation of the put() method.
         '''
         tok = def_token(token)
         user, uid, gid, hash = tok.strip().split('.', 3)
@@ -1635,37 +1637,34 @@ class storeClient(object):
                     print("Error: Local file '%s' does not exist" % f)
                 continue
 
-            r = requests.get(self.svc_url + "/put?name=%s" % nm,
-                              headers=hdrs)
+            r = requests.get(self.svc_url + "/put?name=%s" % nm, headers=hdrs)
 
             # Cannot upload directly to a container
             # if r.status_code == 500 and \
             #    r.content == "Data cannot be uploaded to a container":
-            if r.status_code == 500:
-                file = fr[fr.rfind('/') + 1:]
-                nm += '/%s' % fr_name
-                r = requests.get(self.svc_url + "/put?name=%s" % nm,
-                                    headers=hdrs)
-            try:
-                if verbose:
-                    sys.stdout.write("(%d / %d) %s -> " % (fnum, nfiles, f))
-
-                # This *should* work for large data files - MJG 05/24/17
-                with open(f, 'rb') as file:
-                    requests.put(r.content, data=file,
-                         headers={'Content-type': 'application/octet-stream',
-                                  'X-DL-AuthToken': token})
-                if verbose:
-                    sys.stdout.write("%s\n" % nm)
-
-            except Exception as e:
-                resp.append(str(e))
+            # This is now handles above where we check for a container using is_vosDir
+            if r.status_code == requests.codes.server_error:
+                resp.append(scToString(r.content))
             else:
-                resp.append('OK')
+                try:
+                    if verbose:
+                        sys.stdout.write("(%d / %d) %s -> " % (fnum, nfiles, f))
 
+                    # This *should* work for large data files - MJG 05/24/17
+                    with open(f, 'rb') as file:
+                        requests.put(r.content, data=file,
+                             headers={'Content-type': 'application/octet-stream',
+                                      'X-DL-AuthToken': token})
+                    if verbose:
+                        sys.stdout.write("%s\n" % nm)
+
+                except Exception as e:
+                    resp.append(str(e))
+                else:
+                    resp.append('OK')
             fnum += 1
 
-        return (str(resp) if len(resp) > 1 else resp[0])
+        return 'OK' if not resp else resp
 
 
     # --------------------------------------------------------------------
@@ -1748,8 +1747,18 @@ class storeClient(object):
         '''Implementation of the cp() method.
         '''
         # Patch the names with the URI prefix if needed.
-        src = (fr if fr.count("://") > 0 else ("vos://" + fr))
-        dest = (to if to.count("://") > 0 else ("vos://" + to))
+        fr_rem = fr.count("://") > 0
+        to_rem = to.count("://") > 0
+        if not fr_rem and not to_rem:
+            src = "vos://" + fr
+            dest = "vos://" + to
+        elif not fr_rem:
+            return "Cannot copy from local to remote; use put() instead."
+        elif not to_rem:
+            return "Cannot copy from remote to local; use get() instead."
+        else:
+            src = fr
+            dest = to
 
         # If the 'from' string has no metachars we're copying a single file,
         # otherwise expand the file list and process the matches individually.
@@ -1862,7 +1871,7 @@ class storeClient(object):
                                    "/ls?name=%s&format=%s&verbose=%s" % \
                                    (uri, format, verbose), def_token(token))
         except:
-            raise Exception(r.content)
+            raise Exception(scToString(r.content))
         return(scToString(r.content))
 
 
@@ -1888,10 +1897,13 @@ class storeClient(object):
         '''Implementation of the mkdir() method.
         '''
         nm = (name if name.count("://") > 0 else ("vos://" + name))
+        if nm and nm[-1] == '/': nm = nm[:-1]
 
         try:
             r = self.getFromURL(self.svc_url, "/mkdir?dir=%s" % nm,
                                    def_token(token))
+            if r.status_code != requests.codes.created: return scToString(r.content)
+            else: return 'OK'
         except Exception:
             raise storeClientError(r.content)
         else:
@@ -1929,8 +1941,18 @@ class storeClient(object):
         '''Implementation of the mv() method.
         '''
         # Patch the names with the URI prefix if needed.
-        src = (fr if fr.count("://") > 0 else ("vos://" + fr))
-        dest = (to if to.count("://") > 0 else ("vos://" + to))
+        fr_rem = fr.count("://") > 0
+        to_rem = to.count("://") > 0
+        if not fr_rem and not to_rem:
+            src = "vos://" + fr
+            dest = "vos://" + to
+        elif not fr_rem:
+            return "Cannot move from local to remote; use put() instead."
+        elif not to_rem:
+            return "Cannot move from remote to local; use get() instead."
+        else:
+            src = fr
+            dest = to
 
         # If the 'from' string has no metachars, we're copying a single file,
         # otherwise expand the file list on the and process the matches
@@ -1997,25 +2019,28 @@ class storeClient(object):
         if nm == "vos://" or nm == "vos://tmp" or nm == "vos://public":
             return "Error: operation not permitted"
 
-        # If the 'name' string has no metacharacters we're copying a single file,
+        # If the 'name' string has no metacharacters we're removing a single file,
         # otherwise expand the file list on the and process the matches
         # individually.
         if not hasmeta(nm):
-            r = self.getFromURL(self.svc_url, "/rm?file=%s" % nm,
-                                   def_token(token))
-            return scToString(r.content)
+            r = is_vosDir(self.svc_url, token, nm)
+            if not isinstance(r, bool): return scToString(r.content)
+            elif r: return "%s is a directory." % name
+
+            r = self.getFromURL(self.svc_url, "/rm?file=%s" % nm, def_token(token))
+            if r.status_code != requests.codes.no_content: return scToString(r.content)
+            else: return 'OK'
         else:
             flist = expandFileList(self.svc_url, token, nm, "csv", full=True)
             nfiles = len(flist)
+            if nfiles < 1:
+                return 'A Node does not exist with the requested URI.'
             fnum = 1
             resp = []
             for f in flist:
-                if verbose:
-                    print("(%d / %d) %s" % (fnum, nfiles, f))
-                r = self.getFromURL(self.svc_url, "/rm?file=%s" % f,
-                                       def_token(token))
+                if verbose: print("(%d / %d) %s" % (fnum, nfiles, f))
+                resp.append(self._rm(token=token, name=f, verbose=verbose))
                 fnum += 1
-                resp.append(scToString(r.content))
             return resp
 
 
@@ -2048,19 +2073,23 @@ class storeClient(object):
     def _rmdir(self, token=None, name='', verbose=False):
         '''Implementation of the rmdir() method.
         '''
-
-        # FIXME - Should handle file templates, return Response objects
+        # FIXME - Should handle file templates(?)
 
         # Patch the names with the URI prefix if needed.
         nm = (name if name.count("://") > 0 else ("vos://" + name))
         if nm == "vos://" or nm == "vos://tmp" or nm == "vos://public":
             return "Error: operation not permitted"
-
+        if nm and nm[-1] == '/': nm = nm[:-1]
+        r = is_vosDir(self.svc_url, token, nm)
+        if not isinstance(r, bool): return scToString(r.content)
+        elif not r: return "%s is not a directory." % name
         try:
             r = self.getFromURL(self.svc_url, "/rmdir?dir=%s" % nm,
                                    def_token(token))
+            if r.status_code != requests.codes.no_content: return scToString(r.content)
+            else: return 'OK'
         except Exception as e:
-            print('storeClient._rmdir: error: ' + r.content)
+            print('storeClient._rmdir: error: ' + scToString(r.content))
             raise storeClientError(str(e))
         else:
             return 'OK'
@@ -2133,9 +2162,9 @@ class storeClient(object):
             r = self.getFromURL(self.svc_url, "/tag?name=%s&tag=%s" % \
                                    (name, tag), def_token(token))
         except Exception:
-            raise storeClientError(r.content)
+            raise storeClientError(scToString(r.content))
         else:
-            if r.status_code == 200:
+            if r.status_code == requests.codes.ok:
                 return 'OK'
             else:
                 return scToString(r.content)
@@ -2179,10 +2208,10 @@ def is_vosDir(svc_url, token, path):
     '''
     url = svc_url + ("/isdir?name=%s" % (path))
     r = requests.get(url, headers={'X-DL-AuthToken': def_token(token)})
-    if r.status_code != 200:
-        return False
+    if r.status_code != requests.codes.ok:
+        return r
     else:
-        return (True if r.content.lower() == 'true' else False)
+        return (True if scToString(r.content).lower() == 'true' else False)
 
 def expandFileList(svc_url, token, pattern, format, full=False):
     '''Expand a filename pattern in a VOSpace URI to a list of files.  We
@@ -2232,6 +2261,15 @@ def expandFileList(svc_url, token, pattern, format, full=False):
     if not hasmeta(name) and name is not None:
         pstr = (name if name != '' else "*")
 
+    # Check to make sure the parent exists and is a container
+    pstat = stat(dir)
+    if pstat.get('type') == 'link':
+        dir = pstat['target']
+        dir = dir[dir.index('://')+3:]
+        pstat = stat(dir)
+    if pstat.get('type') != 'container':
+        return 'A Container does not exist with the requested URI.'
+
     # Make the service call to get a listing of the parent directory.
     url = svc_url + "/ls?name=%s%s&format=%s" % (uri, dir, "csv")
     r = requests.get(url, headers={'X-DL-AuthToken': def_token(token)})
@@ -2240,7 +2278,7 @@ def expandFileList(svc_url, token, pattern, format, full=False):
     list = []
     flist = scToString(r.content).split(',')
     for f in flist:
-        if fnmatch.fnmatch(f, pstr) or f == pstr:
+        if f and (fnmatch.fnmatch(f, pstr) or f == pstr):
             furi = (f if not full else (uri + dir + "/" + f))
             list.append(furi.replace("///", "//"))
 

@@ -301,10 +301,8 @@ class authClient(object):
         '''
         self.config = ConfigParser.RawConfigParser(allow_no_value=True)
         if os.path.exists('%s/dl.conf' % self.home):
-            print ('loading dl.conf')
             self.config.read('%s/dl.conf' % self.home)
         else:
-            print ('building default dl.conf')
             self.config.add_section('datalab')
             self.config.set('datalab', 'created', strftime(
                 '%Y-%m-%d %H:%M:%S', gmtime()))
@@ -335,7 +333,6 @@ class authClient(object):
         '''
         if not self.config.has_section(section):
             self.config.add_section(section)
-        print ('setConfig: [%s] %s = %s' % (section,param,value))
         self.config.set(section, param, value)
         self.writeConfig()
 
@@ -348,7 +345,6 @@ class authClient(object):
         '''Write out the configuration file to disk.
         '''
         with open('%s/dl.conf' % self.home, 'w') as configfile:
-            print ('writing dl.conf')
             self.config.write(configfile)
 
     def whoAmI():
@@ -653,7 +649,6 @@ class authClient(object):
             self.config.set('login', 'status', 'loggedin')
             self.config.set('login', 'user', username)
             self.config.set('login', 'authtoken', self.auth_token)
-            print('login writing config')
             self.writeConfig()
 
         return acToString(self.auth_token)
@@ -687,7 +682,6 @@ class authClient(object):
             print("logout: auth_token = '%s'" % self.auth_token)
             print("logout: url = '%s'" % url)
             print("logout: logged in = " + self.isTokenLoggedIn(token))
-
 
         try:
             user, uid, gid, hash = token.strip().split('.', 3)
@@ -786,12 +780,10 @@ class authClient(object):
             raise dlAuthError(acToString(r.content))
         else:
             # Update the saved user token.
-            print("Updating saved user token ....")
             if response is not None:
                 self.auth_token = response
                 tok_file = self.home + '/id_token.' + self.username
                 if os.path.exists(tok_file):
-                    print("pwreset: removing token file " + tok_file)
                     os.remove(tok_file)
                 with open(tok_file, 'wb') as tok_fd:
                     if self.debug:

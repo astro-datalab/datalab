@@ -5,7 +5,7 @@
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Matthew Graham <graham@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20190624'  # yyyymmdd
+__version__ = '20190701'  # yyyymmdd
 
 
 '''
@@ -2079,6 +2079,7 @@ class storeClient(object):
         nm = (name if name.count("://") > 0 else ("vos://" + name))
         if nm == "vos://" or nm == "vos://tmp" or nm == "vos://public":
             return "Error: operation not permitted"
+        if nm and nm[-1] == '/': nm = nm[:-1]
         r = is_vosDir(self.svc_url, token, nm)
         if not isinstance(r, bool): return scToString(r.content)
         elif not r: return "%s is not a directory." % name

@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Matthew Graham <graham@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20190624'  # yyyymmdd
+__version__ = '20190422'  # yyyymmdd
 
 
 '''
@@ -223,7 +223,7 @@ def list_profiles(token=None, profile=None, format='text'):
     Usage:
         list_profiles (token=None, profile=None, format='text')
 
-    MultiMethod Usage:
+    MultiMethod Usage:  
     ------------------
             queryClient.list_profiles (token)
             queryClient.list_profiles ()
@@ -335,7 +335,7 @@ def services(name=None, svc_type=None, mode='list', profile='default'):
 	'tap', 'sia', 'scs', or 'vos'.
 
     mode : str
-	Query mode:
+	Query mode:  
 
     profile : str
         The name of the service profile to use. The list of available
@@ -522,7 +522,7 @@ def query(token=None, adql=None, sql=None, fmt='csv', out=None, async_=False,
           315.00408275885701,35.2665448169895797
           314.996334457679438,35.2673478725552698
     '''
-    return qc_client._query (token=def_token(token), adql=adql, sql=sql,
+    return qc_client._query (token=def_token(token), adql=adql, sql=sql, 
                              fmt=fmt, out=out, async_=async_, profile=profile,
                              **kw)
 
@@ -1284,10 +1284,10 @@ def mydb_index(table, column='', token=None, q3c=None, cluster=False,
     .. code-block:: python
 
 	# Index the table's "id" column
-        queryClient.index('foo1', 'id')
+        queryClient.index('foo1', 'id') 	
 
 	# Index and cluster the table by position
-        queryClient.index('foo1', q3c='ra,dec', cluster=True)
+        queryClient.index('foo1', q3c='ra,dec', cluster=True) 	
     '''
     return qc_client._mydb_index(token=def_token(token), table=table,
                                  column=column, q3c=q3c, cluster=cluster,

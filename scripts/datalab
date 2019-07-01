@@ -126,7 +126,7 @@ if __name__ == "__main__":
           'mydb_insert' : dl.MyDB_Insert,       # insert into MyDB table*
           'mydb_import' : dl.MyDB_Import,       # import data into MyDB table*
         'mydb_truncate' : dl.MyDB_Truncate,     # truncate MyDB table*
-#          'mydb_index' : dl.MyDB_Index,        # index MyDB table column*
+           'mydb_index' : dl.MyDB_Index,        # index MyDB table column*
           'mydb_rename' : dl.MyDB_Rename,       # rename a MyDB table*
             'mydb_copy' : dl.MyDB_Copy,         # copy a MyDB table*
 \

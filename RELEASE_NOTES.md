@@ -1,4 +1,4 @@
-# Data Lab 2.17.0 release notes [20190701]
+# Data Lab 2.17.1 release notes [20190701]
 
 The following changes have been implemented:
 
@@ -6,7 +6,7 @@ The following changes have been implemented:
 
 - docstring updates
 
-- `services()` function to list available services, e.g. 
+- `services()` function to list available services, e.g.
 
    ```python
    # List the available SIA services

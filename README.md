@@ -14,7 +14,7 @@ Authentication to Data Lab is based on a username and password.
 ## System requirements
 
 * A Data Lab account
-* Python 2.7 or later (Python 3.6 recommended)
+* Python 2.7 or later (Python 3.6 recommended; **we are deprecating Pythin 2 support soon**)
 * fuse or OSX-FUSE (if you want to mount the remote storage as a local filesystem)
 
 
@@ -31,6 +31,14 @@ The easiest way to install the ``datalab`` client is via pip:
 
 ```
 pip install --upgrade noaodatalab
+```
+
+If this command complains, or insists that all dependencies are
+already fulfilled and thus refuses to update the `noaodatalab`
+package, you can force it to update the dependencies as well:
+
+```
+pip install --upgrade -I noaodatalab
 ```
 
 ### Install from sources
@@ -61,6 +69,14 @@ touch ~/.netrc
 
 ### ``datalab`` command line client
 
+To check the currently installed version of `datalab`:
+
+```
+datalab --version
+
+Task Version:  2.17.1
+```
+
 To get a list of available datalab commands (tasks):
 
 ```
@@ -86,6 +102,7 @@ where <task> is one of:
         mydb_create - Create a user MyDB table
           mydb_drop - Drop a user MyDB table
         mydb_import - Import data into a user MyDB table
+         mydb_index - Index data in a MyDB table
         mydb_insert - Insert data into a user MyDB table
           mydb_list - List the user MyDB tables
         mydb_rename - Rename a user MyDB table
@@ -98,9 +115,11 @@ where <task> is one of:
                  rm - delete a file in Data Lab
               rmdir - delete a directory in Data Lab
              schema - Print data service schema info
+           services - Print available data services
              status - Report on the user status
            svc_urls - Print service URLs in use
                 tag - tag a file in Data Lab
+            version - Print task version
              whoami - Print the current active user
 ```
 
@@ -109,13 +128,16 @@ option:
 
 ```
 datalab login help
+
 The 'login' task takes the following parameters:
-  debug - print debug log level messages [optional]
-  verbose - print verbose level log messages [optional]
-  warning - print warning level log messages [optional]
-  user - username of account in Data Lab [required]
-  password - password for account in Data Lab [required]
-  mount - mountpoint of remove VOSpace [optional]
+
+          user - Username of account in Data Lab [required]
+      password - Password for account in Data Lab [required]
+         mount - Mountpoint of remote Virtual Storage [optional]
+  
+       verbose - print verbose level log messages [optional]
+         debug - print debug log level messages [optional]
+       warning - print warning level log messages [optional]
 ```
 
 The ``datalab`` command will prompt you for required arguments if you do not
@@ -123,8 +145,10 @@ provide them on the command line, e.g.:
 
 ```
 datalab login
-user (default: None):
-password (default: None):
+
+user (default: None): foousername
+password (default: None): foouserpassword
+Welcome to the Data Lab, foousername
 ```
 
 Documentation for the ``datalab`` commands can be also found in the

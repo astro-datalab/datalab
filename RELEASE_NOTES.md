@@ -1,4 +1,4 @@
-# Data Lab 2.17.0 release notes [20190701]
+# Data Lab 2.17.0 / 2.17.1 release notes [20190701]
 
 The following changes have been implemented:
 

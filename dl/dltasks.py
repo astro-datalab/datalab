@@ -1159,6 +1159,40 @@ class MyDB_Insert(Task):
             print (res)
 
 
+class MyDB_Index(Task):
+    '''
+        Index data in a user's MyDB table.
+    '''
+    def __init__(self, datalab):
+        Task.__init__(self, datalab, 'mydb_index',
+                      'Index data in a MyDB table')
+        self.addOption("table",
+            Option("table", "", "Table name to create", required=True))
+        self.addOption("column",
+            Option("column", "", "Column to index", required=True))
+        self.addOption("q3c",
+            Option("q3c", "", "Column to index using Q3C", required=False))
+        self.addOption("cluster",
+            Option("cluster", "", "Cluster table on Q3C index?",
+                   required=False))
+        self.addOption("async_",
+            Option("async_", "", "Run asynchronously?", required=False))
+        self.addStdOptions()
+
+    def run(self):
+        token = getUserToken(self)
+        try:
+            res = queryClient.mydb_index (token, self.table.value,
+                                           self.column.value, 
+                                           q3c=self.q3c.value,
+                                           cluster=self.cluster.value,
+                                           async_=self.async_.value)
+        except Exception as e:
+            print ("Error indexing table '%s': %s" % (self.table.value,str(e)))
+        else:
+            print (res)
+
+
 class MyDB_Truncate(Task):
     '''
         Truncate a user MyDB table.

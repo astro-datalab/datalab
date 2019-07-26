@@ -240,26 +240,28 @@ def encode_multipart(fields, files, boundary=None):
         a dict with required keys 'filename' and 'content', and optional
         'mimetype' (if not specified, tries to guess mime type or uses
         'application/octet-stream').
+        
+        ..code-block:: python
 
-        >>> body, headers = encode_multipart({'FIELD': 'VALUE'},
-        ...                                  {'FILE': {'filename': 'F.TXT', 'content': 'CONTENT'}},
-        ...                                  boundary='BOUNDARY')
-        >>> print('\n'.join(repr(l) for l in body.split('\r\n')))
-        '--BOUNDARY'
-        'Content-Disposition: form-data; name="FIELD"'
-        ''
-        'VALUE'
-        '--BOUNDARY'
-        'Content-Disposition: form-data; name="FILE"; filename="F.TXT"'
-        'Content-Type: text/plain'
-        ''
-        'CONTENT'
-        '--BOUNDARY--'
-        ''
-        >>> print(sorted(headers.items()))
-        [('Content-Length', '193'), ('Content-Type', 'multipart/form-data; boundary=BOUNDARY')]
-        >>> len(body)
-        193
+            >>> body, headers = encode_multipart({'FIELD': 'VALUE'},
+            ...                                  {'FILE': {'filename': 'F.TXT', 'content': 'CONTENT'}},
+            ...                                  boundary='BOUNDARY')
+            >>> print('\\n'.join(repr(l) for l in body.split('\\r\\n')))
+            '--BOUNDARY'
+            'Content-Disposition: form-data; name="FIELD"'
+            ''
+            'VALUE'
+            '--BOUNDARY'
+            'Content-Disposition: form-data; name="FILE"; filename="F.TXT"'
+            'Content-Type: text/plain'
+            ''
+            'CONTENT'
+            '--BOUNDARY--'
+            ''
+            >>> print(sorted(headers.items()))
+            [('Content-Length', '193'), ('Content-Type', 'multipart/form-data; boundary=BOUNDARY')]
+            >>> len(body)
+            193
     """
     def escape_quote(s):
         return s.replace('"', '\\"')

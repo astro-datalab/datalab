@@ -1605,12 +1605,21 @@ class storeClient(object):
         else:
             dname = ''
             flist = glob.glob(fr)
+        nfiles = len(flist)
 
         if debug:
             print("fr=%s  to=%s  dname=%s" % (fr, to, dname))
             print(flist)
 
-        nfiles = len(flist)
+        if nfiles > 1:
+            #pstat = stat(to)
+            #ptype = pstat.get('type')
+            ptype = stat(to).get('type')
+            if ptype is None:
+                return ['Error: target directory not exist']
+            elif ptype != 'container':
+                return ['Error: target must be a container']
+
         fnum = 1
         resp = []
         for f in flist:

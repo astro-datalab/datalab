@@ -17,7 +17,7 @@ Import via
 .. code-block:: python
 
     from dl import Util
-    from dl.Util import multifunc, multimethod, def_token
+    from dl.Util import multimethod, def_token
 """
 
 import os

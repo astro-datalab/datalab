@@ -128,7 +128,10 @@ DAL_SERVICE_URL = 'https://datalab.noao.edu' 	# The base DAL service URL
 
 # Allow the service URL for dev/test systems to override the default.
 THIS_HOST = socket.gethostname()			# host name
-THIS_IP	  = socket.gethostbyname(socket.gethostname())	# host IP address
+with socket.socket(type=socket.SOCK_DGRAM) as sock:     # host IP address
+    sock.connect(('8.8.8.8', 1))        # Example IP address, see RFC 5737
+    THIS_IP, _ = sock.getsockname()
+
 
 if THIS_HOST[:5] == 'dldev':
     DEF_SERVICE_ROOT = 'http://dldev.datalab.noao.edu'
@@ -2255,6 +2258,7 @@ class queryClient (object):
         verbose = (kw['drop'] if 'drop' in kw else False)
 
         # Set up the request headers and initialize.
+        params = {}
         headers = self.getHeaders (token)
         params['profile'] = self.svc_profile
         dburl = '%s/ingest' % (self.svc_url)

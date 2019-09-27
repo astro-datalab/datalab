@@ -48,11 +48,6 @@ __version__ = '20180422'  # yyyymmdd
 import requests
 import os
 
-if os.path.isfile ('./Util.py'):                # use local dev copy
-    from Util import def_token
-else:                                           # use distribution copy
-    from dl.Util import def_token
-
 
 # The URL of the ResManager service to contact.  This may be changed by
 # passing a new URL into the set_svc_url() method before beginning.

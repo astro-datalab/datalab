@@ -173,7 +173,7 @@ def isAlive(svc_url=DEF_SERVICE_URL):
 def isValidToken(token):
     try:
         user, uid, gid, hash = token.strip().split('.', 3)
-    except Exception as e:
+    except Exception:
         return False
 
     if user in list(DEF_USERS.keys()) and token in list(DEF_USERS.values()):
@@ -685,7 +685,7 @@ class authClient(object):
 
         try:
             user, uid, gid, hash = token.strip().split('.', 3)
-        except Exception as e:
+        except Exception:
             raise dlAuthError('Error: Invalid user token')
 
         if not isValidToken(token):

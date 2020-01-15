@@ -117,9 +117,9 @@ DEF_SERVICE_ROOT = 'https://datalab.noao.edu'
 
 # Allow the service URL for dev/test systems to override the default.
 THIS_HOST = socket.gethostname()                        # host name
-with socket.socket(type=socket.SOCK_DGRAM) as sock:  	# host IP address
-    sock.connect(('8.8.8.8', 1))  	# Example IP address, see RFC 5737
-    THIS_IP, _ = sock.getsockname()
+sock = socket.socket(type=socket.SOCK_DGRAM)	# host IP address
+sock.connect(('8.8.8.8', 1))  	# Example IP address, see RFC 5737
+THIS_IP, _ = sock.getsockname()
 
 if THIS_HOST[:5] == 'dldev':
     DEF_SERVICE_ROOT = 'http://dldev.datalab.noao.edu'

@@ -597,13 +597,15 @@ class authClient(object):
         # make a service call to get a new token.
         url = self.svc_url + "/login?"
         query_args = {"username": username,
-                      "password": password,
                       "profile": self.svc_profile,
                       "debug": (debug or self.debug)}
 
+            # Add the auth token and password to the reauest header.
+        headers = {'X-DL-Password': password}
+
         response = 'None'
         try:
-            r = requests.get(url, params=query_args)
+            r = requests.get(url, params=query_args, headers=headers)
             response = acToString(r.content)
 
             if debug or self.debug:

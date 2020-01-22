@@ -25,7 +25,6 @@ from astropy.table import Table
 from astropy.io.votable import parse_single_table
 from astropy.coordinates import SkyCoord, name_resolve
 from astropy.utils.data import get_readable_fileobj
-from astropy.extern.six import BytesIO, string_types
 import astropy.units as u
 
 # Turn off some annoying astropy warnings
@@ -230,7 +229,7 @@ def vospace_readable_fileobj(name_or_obj, token=None, **kwargs):
     """
     fileobj = name_or_obj
     close_fileobj = False
-    if (isinstance(name_or_obj, string_types) and name_or_obj.find('://') > 0):
+    if (isinstance(name_or_obj, str) and name_or_obj.find('://') > 0):
         uri = name_or_obj[:name_or_obj.find('://')]
         if authClient.isValidUser(uri):
             # VOSpace call

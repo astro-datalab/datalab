@@ -229,7 +229,7 @@ def vospace_readable_fileobj(name_or_obj, token=None, **kwargs):
     """
     fileobj = name_or_obj
     close_fileobj = False
-    if (isinstance(name_or_obj, str) and name_or_obj.find('://') > 0):
+    if (isinstance(name_or_obj, (str,unicode)) and name_or_obj.find('://') > 0):
         uri = name_or_obj[:name_or_obj.find('://')]
         if authClient.isValidUser(uri):
             # VOSpace call

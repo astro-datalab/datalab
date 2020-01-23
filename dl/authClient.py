@@ -167,7 +167,8 @@ def isAlive(svc_url=DEF_SERVICE_URL):
         response = ac_client.isAlive(svc_url.strip('/'))
     except Exception as e:
         response = str(e)
-    return (True if response.lower() == 'true' else False)
+        return False
+    return response
 
 
 def isValidToken(token):

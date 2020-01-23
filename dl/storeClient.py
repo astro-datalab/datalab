@@ -5,7 +5,7 @@
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Matthew Graham <graham@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20190701'  # yyyymmdd
+__version__ = 'v2.18.2'
 
 
 '''
@@ -117,7 +117,7 @@ DEF_SERVICE_ROOT = 'https://datalab.noao.edu'
 
 # Allow the service URL for dev/test systems to override the default.
 THIS_HOST = socket.gethostname()                        # host name
-sock = socket.socket(type=socket.SOCK_DGRAM)	# host IP address
+sock = socket.socket(type=socket.SOCK_DGRAM)  	# host IP address
 sock.connect(('8.8.8.8', 1))  	# Example IP address, see RFC 5737
 THIS_IP, _ = sock.getsockname()
 
@@ -2273,7 +2273,9 @@ def expandFileList(svc_url, token, pattern, format, full=False):
         pstr = (name if name != '' else "*")
 
     # Check to make sure the parent exists and is a container
-    pstat = stat(dir)
+    if debug:
+        print ('stat of dir :  ' + (uri+dir))
+    pstat = stat(uri+dir)
     if pstat.get('type') == 'link':
         dir = pstat['target']
         dir = dir[dir.index('://')+3:]

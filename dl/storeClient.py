@@ -645,7 +645,7 @@ def ls(token, name, format='csv', verbose=False):
 def ls(optval, name='vos://', token=None, format='csv', verbose=False):
     if optval is not None and len(optval.split('.')) >= 4:
         # optval looks like a token
-        return sc_client._ls(name='vos://', format=format,
+        return sc_client._ls(name=name, format=format,
                           token=def_token(optval), verbose=verbose)
     else:
         return sc_client._ls(name=optval, format=format,

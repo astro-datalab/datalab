@@ -42,7 +42,7 @@ Import via
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20180422'  # yyyymmdd
+__version__ = '2.18.3'  # yyyymmdd
 
 
 import requests

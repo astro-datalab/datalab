@@ -1854,13 +1854,14 @@ class storeClient(object):
                          verbose=verbose)
 
     @multimethod('_sc',1,True)
-    def ls(self, optval, token=None, format='csv', verbose=False):
+    def ls(self, optval, name='vos://', token=None, format='csv',
+           verbose=False):
         ''' Usage:  storeClient.ls(name)
              Usage:  storeClient.ls(token, name='foo')
         '''
         if optval is not None and len(optval.split('.')) >= 4:
             # optval looks like a token
-            return self._ls(name='vos://', format=format,
+            return self._ls(name=name, format=format,
                              token=def_token(optval), verbose=verbose)
         else:
             return self._ls(name=optval, format=format, token=def_token(None),

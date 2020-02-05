@@ -1,18 +1,11 @@
 """Legacy helpers for Data Lab. Most are deprecated."""
 
-from __future__ import print_function
-
 __authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20171211' # yyyymmdd
-
-try:
-    from cStringIO import StringIO   # python 2
-    from Queue import deque
-except ImportError:
-    from io import StringIO          # python 3
-    from queue import deque
+__version__ = '20200204' # yyyymmdd
 
 # std lib imports
+from io import StringIO          # python 3
+from queue import deque
 from functools import partial
 
 from collections import OrderedDict

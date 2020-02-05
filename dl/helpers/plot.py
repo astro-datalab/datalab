@@ -1,10 +1,7 @@
 """Data Lab plotting helpers.""" 
 
-# std lib
-from __future__ import print_function
-
 __authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20171219' # yyyymmdd
+__version__ = '20200204' # yyyymmdd
 
 # 3rd party
 import numpy as np

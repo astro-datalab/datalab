@@ -14,9 +14,8 @@ Authentication to Data Lab is based on a username and password.
 ## System requirements
 
 * A Data Lab account
-* Python 2.7 or later (Python 3.6 recommended; **we are deprecating Pythin 2 support soon**)
+* Python 3.x (Python 3.8 recommended; **We are no longer supporting Python 2**)
 * fuse or OSX-FUSE (if you want to mount the remote storage as a local filesystem)
-
 
 ## Installation
 
@@ -30,16 +29,10 @@ etc.)
 The easiest way to install the ``datalab`` client is via pip:
 
 ```
-pip install --upgrade noaodatalab
+pip install --ignore-installed --no-cache-dir noaodatalab
 ```
 
-If this command complains, or insists that all dependencies are
-already fulfilled and thus refuses to update the `noaodatalab`
-package, you can force it to update the dependencies as well:
-
-```
-pip install --upgrade -I noaodatalab
-```
+The flags `--ignore-installed` and `--no-cache-dir` should ensure that the lastest version is pulled freshly from the internet.
 
 ### Install from sources
 
@@ -74,7 +67,7 @@ To check the currently installed version of `datalab`:
 ```
 datalab --version
 
-Task Version:  2.17.1
+Task Version:  2.18.3
 ```
 
 To get a list of available datalab commands (tasks):

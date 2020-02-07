@@ -1,9 +1,7 @@
 """Data Lab helpers for (local) positional cross-matching."""
 
-from __future__ import print_function
-
 __authors__ = 'Robert Nikutta <nikutta@noao.edu>, NOAO Data Lab Team <datalab@noao.edu>'
-__version__ = '20171219'
+__version__ = '20200204'
 
 from astropy.coordinates import SkyCoord
 from astropy import units as u

@@ -1,21 +1,13 @@
 """Data Lab utility helper functions."""
 
-# Python 2/3 compatibility
-from __future__ import print_function
-
 __authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20180129' # yyyymmdd
+__version__ = '20200204' # yyyymmdd
 
 # std lib
+import time
 from functools import partial
 from io import BytesIO
 from contextlib import contextmanager
-    
-
-try:
-    input = raw_input # use 'input' function in both Python 2 and 3
-except NameError:
-    pass
 
 # 3rd party
 from collections import OrderedDict
@@ -34,6 +26,33 @@ warnings.simplefilter('ignore', AstropyWarning)
 
 from .. import storeClient
 from .. import authClient
+
+
+def async_query_status(jobid,wait=3):
+
+    """Loop until an async job has completed.
+    
+    Parameters
+    ----------
+    jobid : str
+        The job ID string of a submitted query job.
+        
+    wait : int | float
+        Wait for `wait` seconds before checking status again. Default: 3 (seconds)
+    """
+    
+    print("Checking status of async job '%s' " % jobid)
+    while True:
+        status = qc.status(jobid)
+        print(status)
+        if status in ('QUEUED','EXECUTING'):
+            print('Waiting %g seconds...' % wait)
+            time.sleep(wait)
+        elif status == 'COMPLETED':
+            print('Async job finished. Retrieve rows with:\n  result = queryClient.results(jobid)')
+            break
+        else:
+            raise Exception('Async query error.',status)
 
 
 def resolve(name=None):

@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.5, 3.6, 3.7, 3.8]
+        python-version: [3.7, 3.8]
 
     steps:
     - uses: actions/checkout@v2
@@ -27,7 +27,6 @@ jobs:
         pip install --upgrade twine
     - name: Build pip package
       run: |
-        cd datalalab
         rm -rf dist/ build/ datalab_client.egg-info/ noaodatalab.egg-info/
         python setup.py sdist
         python setup.py bdist_wheel --universal

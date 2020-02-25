@@ -1,4 +1,4 @@
-![Build, test, deploy pip package of datalab cmd line client](https://github.com/rnikutta/datalab/workflows/Build,%20test,%20deploy%20pip%20package%20of%20datalab%20cmd%20line%20client/badge.svg?branch=master)
+![github-actions](https://github.com/rnikutta/datalab/workflows/Build,%20test,%20deploy%20pip%20package%20of%20datalab%20cmd%20line%20client/badge.svg?branch=master)
 
 # THE DATALAB COMMAND LINE CLIENT
 

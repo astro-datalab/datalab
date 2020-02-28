@@ -1465,12 +1465,14 @@ class storeClient(object):
         if to != '' and to is not None:
             # Expand metacharacters to create a file list for download.
             flist = expandFileList(self.svc_url, token, nm, "csv", full=True)
-            if debug:
-                print("get: flist = %s" % flist)
 
             nfiles = len(flist)
             if nfiles < 1:
                 return 'A Node does not exist with the requested URI.'
+
+            if debug:
+                print("get: flist = %s" % flist)
+                print("get: nfiles = %s" % nfiles)
             fnum = 1
             resp = []
             for f in flist:
@@ -1482,7 +1484,8 @@ class storeClient(object):
                     dlname = ((to + "/" + fn) if hasmeta(fr) else to)
 
                 # Get a single file.
-                res = requests.get(self.svc_url + "/get?name=%s" % f, headers=hdrs)
+                res = requests.get(self.svc_url + "/get?name=%s" % f, 
+                                   headers=hdrs)
 
                 if res.status_code != 200:
                     resp.append("Error: " + scToString(res.text))
@@ -1499,7 +1502,7 @@ class storeClient(object):
                         dl = 0
                         done = 0
                         with open(dlname, 'wb', 0) as fd:
-                            for chunk in r.iter_content(chunk_size=1024):
+                            for chunk in r.iter_content(chunk_size=32768):
                                 dl += len(chunk)
                                 if chunk:
                                     fd.write(chunk)
@@ -1508,8 +1511,9 @@ class storeClient(object):
 
                                 if verbose:
                                     # Print a progress indicator
-                                    sys.stdout.write("\r(%d/%d) [%s%s] [%7s] %s" % \
-                                        (fnum, nfiles, '=' * done, ' ' * (20-done),
+                                    sys.stdout.write(
+                                        "\r(%d/%d) [%s%s] [%7s] %s" % \
+                                        (fnum, nfiles, '='*done, ' '*(20-done),
                                         sizeof_fmt(dl), f[6:]))
                                     sys.stdout.flush()
 
@@ -2232,6 +2236,11 @@ def expandFileList(svc_url, token, pattern, format, full=False):
     '''
     debug = False
 
+    # Check first that we're only getting a single file.
+    if not hasmeta(pattern) and not pattern.endswith('/'):
+        flist = [pattern]
+        return (flist)
+
     # The URI prefix is constant whether it's included in the pattern string
     # or not.  The SM sm controls a specific instance of VOSpace so at the
     # moment the expansiom to the VOSpace URI is handled on the server.  We'll
@@ -2260,7 +2269,7 @@ def expandFileList(svc_url, token, pattern, format, full=False):
             dir = dir + name
         else:
             if dir.endswith("/"):
-                dir = dir[:-1]        # trim trailing '/'
+                dir = dir[:-1]                          # trim trailing '/'
             if not dir.startswith("/"):
                 dir = "/" + dir                         # prepend '/'
     else:

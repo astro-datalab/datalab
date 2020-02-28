@@ -84,16 +84,18 @@ from dl import resClient
 httplib2.debuglevel = 0
 HTTPConnection.debuglevel = 0
 
-TEST = True
+TEST = False
 
 if TEST:
     AM_URL = "http://dldev.datalab.noao.edu/auth"       # Auth Manager
     SM_URL = "http://dldev.datalab.noao.edu/storage"    # Storage Manager
     QM_URL = "http://dldev.datalab.noao.edu/query"      # Query Manager
+    RES_URL = "http://dldev.datalab.noao.edu/res"       # Resource Manager
 else:
     AM_URL = "https://datalab.noao.edu/auth"      	# Auth Manager
     SM_URL = "https://datalab.noao.edu/storage"   	# Storage Manager
     QM_URL = "https://datalab.noao.edu/query"     	# Query Manager
+    RES_URL = "https://datalab.noao.edu/res"     	# Resource Manager
 
 
 
@@ -176,6 +178,10 @@ class DataLab:
             self.config.set('storage', 'profile', 'default')
             self.config.set('storage', 'svc_url', SM_URL)
 
+            self.config.add_section('res')
+            self.config.set('storage', 'profile', 'default')
+            self.config.set('storage', 'svc_url', RES_URL)
+
             self.config.add_section('vospace')
             self.config.set('vospace', 'mount', '')
 
@@ -185,6 +191,15 @@ class DataLab:
 
         # Set script variables
         CAPS_DIR = os.getenv('VOSPACE_CAPSDIR', '../caps')
+
+        try:
+            # Older versions of dl.conf may not have these configs.
+            authClient.set_svc_url(self.config.get('auth','svc_url'))
+            queryClient.set_svc_url(self.config.get('query','svc_url'))
+            storeClient.set_svc_url(self.config.get('storage','svc_url'))
+            resClient.set_svc_url(self.config.get('res','svc_url'))
+        except Exception:
+            pass
 
 
     def save(self, section, param, value):

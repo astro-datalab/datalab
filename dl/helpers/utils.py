@@ -1,7 +1,7 @@
 """Data Lab utility helper functions."""
 
 __authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20200204' # yyyymmdd
+__version__ = '20200303' # yyyymmdd
 
 # std lib
 import time
@@ -26,6 +26,7 @@ warnings.simplefilter('ignore', AstropyWarning)
 
 from .. import storeClient
 from .. import authClient
+from .. import queryClient
 
 
 def async_query_status(jobid,wait=3):
@@ -43,7 +44,7 @@ def async_query_status(jobid,wait=3):
     
     print("Checking status of async job '%s' " % jobid)
     while True:
-        status = qc.status(jobid)
+        status = queryClient.status(jobid)
         print(status)
         if status in ('QUEUED','EXECUTING'):
             print('Waiting %g seconds...' % wait)

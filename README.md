@@ -1,3 +1,5 @@
+![github-actions](https://github.com/rnikutta/datalab/workflows/Build,%20test,%20deploy%20pip%20package%20of%20datalab%20cmd%20line%20client/badge.svg?branch=master)
+
 # THE DATALAB COMMAND LINE CLIENT
 
 ``datalab`` is command-line Python client for the [NOAO Data Lab](https://datalab.noao.edu).

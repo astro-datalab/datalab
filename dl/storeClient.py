@@ -5,7 +5,7 @@
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Matthew Graham <graham@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = 'v2.18.5'
+__version__ = 'v2.18.4'
 
 
 '''
@@ -90,6 +90,7 @@ import requests
 import glob
 import socket
 import json
+import time
 
 if os.path.isfile('./Util.py'):                # use local dev copy
     from Util import multimethod
@@ -375,38 +376,47 @@ def stat(path, token=None, verbose=True):
 # GET -- Retrieve a file (or files) from the Store Manager service
 #
 @multimethod('sc',3,False)
-def get(token, fr, to, mode='text', verbose=True, debug=False):
+def get(token, fr, to, mode='text', verbose=True, debug=False, timeout=30):
     return sc_client._get(fr=fr, to=to, token=def_token(token),
-                        mode=mode, verbose=verbose, debug=debug)
+                        mode=mode, verbose=verbose, debug=debug,
+                        timeout=timeout)
 
 @multimethod('sc',2,False)
-def get(opt1, opt2, fr='', to='', token=None, mode='text', verbose=True, debug=False):
+def get(opt1, opt2, fr='', to='', token=None, mode='text', verbose=True, 
+        debug=False, timeout=30):
     if opt1 is not None and len(opt1.split('.')) >= 4:
         # opt1 looks like a token
         return sc_client._get(fr=opt2, to=to, token=def_token(opt1),
-                            mode=mode, verbose=verbose, debug=debug)
+                            mode=mode, verbose=verbose, debug=debug,
+                            timeout=timeout)
     else:
         # opt1 is the 'fr' value, opt2 is the 'to' value
         return sc_client._get(fr=opt1, to=opt2, token=def_token(token),
-                            mode=mode, verbose=verbose, debug=debug)
+                            mode=mode, verbose=verbose, debug=debug,
+                            timeout=timeout)
 
 @multimethod('sc',1,False)
-def get(optval, fr='', to='', token=None, mode='text', verbose=True, debug=False):
+def get(optval, fr='', to='', token=None, mode='text', verbose=True, 
+        debug=False, timeout=30):
     if optval is not None and len(optval.split('.')) >= 4:
         # optval looks like a token
         return sc_client._get(fr=fr, to=to, token=def_token(optval),
-                            mode=mode, verbose=verbose, debug=debug)
+                            mode=mode, verbose=verbose, debug=debug,
+                            timeout=timeout)
     else:
         # optval is the 'fr' value
         return sc_client._get(fr=optval, to=to, token=def_token(token),
-                            mode=mode, verbose=verbose, debug=debug)
+                            mode=mode, verbose=verbose, debug=debug,
+                            timeout=timeout)
 
 @multimethod('sc',0,False)
-def get(token=None, fr='', to='', mode='text', verbose=True, debug=False):
+def get(token=None, fr='', to='', mode='text', verbose=True, debug=False,
+        timeout=30):
     '''Retrieve a file from the store manager service
 
     Usage:
-        get(token=None, fr='', to='', mode='text', verbose=True, debug=False)
+        get(token=None, fr='', to='', mode='text', verbose=True, debug=False,
+            timeout=30)
 
     MultiMethod Usage:
     ------------------
@@ -435,6 +445,19 @@ def get(token=None, fr='', to='', mode='text', verbose=True, debug=False):
         for Python 2 this will be a 'string', for Python 3 it will be a
         'bytes' data type (the caller is responsible for conversion).
 
+    verbose : bool
+        Print verbose output, e.g. progress indicators.
+
+    debug : bool
+        Print debug output.
+
+    timeout : integer
+        Retry timeout value.  When processing long lists, download will
+        pause every `timeout` files to lessen server load.  For individual
+        files, transfer will retry for `timeout` seconds before aborting.
+        Failed transfers are automatically appended to the file list so
+        they may be transferred again later.
+
     Returns
     -------
     result : str
@@ -456,7 +479,8 @@ def get(token=None, fr='', to='', mode='text', verbose=True, debug=False):
         flist = storeClient.get('*.fits', './data/')
     '''
     return sc_client._get(fr=fr, to=to, token=def_token(token),
-                        mode=mode, verbose=verbose, debug=debug)
+                        mode=mode, verbose=verbose, debug=debug,
+                        timeout=timeout)
 
 
 # --------------------------------------------------------------------
@@ -674,7 +698,7 @@ def ls(name='vos://', token=None, format='csv', verbose=False):
         .. todo:: [20161110] currently doesn't seem to work.
 
     format : str
-        Default ``str``.
+        Default ``csv``.  The ``long`` option produces an output similar to 'ls -l'.
 
     Example
     -------
@@ -1379,50 +1403,57 @@ class storeClient(object):
     # GET -- Retrieve a file from the store manager service
     # --------------------------------------------------------------------
     @multimethod('_sc',3,True)
-    def get(self, token, fr, to, mode='text', verbose=True, debug=False):
+    def get(self, token, fr, to, mode='text', verbose=True, debug=False,
+            timeout=30):
         ''' Usage:  storeClient.get(token, fr, to)
         '''
         return self._get(fr=fr, to=to, token=def_token(token),
-                          mode=mode, verbose=verbose, debug=debug)
+                          mode=mode, verbose=verbose, debug=debug,
+                          timeout=timeout)
 
     @multimethod('_sc',2,True)
     def get(self, opt1, opt2, fr='', to='', token=None, verbose=True,
-             mode='text', debug=False):
+             mode='text', debug=False, timeout=30):
         ''' Usage:  storeClient.get(fr, to)
         '''
         if opt1 is not None and len(opt1.split('.')) >= 4:
             # opt1 looks like a token
             return self._get(fr=opt2, to=to, token=def_token(opt1),
-                              mode=mode, verbose=verbose, debug=debug)
+                              mode=mode, verbose=verbose, debug=debug,
+                              timeout=timeout)
         else:
             # opt1 is the 'fr' value, opt2 is the 'to' value
             return self._get(fr=opt1, to=opt2, token=def_token(token),
-                              mode=mode, verbose=verbose, debug=debug)
+                              mode=mode, verbose=verbose, debug=debug,
+                              timeout=timeout)
 
     @multimethod('_sc',1,True)
     def get(self, optval, fr='', to='', token=None, mode='text',
-             verbose=True, debug=False):
+             verbose=True, debug=False, timeout=30):
         ''' Usage:  storeClient.get(fr)
         '''
         if optval is not None and len(optval.split('.')) >= 4:
             # optval looks like a token
             return self._get(fr=fr, to=to, token=def_token(optval),
-                              mode=mode, verbose=verbose, debug=debug)
+                              mode=mode, verbose=verbose, debug=debug,
+                              timeout=timeout)
         else:
             # optval is the 'fr' value
             return self._get(fr=optval, to=to, token=def_token(token),
-                              mode=mode, verbose=verbose, debug=debug)
+                              mode=mode, verbose=verbose, debug=debug,
+                              timeout=timeout)
 
     @multimethod('_sc',0,True)
     def get(self, fr='', to='', token=None, mode='text', verbose=True,
-             debug=False):
+             debug=False, timeout=30):
         ''' Usage:  storeClient.get(token, fr, to)
         '''
         return self._get(fr=fr, to=to, token=def_token(token),
-                          mode=mode, verbose=verbose, debug=debug)
+                          mode=mode, verbose=verbose, debug=debug,
+                          timeout=timeout)
 
     def _get(self, token=None, fr='', to='', mode='text', verbose=True,
-              debug=False):
+              debug=False, timeout=30):
         '''Implementation of the get() method.
         '''
 
@@ -1476,6 +1507,8 @@ class storeClient(object):
             fnum = 1
             resp = []
             for f in flist:
+                nfiles = len(flist)     # recompute in case list was modified
+
                 # Generate the download file path.
                 junk, fn = os.path.split(f)
                 if to.endswith("/"):
@@ -1490,8 +1523,27 @@ class storeClient(object):
                 if res.status_code != 200:
                     resp.append("Error: " + scToString(res.text))
                 else:
-                    r = requests.get(res.text, stream=True)
-                    if r.status_code != 200:
+                    r = None
+                    for i in range(1,timeout):
+                        try:
+                            r = requests.get(res.text, stream=True)
+                        except Exception as e:
+                            if "No connection adapters" in str(e) and i%5 == 0:
+                                print('GET error %d: retrying' % i)
+                            if "Internal Server Error" in str(e) and i%5 == 0: 
+                                print('GET internal error %d: retrying' % i)
+                            time.sleep(1)
+                            if i == (timeout-1):
+                                r = None
+                                break
+                        else:
+                            break
+
+                    if r is None:
+                        # If the download failed, put it back at the end
+                        # of the list so we can retry later.
+                        flist.append(f)
+                    elif r.status_code != 200:
                         resp.append(scToString(r.content))
                     else:
                         clen = r.headers.get('content-length')
@@ -1502,20 +1554,26 @@ class storeClient(object):
                         dl = 0
                         done = 0
                         with open(dlname, 'wb', 0) as fd:
-                            for chunk in r.iter_content(chunk_size=32768):
-                                dl += len(chunk)
-                                if chunk:
-                                    fd.write(chunk)
+
+                            while 1:
+                                buf = r.raw.read((8*1024))
+                                dl += len(buf)
+                                if not buf:
+                                    break
+                                fd.write(buf)
                                 if total_length > 0:
                                     done = int(20 * dl / total_length)
-
-                                if verbose:
-                                    # Print a progress indicator
+                                if verbose:     # Print a progress indicator
                                     sys.stdout.write(
                                         "\r(%d/%d) [%s%s] [%7s] %s" % \
                                         (fnum, nfiles, '='*done, ' '*(20-done),
                                         sizeof_fmt(dl), f[6:]))
                                     sys.stdout.flush()
+
+                            # If the download failed, put it back at the end
+                            # of the list so we can retry later.
+                            if total_length > 0 and dl == 0:
+                                flist.append(f)
 
                             # Handle a zero-length file download.
                             if verbose:
@@ -1527,6 +1585,8 @@ class storeClient(object):
                         fd.close()
                         resp.append('OK')
                 fnum += 1
+                if fnum % timeout == 0:
+                    time.sleep(5)
 
             return resp
 

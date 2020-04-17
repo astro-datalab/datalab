@@ -24,9 +24,9 @@ import warnings
 from astropy.utils.exceptions import AstropyWarning
 warnings.simplefilter('ignore', AstropyWarning)
 
-from .. import storeClient
-from .. import authClient
-from .. import queryClient
+#from .. import storeClient
+#from .. import authClient
+#from .. import queryClient
 
 def async_query_status(jobid,wait=3):
 

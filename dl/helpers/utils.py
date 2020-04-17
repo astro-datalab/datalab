@@ -1,7 +1,7 @@
 """Data Lab utility helper functions."""
 
 __authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20200416' # yyyymmdd
+__version__ = '20200417' # yyyymmdd
 
 # std lib
 import time
@@ -24,10 +24,9 @@ import warnings
 from astropy.utils.exceptions import AstropyWarning
 warnings.simplefilter('ignore', AstropyWarning)
 
-.. import storeClient
-.. import authClient
-.. import queryClient
-
+from .. import storeClient
+from .. import authClient
+from .. import queryClient
 
 def async_query_status(jobid,wait=3):
 

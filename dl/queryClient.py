@@ -1827,12 +1827,12 @@ class queryClient (object):
         if async_ and 'wait' in kw:
             self.async_wait = wait = kw['wait']
 
-        poll_time = 1 			# see if we wait for an Async result
+        poll_time = 1 			# set polling interval
         if async_ and 'poll' in kw:
             self.async_poll = poll_time = int(kw['poll'])
 
-        verbose = False 		# see if we wait for an Async result
-        if async_ and 'poll' in kw:
+        verbose = False 		# set verbose output
+        if async_ and 'verbose' in kw:
             verbose = kw['verbose']
 
 

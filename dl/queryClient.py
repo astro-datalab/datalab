@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Matthew Graham <graham@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = 'v2.18.5'
+__version__ = 'v2.18.6'
 
 
 '''
@@ -48,6 +48,9 @@ Query Manager Client Interface
                  abort  (token, jobId)
                  abort  (optval, jobId=None)
                  abort  (token=None, jobId=None)
+                  wait  (token, jobId, wait=3, verbose=False)
+                  wait  (optval, jobId=None, wait=3, verbose=False)
+                  wait  (token=None, jobId=None, wait=3, verbose=False)
 
              mydb_list  (optval, table=None)
              mydb_list  (table=None, token=None)
@@ -823,6 +826,51 @@ def abort(token=None, jobId=None):
         301.385106974224186,44.4963443903961604
     '''
     return qc_client._abort (token=def_token(token), jobId=jobId)
+
+
+    # --------------------------
+    # --------------------------
+
+# --------------------------------------------------------------------
+# WAIT -- Wait for completion of asynchronous job.
+#
+@multimethod('qc',2,False)
+def wait(token, jobId, wait=3, verbose=False):
+    '''Usage:  queryClient.wait (token, jobID)
+    '''
+    return qc_client._wait (token=def_token(token), jobId=jobId, wait=wait,
+                            verbose=verbose)
+
+@multimethod('qc',1,False)
+def wait(optval, jobId=None, wait=3, verbose=False):
+    '''Usage:  queryClient.wait (jobID)
+               queryClient.wait (token, jobId=<id>)
+    '''
+    if optval is not None and len(optval.split('.')) >= 4:
+        # optval looks like a token
+        return qc_client._wait (token=def_token(optval), jobId=jobId, wait=wait,
+                                verbose=verbose)
+    else:
+        # optval is probably a jobId
+        return qc_client._wait (token=def_token(None), jobId=optval, wait=wait,
+                                verbose=verbose)
+
+@multimethod('qc',0,False)
+def wait(token=None, jobId=None, wait=3, verbose=False):
+    '''Usage:  queryClient.wait (jobID=<str>)
+    '''
+    '''Loop until an async job has completed.
+
+    Parameters
+    ----------
+    jobid : str
+        The job ID string of a submitted query job.
+    
+    wait : int | float
+        Wait for `wait` seconds before checking status again. Default: 3sec
+    '''
+    return qc_client._wait (token=def_token(token), jobId=jobId, wait=wait,
+                            verbose=verbose)
 
 
 
@@ -1779,12 +1827,12 @@ class queryClient (object):
         if async_ and 'wait' in kw:
             self.async_wait = wait = kw['wait']
 
-        poll_time = 1 			# see if we wait for an Async result
+        poll_time = 1 			# set polling interval
         if async_ and 'poll' in kw:
             self.async_poll = poll_time = int(kw['poll'])
 
-        verbose = False 		# see if we wait for an Async result
-        if async_ and 'poll' in kw:
+        verbose = False 		# set verbose output
+        if async_ and 'verbose' in kw:
             verbose = kw['verbose']
 
 
@@ -1833,7 +1881,7 @@ class queryClient (object):
         r = requests.get (dburl, headers=headers)
         if r.status_code != 200:
             raise queryClientError (r.text)
-        resp = r.content
+        resp = qcToString(r.content)
 
         if async_ and wait:
             # Sync query timeouts are handled on the server.  If waiting
@@ -1842,7 +1890,8 @@ class queryClient (object):
             jobId = resp
             stat = self._status (token=token, jobId=jobId)
             tval = 0
-            while (stat != 'COMPLETED'):
+            while (stat not in ['COMPLETED','ERROR']):
+                if verbose: print (stat)
                 time.sleep (poll_time)
                 try:
                     stat = self._status (token=token, jobId=jobId)
@@ -1869,12 +1918,12 @@ class queryClient (object):
 		# Retrieve Async error.
                 if verbose:
                     print ('Retrieving error')
-                resp = self._error (token=token, jobId=jobId).lower()
+                resp = self._error (token=token, jobId=jobId)
             elif stat == 'COMPLETED':
 		# Retrieve Async results.  A save to vos/mydb is handled below.
                 if verbose:
                     print ('Retrieving results')
-                resp = self._results (token=token, jobId=jobId).lower()
+                resp = self._results (token=token, jobId=jobId)
 
         if (out is not None and out != '') and not async_:
             # If we're saving to a local file (e.g. in a notebook directory),
@@ -2024,7 +2073,7 @@ class queryClient (object):
 
 
     # --------------------------
-    # Async jobs abort()
+    # Async job abort()
     # --------------------------
 
     @multimethod('_qc',2,True)
@@ -2062,6 +2111,65 @@ class queryClient (object):
 
         r = requests.get (dburl, headers=headers)
         return qcToString(r.content)
+
+
+    # --------------------------
+    # Async job wait()
+    # --------------------------
+
+    @multimethod('_qc',2,True)
+    def wait(self, token, jobId, wait=3, verbose=False):
+        '''Usage:  queryClient.wait (token, jobID)
+        '''
+        return self._wait (token=def_token(token), jobId=jobId, wait=wait,
+                           verbose=verbose)
+
+    @multimethod('_qc',1,True)
+    def wait(self, optval, jobId=None, wait=3, verbose=False):
+        '''Usage:  queryClient.wait (jobID)
+                   queryClient.wait (token, jobId=<id>)
+        '''
+        if optval is not None and len(optval.split('.')) >= 4:
+            # optval looks like a token
+            return self._wait (token=def_token(optval), jobId=jobId, wait=wait,
+                               verbose=verbose)
+        else:
+            # optval is probably a jobId
+            return self._wait (token=def_token(None), jobId=optval, wait=wait,
+                               verbose=verbose)
+
+    @multimethod('_qc',0,True)
+    def wait(self, token=None, jobId=None, wait=3, verbose=False):
+        '''Usage:  queryClient.wait (jobID=<str>)
+        '''
+        return self._wait (token=def_token(token), jobId=jobId, wait=wait,
+                           verbose=verbose)
+
+    def _wait(self, token=None, jobId=None, wait=3, verbose=False):
+        '''Implementation of the wait() method.
+
+           Loop until an async job has completed.
+    
+        Parameters
+        ----------
+        jobid : str
+            The job ID string of a submitted query job.
+        
+        wait : int | float
+            Wait for `wait` seconds before checking status again. Default: 3sec
+        '''
+    
+        while True:
+            status = qc_client._status(token=token, jobId=jobId)
+            if verbose:
+                print(status)
+            if status in ('QUEUED','EXECUTING'):
+                if verbose:
+                    print('Waiting %g seconds...' % wait)
+                time.sleep(wait)
+            else:
+                return status
+
 
 
 #=========================================================================

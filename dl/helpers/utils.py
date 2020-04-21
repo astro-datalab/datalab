@@ -1,7 +1,7 @@
 """Data Lab utility helper functions."""
 
 __authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '20200417' # yyyymmdd
+__version__ = '20200421' # yyyymmdd
 
 # std lib
 import time
@@ -24,35 +24,8 @@ import warnings
 from astropy.utils.exceptions import AstropyWarning
 warnings.simplefilter('ignore', AstropyWarning)
 
-#from .. import storeClient
-#from .. import authClient
-from . import queryClient
-
-def async_query_status(jobid,wait=3):
-
-    """Loop until an async job has completed.
-    
-    Parameters
-    ----------
-    jobid : str
-        The job ID string of a submitted query job.
-        
-    wait : int | float
-        Wait for `wait` seconds before checking status again. Default: 3 (seconds)
-    """
-    
-    print("Checking status of async job '%s' " % jobid)
-    while True:
-        status = queryClient.status(jobid)
-        print(status)
-        if status in ('QUEUED','EXECUTING'):
-            print('Waiting %g seconds...' % wait)
-            time.sleep(wait)
-        elif status == 'COMPLETED':
-            print('Async job finished. Retrieve rows with:\n  result = queryClient.results(jobid)')
-            break
-        else:
-            raise Exception('Async query error.',status)
+from .. import storeClient
+from .. import authClient
 
 
 def resolve(name=None):

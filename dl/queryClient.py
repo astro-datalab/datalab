@@ -1902,7 +1902,7 @@ class queryClient (object):
                         stat = self._abort (token=token, jobId=jobId)
                         break
                     if verbose:
-                        tim = tval * poll_time
+                        tim = tval + poll_time
                         rem = timeout - tim
                         print ('Status = %s; elapsed time: %d, timeout in %d' %
                                (stat, tim, rem))

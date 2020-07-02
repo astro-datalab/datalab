@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Matthew Graham <graham@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = 'v2.18.6'
+__version__ = 'v2.18.8'
 
 
 '''
@@ -95,6 +95,7 @@ try:
     from cStringIO import StringIO
 except:
     from io import StringIO			# Python 2/3 compatible
+from io import BytesIO
 import socket
 import json
 import time
@@ -106,7 +107,8 @@ import pandas
 from tempfile import NamedTemporaryFile
 
 from dl import storeClient
-from dl.helpers.utils import convert
+#from dl.helpers.utils import convert
+from utils import convert
 if os.path.isfile('./Util.py'):			# use local dev copy
     from Util import multimethod
     from Util import def_token
@@ -1386,6 +1388,13 @@ def mydb_drop(table, token=None):
 
 
 # --------------------------------------------------------------------
+# MYDB_FLUSH -- Flush user's MyDB tables from temporary space
+#
+def mydb_flush(token=None):
+    return qc_client._mydb_flush(token=def_token(token))
+
+
+# --------------------------------------------------------------------
 # MYDB_RENAME -- Rename a table in the user's MyDB.
 #
 @multimethod('qc',3,False)
@@ -1827,6 +1836,14 @@ class queryClient (object):
         if async_ and 'wait' in kw:
             self.async_wait = wait = kw['wait']
 
+        stream = False 		        # set a streaming request and adjust
+        if 'stream' in kw:
+            stream = kw['stream']
+            if stream:
+                timeout = 0
+                async_ = False
+                self.set_timeout_request(0)
+
         poll_time = 1 			# set polling interval
         if async_ and 'poll' in kw:
             self.async_poll = poll_time = int(kw['poll'])
@@ -1850,17 +1867,6 @@ class queryClient (object):
             qfmt = fmt
 
         if adql is not None and adql != '':
-            # Check for unsupported ADQL functions.
-            #if 'q3c_' in adql.lower():
-            #    msg = "Q3C functions are not allowed in ADQL queries"
-            #    raise queryClientError(msg)
-            #if 'healpix_' in adql.lower():
-            #    msg = "Healpix functions are is not allowed in ADQL queries"
-            #    raise queryClientError(msg)
-            #if 'htm_' in adql.lower():
-            #    msg = "HTM functions are is not allowed in ADQL queries"
-            #    raise queryClientError(msg)
-
             query = quote_plus(adql)		# URL-encode the query string
             dburl = '%s/query?adql=%s&ofmt=%s&out=%s&async=%s' % (
                 self.svc_url, query, qfmt, out, async_)
@@ -1877,8 +1883,38 @@ class queryClient (object):
         else:
             dburl += "&profile=%s" % self.svc_profile
 
-        # Make the service call.
-        r = requests.get (dburl, headers=headers)
+        # Make the service call.  In a streaming request we force a Sync
+        # operation and by setting the timeout to zero let it run as long as
+        # needed.  Once a JM is implemented an ASync save will be possible.
+        # Note:  Results may still be limited by the memory available to
+        # contain the result string, especially in notebook environments.
+        if stream:
+            if (out is not None and out != '') and not async_:
+                # If we're saving a local file (e.g. in a notebook directory),
+                # save the file here. Results saved to VOSpace/MyDB are handled
+                # on the server side.
+                if out[:7] == 'file://':
+                    out = out[7:]
+                if ':' in out and out[:out.index(':')] in ['vos', 'mydb']:
+                    out = None
+                try:
+                    resp = self.getStreamURL(dburl, headers=headers,
+                                                    fname=out)
+                except Exception as e:
+                    print ('Error in getStreamURL: %s' %  qcToString(str(e)))
+                    return qcToString(str(e))
+                if (out is not None and out != ''):
+                    return qcToString(resp)
+                else:
+                    # Otherwise, simply return the result of the query.
+                    strval = qcToString(resp)
+                    if fmt in ['pandas','array','structarray','table']:
+                        return convert (strval,fmt)
+                    else:
+                        return qcToString(resp)
+
+        # If we're not streaming the request result, process it here.
+        r = requests.get (dburl, headers=headers, timeout=timeout)
         if r.status_code != 200:
             raise queryClientError (r.text)
         resp = qcToString(r.content)
@@ -1927,14 +1963,13 @@ class queryClient (object):
 
         if (out is not None and out != '') and not async_:
             # If we're saving to a local file (e.g. in a notebook directory),
-            # the file here.  Results saved to VOSpace or MyDB are handled on
-            # the server side.
+            # save the file here. Results saved to VOSpace or MyDB are handled
+            # on the server side.
             if out[:7] == 'file://':
                 out = out[7:]
             if ':' not in out or out[:out.index(':')] not in ['vos', 'mydb']:
-                file = open (out, 'wb')
-                file.write (resp)
-                file.close ()
+                with open(out, 'wb') as file:
+                    file.write(resp.encode("utf-8"))
             return 'OK'
         else:
             # Otherwise, simply return the result of the query.
@@ -2638,6 +2673,24 @@ class queryClient (object):
         else:
             return 'OK'
 
+    # --------------------------------------------------------------------
+    # MYDB_FLUSH -- Drop the temporary tables in mydb schema in tapdb DB
+    #
+    def _mydb_flush(self, token=None):
+        '''Usage:  queryClient.mydb_flush ()
+
+        '''
+        headers = self.getHeaders(token)
+
+        dburl = '%s/flush' % (self.svc_url)
+        if self.svc_profile != "default":
+            dburl += "?profile=%s" % self.svc_profile
+
+        r = requests.get (dburl, headers=headers)
+        if r.content[:5].lower() == 'error':
+            return qcToString(r.content)
+        else:
+            return 'OK'
 
     # --------------------------------------------------------------------
     # MYDB_RENAME -- Rename a table in the user's MyDB.
@@ -2754,9 +2807,8 @@ class queryClient (object):
 
         if out is not None:
             if out[:out.index(':')] not in ['vos', 'mydb']:
-                file = open(out, 'wb')
-                file.write(r.content)
-                file.close()
+                with open(out, 'wb') as file:
+                    file.write(r.content.encode("utf-8"))
         else:
             return qcToString(r.content)
 
@@ -2788,9 +2840,8 @@ class queryClient (object):
 
         if out is not None:
             if out[:out.index(':')] not in ['vos', 'mydb']:
-                file = open(out, 'wb')
-                file.write(r.content)
-                file.close()
+                with open(out, 'wb') as file:
+                    file.write(r.content.encode("utf-8"))
         else:
             return qcToString(r.content)
 
@@ -2823,6 +2874,38 @@ class queryClient (object):
         except Exception as e:
             raise queryClientError(str(e))
         return resp
+
+
+    def getStreamURL (self, url, headers, fname=None, chunk_size=1048576):
+        ''' Get the specified URL in a streaming fashion.  This allows for
+            large downloads without hitting timeout limits.
+        '''
+        r = requests.get(url, headers=headers, stream=True)
+        if r.status_code != 200:
+            return r.status_code, r.content
+        else:
+            try:
+                # Download the request in chunks to avoid timeouts.
+                #clen = min(chunk_size, r.headers.get('content-length'))
+                if fname is not None and fname != '':
+                    with open(fname, 'wb', 0) as fd:
+                        for chunk in r.iter_content(chunk_size=chunk_size):
+                            if chunk:
+                                fd.write(chunk)
+                    return 'OK'
+                else:
+                    resp = ''
+                    for chunk in r.iter_content(chunk_size=chunk_size):
+                        if chunk:
+                            resp = resp + chunk
+                    return resp
+            except IOError as e:
+                print ('IOError in getStreamURL: %s' %  qcToString(str(e)))
+                raise queryClientError(str(e))
+            except Exception as e:
+                print ('Error in getStreamURL: %s' %  qcToString(str(e)))
+                raise queryClientError(str(e))
+
 
     def chunked_upload(self, token, local_file, remote_file):
         '''A streaming file uploader.

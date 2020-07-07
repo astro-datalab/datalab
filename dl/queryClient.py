@@ -107,7 +107,8 @@ import pandas
 from tempfile import NamedTemporaryFile
 
 from dl import storeClient
-from dl.helpers.utils import convert
+# from dl.helpers.utils import convert
+from utils import convert
 if os.path.isfile('./Util.py'):			# use local dev copy
     from Util import multimethod
     from Util import def_token

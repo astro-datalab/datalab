@@ -1057,7 +1057,7 @@ class authClient(object):
         '''Get something from a URL.  Return a 'response' object.
         '''
         try:
-            hdrs = self.qc_getHeaders(token)
+            hdrs = self.getHeaders(token)
             resp = requests.get("%s%s" % (svc_url, path), headers=hdrs)
 
         except Exception as e:

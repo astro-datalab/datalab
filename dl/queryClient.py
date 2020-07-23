@@ -39,6 +39,9 @@ Query Manager Client Interface
                 status  (token, jobId)
                 status  (optval, jobId=None)
                 status  (token=None, jobId=None)
+                  jobs  (token, jobId)
+                  jobs  (optval, jobId=None)
+                  jobs  (token=None, jobId=None)
                results  (token, jobId, delete=True)
                results  (optval, jobId=None, delete=True)
                results  (token=None, jobId=None, delete=True)
@@ -91,11 +94,8 @@ try:
     from urllib import quote_plus               # Python 2
 except ImportError:
     from urllib.parse import quote_plus         # Python 3
-try:
-    from cStringIO import StringIO
-except:
-    from io import StringIO			# Python 2/3 compatible
-from io import BytesIO
+from io import StringIO			        # Python 2/3 compatible
+from io import BytesIO			        # Python 2/3 compatible
 import socket
 import json
 import time
@@ -106,6 +106,7 @@ import ast, csv
 import pandas
 from tempfile import NamedTemporaryFile
 
+from dl import resClient
 from dl import storeClient
 from dl.helpers.utils import convert
 if os.path.isfile('./Util.py'):			# use local dev copy
@@ -613,6 +614,95 @@ def status(token=None, jobId=None):
 
     '''
     return qc_client._status (token=def_token(token), jobId=jobId)
+
+
+# --------------------------------------------------------------------
+# JOBS -- Get a list of the user's Async jobs.
+#
+@multimethod('qc',2,False)
+def jobs(token, jobId, format='text', status='all'):
+    return qc_client._jobs (token=def_token(token), jobId=jobId,
+                            format=format, status=status)
+
+@multimethod('qc',1,False)
+def jobs(optval, jobId=None, format='text', status='all'):
+    if optval is not None and len(optval.split('.')) >= 4:
+        # optval looks like a token
+        return qc_client._jobs (token=def_token(optval), jobId=jobId,
+                                format=format, status=status)
+    else:
+        # optval is probably a jobId
+        return qc_client._jobs (token=def_token(None), jobId=optval,
+                                format=format, status=status)
+
+@multimethod('qc',0,False)
+def jobs(token=None, jobId=None, format='text', status='all'):
+    '''Get a list of the user's Async jobs.
+
+    Usage:
+        jobs (token=None, jobId=None, format='text', status='all')
+
+    MultiMethod Usage:
+    ------------------
+        queryClient.jobs (jobId)
+        queryClient.jobs (token, jobId)
+        queryClient.jobs (token, jobId=<id>)
+        queryClient.jobs (jobId=<str>)
+
+    Use the authentication token and the jobId of a previously issued
+    asynchronous query to check the query's current status.
+
+    Parameters
+    ----------
+    token : str
+        Authentication token (see function :func:`authClient.login()`)
+
+    jobId : str
+        The jobId returned when issuing an asynchronous query via
+        :func:`queryClient.query()` with ``async=True``.
+
+    format : str
+        Format of the result.  Support values include 'text' for a simple
+        formatted table suitable for printing, or 'json' for a JSON
+        string of the full matching record(s).
+
+    status : str
+        If status='all' then all async jobs are returned, otherwise this
+        value may be used to return only those jobs with the specified
+        status.  Allowed values are:
+
+                all             Return all jobs
+                EXECUTING       Job is still running
+                COMPLETED       Job completed successfully
+                ERROR           Job exited with an error
+                ABORTED         Job was aborted by the user
+
+    Returns
+    -------
+    joblist : str
+        Returns a list of async query jobs submitted by the user in the
+        last 30 days, possibly filtered by the 'status' parameter.  The
+        'json' format option allows the caller to format the full contents
+        of the job record beyond the supplied simple 'text' option.
+
+    Example
+    -------
+    .. code-block:: python
+
+        print (queryClient.jobs(token, jobId))
+
+    This prints
+
+    .. code::
+
+        JobID              Start              End                 Status
+        tfu8zpn2tkrlfyr9e  07-22-20T13:10:22  07-22-20T13:34:12   COMPLETED  
+        k8uznptrkkl29ryef  07-22-20T14:09:45                      EXECUTING  
+              :                   :                 :                :
+
+    '''
+    return qc_client._jobs (token=def_token(token), jobId=jobId,
+                            format=format, status=status)
 
 
 # --------------------------------------------------------------------
@@ -1401,6 +1491,7 @@ def mydb_rename(token, source, target):
     return qc_client._mydb_rename (token=def_token(token),
                                 source=source, target=target)
 
+
 @multimethod('qc',2,False)
 def mydb_rename(source, target, token=None):
     '''Rename a table in the user's MyDB to a new name
@@ -1835,7 +1926,7 @@ class queryClient (object):
         if async_ and 'wait' in kw:
             self.async_wait = wait = kw['wait']
 
-        stream = False 		        # set a streaming request and adjust
+        stream = False 		        # set a streaming request and adjust 
         if 'stream' in kw:
             stream = kw['stream']
             if stream:
@@ -1885,7 +1976,7 @@ class queryClient (object):
         # Make the service call.  In a streaming request we force a Sync
         # operation and by setting the timeout to zero let it run as long as
         # needed.  Once a JM is implemented an ASync save will be possible.
-        # Note:  Results may still be limited by the memory available to
+        # Note:  Results may still be limited by the memory available to 
         # contain the result string, especially in notebook environments.
         if stream:
             if (out is not None and out != '') and not async_:
@@ -2018,6 +2109,71 @@ class queryClient (object):
 
         r = requests.get (dburl, headers=headers)
         return qcToString(r.content)
+
+
+    # --------------------------
+    # Async jobs list
+    # --------------------------
+
+    @multimethod('_qc',2,True)
+    def jobs(self, token, jobId, format='text', status='all'):
+        '''Usage:  queryClient.jobs (token, jobID)
+        '''
+        return self._jobs (token=def_token(token), jobId=jobId,
+                           format=format, status=status)
+
+    @multimethod('_qc',1,True)
+    def jobs(self, optval, jobId=None, format='text', status='all'):
+        '''Usage:  queryClient.jobs (jobID)
+                   queryClient.jobs (token, jobId=<id>)
+        '''
+        if optval is not None and len(optval.split('.')) >= 4:
+            # optval looks like a token
+            return self._jobs (token=def_token(optval), jobId=jobId,
+                               format=format, status=status)
+        else:
+            # optval is probably a jobId
+            return self._jobs (token=def_token(None), jobId=optval,
+                               format=format, status=status)
+
+    @multimethod('_qc',0,True)
+    def jobs(self, token=None, jobId=None, format='text', status='all'):
+        '''Usage:  queryClient.jobs (jobID=<str>)
+        '''
+        return self._jobs (token=def_token(token), jobId=jobId,
+                           format=format, status=status)
+
+    def _jobs(self, token=None, jobId=None, format='text', status='all'):
+        '''Implementation of the jobs() method.
+        '''
+        from datetime import datetime
+
+        records = resClient.findJobs (token, jobId)
+        json_recs = json.loads(records)
+
+        if format == 'json':
+            return json_recs
+
+        res = ('%-20s  %-16.16s  %-16.16s  %-20s\n' % 
+               ('JobID','Start','End','Status'))
+        res += ('%-20s  %-16.16s  %-16.16s  %-20s\n' % 
+               ('-----','-----','---','------'))
+        fmt = '%m/%d %H:%M:%S'
+        for key in json_recs.keys():
+            _id = json_recs[key]['id']
+            val = int(float(json_recs[key]['start']))
+            _start = datetime.fromtimestamp(val).strftime(fmt)
+            val = int(float(json_recs[key]['end']))
+            if val == 0:
+                _end = ' '
+            else:
+                _end = datetime.fromtimestamp(val).strftime(fmt)
+            _phase = json_recs[key]['phase']
+            if status == 'all' or _phase.lower() == status.lower():
+                res = res + ('%-20s  %-16s  %-16s  %-20s\n' % 
+                      (_id, _start, _end, _phase))
+
+        return res
 
 
     # --------------------------

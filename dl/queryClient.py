@@ -145,6 +145,7 @@ elif THIS_HOST[:6] == 'dltest':
 
 DEF_SERVICE_URL = DEF_SERVICE_ROOT + '/query'
 SM_SERVICE_URL  = DEF_SERVICE_ROOT + '/storage'
+RM_SERVICE_URL  = DEF_SERVICE_ROOT + '/res'
 
 # The requested query 'profile'.  A profile refers to the specific
 # machines and services used by the QueryManager on the server.
@@ -1590,6 +1591,7 @@ class queryClient (object):
         self.svc_profile = profile  		# QueryMgr service profile
 
         self.sm_svc_url = SM_SERVICE_URL        # StorageMgr service URL
+        self.rm_svc_url = RM_SERVICE_URL        # ResMgr service URL
         self.hostip = THIS_IP
         self.hostname = THIS_HOST
         self.timeout_request = TIMEOUT_REQUEST
@@ -1599,6 +1601,9 @@ class queryClient (object):
         self.home = '%s/.datalab' % os.path.expanduser('~')
 
         self.debug = DEBUG                      # interface debug flag
+
+        resClient.set_svc_url(self.rm_svc_url)
+        storeClient.set_svc_url(self.sm_svc_url)
 
 
     def isAlive(self, svc_url=None, timeout=5):

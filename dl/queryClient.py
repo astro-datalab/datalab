@@ -39,9 +39,9 @@ Query Manager Client Interface
                 status  (token, jobId)
                 status  (optval, jobId=None)
                 status  (token=None, jobId=None)
-                  jobs  (token, jobId)
-                  jobs  (optval, jobId=None)
-                  jobs  (token=None, jobId=None)
+                  jobs  (token, jobId, status='all', option='list')
+                  jobs  (optval, jobId=None, status='all', option='list')
+                  jobs  (token=None, jobId=None, status='all', option='list')
                results  (token, jobId, delete=True)
                results  (optval, jobId=None, delete=True)
                results  (token=None, jobId=None, delete=True)
@@ -621,23 +621,23 @@ def status(token=None, jobId=None):
 # JOBS -- Get a list of the user's Async jobs.
 #
 @multimethod('qc',2,False)
-def jobs(token, jobId, format='text', status='all'):
+def jobs(token, jobId, format='text', status='all', option='list'):
     return qc_client._jobs (token=def_token(token), jobId=jobId,
-                            format=format, status=status)
+                            format=format, status=status, option=option)
 
 @multimethod('qc',1,False)
-def jobs(optval, jobId=None, format='text', status='all'):
+def jobs(optval, jobId=None, format='text', status='all', option='list'):
     if optval is not None and len(optval.split('.')) >= 4:
         # optval looks like a token
         return qc_client._jobs (token=def_token(optval), jobId=jobId,
-                                format=format, status=status)
+                                format=format, status=status, option=option)
     else:
         # optval is probably a jobId
         return qc_client._jobs (token=def_token(None), jobId=optval,
-                                format=format, status=status)
+                                format=format, status=status, option=option)
 
 @multimethod('qc',0,False)
-def jobs(token=None, jobId=None, format='text', status='all'):
+def jobs(token=None, jobId=None, format='text', status='all', option='list'):
     '''Get a list of the user's Async jobs.
 
     Usage:
@@ -678,6 +678,11 @@ def jobs(token=None, jobId=None, format='text', status='all'):
                 ERROR           Job exited with an error
                 ABORTED         Job was aborted by the user
 
+    option : str
+	If 'list' then the matching records are returned, if 'delete' then
+        the records are removed from the database (e.g. to clear up long
+        job lists of completed jobs).
+
     Returns
     -------
     joblist : str
@@ -703,7 +708,7 @@ def jobs(token=None, jobId=None, format='text', status='all'):
 
     '''
     return qc_client._jobs (token=def_token(token), jobId=jobId,
-                            format=format, status=status)
+                            format=format, status=status, option=option)
 
 
 # --------------------------------------------------------------------
@@ -2121,62 +2126,45 @@ class queryClient (object):
     # --------------------------
 
     @multimethod('_qc',2,True)
-    def jobs(self, token, jobId, format='text', status='all'):
+    def jobs(self, token, jobId, format='text', status='all', option='list'):
         '''Usage:  queryClient.jobs (token, jobID)
         '''
         return self._jobs (token=def_token(token), jobId=jobId,
-                           format=format, status=status)
+                           format=format, status=status, option=option)
 
     @multimethod('_qc',1,True)
-    def jobs(self, optval, jobId=None, format='text', status='all'):
+    def jobs(self, optval, jobId=None, format='text', status='all',
+              option='list'):
         '''Usage:  queryClient.jobs (jobID)
                    queryClient.jobs (token, jobId=<id>)
         '''
         if optval is not None and len(optval.split('.')) >= 4:
             # optval looks like a token
             return self._jobs (token=def_token(optval), jobId=jobId,
-                               format=format, status=status)
+                               format=format, status=status, option=option)
         else:
             # optval is probably a jobId
             return self._jobs (token=def_token(None), jobId=optval,
-                               format=format, status=status)
+                               format=format, status=status, option=option)
 
     @multimethod('_qc',0,True)
-    def jobs(self, token=None, jobId=None, format='text', status='all'):
+    def jobs(self, token=None, jobId=None, format='text', status='all',
+              option='list'):
         '''Usage:  queryClient.jobs (jobID=<str>)
         '''
         return self._jobs (token=def_token(token), jobId=jobId,
-                           format=format, status=status)
+                           format=format, status=status, option=option)
 
-    def _jobs(self, token=None, jobId=None, format='text', status='all'):
+    def _jobs(self, token=None, jobId=None, format='text', status='all',
+              option='list'):
         '''Implementation of the jobs() method.
         '''
         from datetime import datetime
 
-        records = resClient.findJobs (token, jobId)
-        json_recs = json.loads(records)
-
-        if format == 'json':
-            return json_recs
-
-        res = ('%-20s  %-16.16s  %-16.16s  %-20s\n' % 
-               ('JobID','Start','End','Status'))
-        res += ('%-20s  %-16.16s  %-16.16s  %-20s\n' % 
-               ('-----','-----','---','------'))
-        fmt = '%m/%d %H:%M:%S'
-        for key in json_recs.keys():
-            _id = json_recs[key]['id']
-            val = int(float(json_recs[key]['start']))
-            _start = datetime.fromtimestamp(val).strftime(fmt)
-            val = int(float(json_recs[key]['end']))
-            if val == 0:
-                _end = ' '
-            else:
-                _end = datetime.fromtimestamp(val).strftime(fmt)
-            _phase = json_recs[key]['phase']
-            if status == 'all' or _phase.lower() == status.lower():
-                res = res + ('%-20s  %-16s  %-16s  %-20s\n' % 
-                      (_id, _start, _end, _phase))
+        res = resClient.findJobs(token, jobId, format=format, status=status,
+                                 option=option)
+        if option == 'delete':
+            return qcToString(res)
 
         return res
 

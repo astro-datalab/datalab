@@ -29,7 +29,8 @@
                 getJob  (token, jobid, keyword)
                 setJob  (token, jobid, keyword, value)
              deleteJob  (token, jobid)
-              findJobs  (token, jobid)
+              findJobs  (token, jobid, format='text', status='all',
+                         option='list')
 
            set_svc_url  (svc_url)
            get_svc_url  ()
@@ -158,8 +159,9 @@ def setJob(token, jobid, keyword, value, profile='default'):
 def deleteJob(token, jobid, profile='default'):
     return client.deleteJob(token, jobid, profile=profile)
 
-def findJobs(token, jobid):
-    return client.findJobs(token, jobid)
+def findJobs(token, jobid, format='text', status='all', option='list'):
+    return client.findJobs(token, jobid, format=format, status=status,
+                           option=option)
 
 
 # Service methods
@@ -1056,7 +1058,8 @@ class resClient(object):
         return self.clientDelete(token, "job", query_args)
 
 
-    def findJobs(self, token, jobid):
+    def findJobs(self, token, jobid, format='text', status='all',
+                 option='list'):
         '''Find job records.  If jobid is None or '*', all records for the user
            identified by the token are returned, otherwise the specific job
            record is returned.
@@ -1068,6 +1071,15 @@ class resClient(object):
             Job to be deleted.
         jobid : str
             Job ID to match.
+        format : str
+            Output format: 'text' or 'json'
+        status : str
+            Job phase status to match.  Default to 'all' but may be one of
+            EXECUTING, COMPLETED, ERROR, ABORT or WAITING.
+        option : str
+            Processing option:  'list' will return a listing of the matching
+            records in the format specified by 'format'; 'delete' will delete
+            all matching records from the server except for EXECUTING jobs.
 
         Returns
         -------
@@ -1076,6 +1088,9 @@ class resClient(object):
         url = self.svc_url + "/findJobs"
 
         query_args = {"jobid" : jobid,
+                      "format" : format,
+                      "status" : status,
+                      "option" : option,
                       "profile" : self.svc_profile,
                       "debug" : self.debug}
         try:
@@ -1091,7 +1106,11 @@ class resClient(object):
         except Exception:
             raise dlResError(response)
 
-        return response
+        if format == 'json':
+            import json
+            return json.loads(response.replace("'",'"'))
+        else:
+            return response
 
 
 
@@ -1163,7 +1182,6 @@ class resClient(object):
                       "value" : value,
                       "profile" : self.svc_profile,
                       "debug" : self.debug}
-        print('qargs: ' + str(query_args))
         try:
             if self.debug:
                 print("set" + what + ": url = '" + url + "'")

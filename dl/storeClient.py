@@ -790,7 +790,7 @@ def mv(token=None, fr='', to='', verbose=False):
     ------------------
         storeClient.mv(token, fr, to)
         storeClient.mv(fr, to)
-        storeClient.mv(fr)
+        storeClient.mv(token)
         storeClient.mv(fr='',to='')
 
     Parameters
@@ -1469,7 +1469,6 @@ class storeClient(object):
                 num /= 1024.0
             return "%.1f%s" % (num, 'Y')
 
-
         tok = def_token(token)
         user, uid, gid, hash = tok.strip().split('.', 3)
         hdrs = {'Content-Type': 'text/ascii',
@@ -1495,7 +1494,11 @@ class storeClient(object):
 
         if to != '' and to is not None:
             # Expand metacharacters to create a file list for download.
-            flist = expandFileList(self.svc_url, token, nm, "csv", full=True)
+            try:
+                flist = expandFileList(self.svc_url, token, nm, "csv",
+                                       full=True)
+            except Exception as e:
+                return str(e)
 
             nfiles = len(flist)
             if nfiles < 1:
@@ -1847,7 +1850,11 @@ class storeClient(object):
             else:
                 return scToString(r.content)
         else:
-            flist = expandFileList(self.svc_url, token, src, "csv", full=True)
+            try:
+                flist = expandFileList(self.svc_url, token, src, "csv",
+                                       full=True)
+            except Exception as e:
+                return str(e)
             nfiles = len(flist)
             fnum = 1
             resp = []
@@ -2043,11 +2050,17 @@ class storeClient(object):
             else:
                 return scToString(r.content)
         else:
-            flist = expandFileList(self.svc_url, token, src, "csv", full=True)
+            try:
+                flist = expandFileList(self.svc_url, token, src, "csv",
+                                       full=True)
+            except Exception as e:
+                return str(e)
+            print (str(flist))
             nfiles = len(flist)
             fnum = 1
             resp = []
             for f in flist:
+                print ('f: ' + str(f))
                 junk, fn = os.path.split(f)
                 to_fname = (dest + ('/%s' % fn)).replace('///','//')
                 if verbose:
@@ -2104,10 +2117,16 @@ class storeClient(object):
             elif r: return "%s is a directory." % name
 
             r = self.getFromURL(self.svc_url, "/rm?file=%s" % nm, def_token(token))
-            if r.status_code != requests.codes.no_content: return scToString(r.content)
-            else: return 'OK'
+            if r.status_code != requests.codes.no_content:
+                return scToString(r.content)
+            else:
+                return 'OK'
         else:
-            flist = expandFileList(self.svc_url, token, nm, "csv", full=True)
+            try:
+                flist = expandFileList(self.svc_url, token, nm, "csv",
+                                       full=True)
+            except Exception as e:
+                return str(e)
             nfiles = len(flist)
             if nfiles < 1:
                 return 'A Node does not exist with the requested URI.'
@@ -2351,11 +2370,14 @@ def expandFileList(svc_url, token, pattern, format, full=False):
         dir = dir[dir.index('://')+3:]
         pstat = stat(dir)
     if pstat.get('type') != 'container':
-        return 'A Container does not exist with the requested URI.'
+        raise Exception('A Container does not exist with the requested URI')
 
     # Make the service call to get a listing of the parent directory.
     url = svc_url + "/ls?name=%s%s&format=%s" % (uri, dir, "csv")
-    r = requests.get(url, headers={'X-DL-AuthToken': def_token(token)})
+    try:
+        r = requests.get(url, headers={'X-DL-AuthToken': def_token(token)})
+    except Exception as e:
+        raise 
 
     # Filter the directory contents list using the filename pattern.
     list = []

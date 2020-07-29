@@ -137,6 +137,8 @@ DEF_PROFILE     = 'default'
 # Use a /tmp/SM_DEBUG file as a way to turn on debugging in the client code.
 DEBUG           = os.path.isfile('/tmp/SM_DEBUG')
 
+        
+URI_RESERVED = ":;?/@&=+$,"          # RFC2396 reserved URI chars
 
 
 # ####################################################################
@@ -1695,6 +1697,10 @@ class storeClient(object):
             if debug:
                 print("put: f=%s" % (f))
             fr_dir, fr_name = os.path.split(f)
+ 
+            if any(i in fr_name for i in URI_RESERVED):
+                resp.append('Error: URI reserved char in source filename: '+f)
+                continue
 
             # Patch the names with the URI prefix if needed.
             nm = (to if to.count("://") > 0 else ("vos://" + to))
@@ -1704,9 +1710,13 @@ class storeClient(object):
                 nm = nm + '/' + fr_name
             nm = nm.replace('///','//')      # fix extra path indicators
 
+            if any(i in nm[nm.rfind('/')+1:] for i in URI_RESERVED):
+                resp.append('Error: URI reserved char in target filename: '+nm)
+                continue
+
             if debug:
                 print("put: fr_dir=%s  fr_name=%s" % (fr_dir,fr_name))
-                print("put: f=%s  nm=%s" % (f,nm))
+                print("put: f=%s  nm(to)=%s" % (f,nm))
 
             if not os.path.exists(f):
                 # Skip files that don't exist

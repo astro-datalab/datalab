@@ -749,7 +749,7 @@ class Dlinterface:
 ################################################
 
 
-    def query(self, query=None, qtype='sql', fmt='csv', out=None, async_=False, profile='default', verbose=True, **kw):
+    def query(self, query=None, qtype='sql', fmt='csv', out=None, async_=False, drop=False, profile='default', verbose=True, **kw):
         '''
         Send a query to a remote query service.
 
@@ -796,6 +796,10 @@ class Dlinterface:
             ``async_`` replaces the previous ``async`` parameter, because ``async``
             was promoted to a keyword in Python 3.7. Users of Python versions
             prior to 3.7 can continue to use the ``async`` keyword.
+
+        drop : bool
+            If ``True``, then if the query is saving to mydb where the same table name
+            already exists, it will overwrite the old mydb table.
 
         Returns
         -------
@@ -890,7 +894,8 @@ class Dlinterface:
         if qtype not in ['sql','adql']:
             print ("Only 'sql' and 'adql' queries are currently supported.")
             return
-
+        print(drop)
+        print('yes')
         _query = query         # local working copy
 
         # Check if the query is in a file
@@ -929,7 +934,7 @@ class Dlinterface:
 
         try:
             res = queryClient.query (token, adql=adql, sql=sql,
-                                     fmt=qcfmt, out=out, async_=async_)
+                                     fmt=qcfmt, out=out, async_=async_, drop=drop)
         except Exception as e:
             if not async_ and str(e) is not None:
                 err = str(e)

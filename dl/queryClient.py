@@ -469,6 +469,9 @@ def query(token=None, adql=None, sql=None, fmt='csv', out=None, async_=False, dr
         was promoted to a keyword in Python 3.7. Users of Python versions
         prior to 3.7 can continue to use the ``async`` keyword.
 
+    drop : bool
+        If ``True``, then if the query is saving to mydb where the same table name
+        already exists, it will overwrite the old mydb table.
 
     profile : str or None
         The Query Manager profile to use for this call.  If ``None`` then

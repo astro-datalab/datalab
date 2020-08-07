@@ -894,8 +894,7 @@ class Dlinterface:
         if qtype not in ['sql','adql']:
             print ("Only 'sql' and 'adql' queries are currently supported.")
             return
-        print(drop)
-        print('yes')
+
         _query = query         # local working copy
 
         # Check if the query is in a file

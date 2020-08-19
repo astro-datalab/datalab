@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Matthew Graham <graham@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = 'v2.18.8'
+__version__ = 'v2.18.9'
 
 
 '''
@@ -381,33 +381,33 @@ def services(name=None, svc_type=None, mode='list', profile='default'):
 #
 @multimethod('qc',2,False)
 def query(token, query, adql=None, sql=None, fmt='csv', out=None,
-           async_=False, profile='default', **kw):
+           async_=False,  drop=False, profile='default', **kw):
     return qc_client._query (token=def_token(token), adql=adql, sql=query,
-                          fmt=fmt, out=out, async_=async_,
+                          fmt=fmt, out=out, async_=async_, drop=drop,
                           profile=profile, **kw)
 
 @multimethod('qc',1,False)
-def query(optval, adql=None, sql=None, fmt='csv', out=None, async_=False,
+def query(optval, adql=None, sql=None, fmt='csv', out=None, async_=False, drop=False,
            token=None, profile='default', **kw):
     if optval is not None and optval.lower()[:6] == 'select':
         # optval looks like a query string
         return qc_client._query (token=def_token(None), adql=adql, sql=optval,
-                              fmt=fmt, out=out, async_=async_,
+                              fmt=fmt, out=out, async_=async_, drop=drop,
                               profile=profile, **kw)
     else:
         # optval is (probably) a token
         return qc_client._query (token=def_token(optval), adql=adql, sql=sql,
-                              fmt=fmt, out=out, async_=async_,
+                              fmt=fmt, out=out, async_=async_, drop=drop,
                               profile=profile, **kw)
 
 @multimethod('qc',0,False)
-def query(token=None, adql=None, sql=None, fmt='csv', out=None, async_=False,
+def query(token=None, adql=None, sql=None, fmt='csv', out=None, async_=False, drop=False,
            profile='default', **kw):
     '''Send an SQL or ADQL query to the database or TAP service.
 
     Usage:
         query (token=None, adql=None, sql=None, fmt='csv', out=None,
-               async_=False, profile='default', **kw):
+               async_=False, drop=False, profile='default', **kw):
 
     MultiMethod Usage:
     ------------------
@@ -468,6 +468,10 @@ def query(token=None, adql=None, sql=None, fmt='csv', out=None, async_=False,
         ``async_`` replaces the previous ``async`` parameter, because ``async``
         was promoted to a keyword in Python 3.7. Users of Python versions
         prior to 3.7 can continue to use the ``async`` keyword.
+
+    drop : bool
+        If ``True``, then if the query is saving to mydb where the same table name
+        already exists, it will overwrite the old mydb table.
 
     profile : str or None
         The Query Manager profile to use for this call.  If ``None`` then
@@ -530,7 +534,7 @@ def query(token=None, adql=None, sql=None, fmt='csv', out=None, async_=False,
           314.996334457679438,35.2673478725552698
     '''
     return qc_client._query (token=def_token(token), adql=adql, sql=sql, 
-                             fmt=fmt, out=out, async_=async_, profile=profile,
+                             fmt=fmt, out=out, async_=async_, drop=drop, profile=profile,
                              **kw)
 
 
@@ -1784,40 +1788,40 @@ class queryClient (object):
 
     @multimethod('_qc',2,True)
     def query(self, token, query, adql=None, sql=None, fmt='csv', out=None,
-               async_=False, profile='default', **kw):
+               async_=False, drop=False, profile='default', **kw):
         '''Usage:  queryClient.query (token)
         '''
         return self._query (token=def_token(token), adql=adql, sql=query,
-                            fmt=fmt, out=out, async_=async_,
+                            fmt=fmt, out=out, async_=async_, drop=drop,
                             profile=profile, **kw)
 
     @multimethod('_qc',1,True)
     def query(self, optval, adql=None, sql=None, fmt='csv', out=None,
-               async_=False, token=None, profile='default', **kw):
+               async_=False, token=None, drop=False, profile='default', **kw):
         '''Usage:  queryClient.client.query (token, ...)
         '''
         if optval is not None and optval.lower()[:6] == 'select':
             # optval looks like a query string
             return self._query (token=def_token(None), adql=adql, sql=optval,
-                                fmt=fmt, out=out, async_=async_,
+                                fmt=fmt, out=out, async_=async_, drop=drop,
                                 profile=profile, **kw)
         else:
             # optval is (probably) a token
             return self._query (token=def_token(optval), adql=adql, sql=sql,
-                                fmt=fmt, out=out, async_=async_,
+                                fmt=fmt, out=out, async_=async_, drop=drop,
                                 profile=profile, **kw)
 
     @multimethod('_qc',0,True)
     def query(self, token=None, adql=None, sql=None, fmt='csv', out=None,
-               async_=False, profile='default', **kw):
+               async_=False, drop=False, profile='default', **kw):
         '''Usage:  queryClient.client.query (...)
         '''
         return self._query (token=def_token(token), adql=adql, sql=sql,
-                            fmt=fmt, out=out, async_=async_,
+                            fmt=fmt, out=out, async_=async_, drop=drop,
                             profile=profile, **kw)
 
     def _query(self, token=None, adql=None, sql=None, fmt='csv', out=None,
-              async_=False, profile='default', **kw):
+              async_=False, drop=False, profile='default', **kw):
         '''Implementation of the query() method.
         '''
 
@@ -1851,7 +1855,6 @@ class queryClient (object):
         if async_ and 'verbose' in kw:
             verbose = kw['verbose']
 
-
         # Set service call headers.
         headers = {'Content-Type': 'text/ascii',
                    'X-DL-TimeoutRequest': str(timeout),
@@ -1867,13 +1870,13 @@ class queryClient (object):
 
         if adql is not None and adql != '':
             query = quote_plus(adql)		# URL-encode the query string
-            dburl = '%s/query?adql=%s&ofmt=%s&out=%s&async=%s' % (
-                self.svc_url, query, qfmt, out, async_)
+            dburl = '%s/query?adql=%s&ofmt=%s&out=%s&async=%s&drop=%s' % (
+                self.svc_url, query, qfmt, out, async_, drop)
 
         elif sql is not None and sql != '':
             query = quote_plus(sql)		# URL-encode the query string
-            dburl = '%s/query?sql=%s&ofmt=%s&out=%s&async=%s' % (
-                self.svc_url, query, qfmt, out, async_)
+            dburl = '%s/query?sql=%s&ofmt=%s&out=%s&async=%s&drop=%s' % (
+                self.svc_url, query, qfmt, out, async_, drop)
         else:
             raise queryClientError("No query specified")
 

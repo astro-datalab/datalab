@@ -786,6 +786,9 @@ class Query2 (Task):
         self.addOption("async",
             Option("async", "", "Asynchronous query?", default=False,
                 required=False))
+        self.addOption("drop",
+                       Option("drop", "", "Overwrite existing table?", default=False,
+                              required=False))
         self.addOption("profile",
             Option("profile", "", "Service profile to use",
                 required=False, default="default"))
@@ -829,7 +832,7 @@ class Query2 (Task):
         try:
             res = queryClient.query (token, adql=adql, sql=sql,
                         fmt=self.fmt.value, out=self.out.value,
-                        async_=getattr(self,"async").value, timeout=self.timeout.value)
+                        async_=getattr(self,"async").value, drop=self.drop.value, timeout=self.timeout.value)
 
             if getattr(self,"async").value:
                 print (res)                         # Return the JobID

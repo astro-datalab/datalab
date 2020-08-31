@@ -2490,8 +2490,6 @@ class queryClient (object):
         # Set up the request headers and initialize.
         headers = self.getHeaders (token)
         dburl = '%s/import' % (self.svc_url)
-        if self.svc_profile != "default":
-            dburl += "&profile=%s" % self.svc_profile
 
         # Data can be the name of a CSV file or a python tablular object that
         # can be converted.

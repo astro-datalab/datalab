@@ -1225,7 +1225,7 @@ class MyDB_Truncate(Task):
     def run(self):
         token = getUserToken(self)
         try:
-            res = queryClient.mydb_truncate (token, table=self.table.value)
+            res = queryClient.mydb_truncate (token, self.table.value)
         except Exception as e:
             print ("Error truncating table '%s': %s" % \
                    (self.table.value,str(e)))

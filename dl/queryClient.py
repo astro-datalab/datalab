@@ -2483,8 +2483,8 @@ class queryClient (object):
         '''
         # Get optional parameters.
         csv_header = (kw['csv_header'] if 'csv_header' in kw else True)
-        verbose = (kw['drop'] if 'drop' in kw else False)
-        drop = (kw['drop'] if 'drop' in kw else True)
+        verbose = (kw['verbose'] if 'verbose' in kw else False)
+        append = (kw['append'] if 'append' in kw else False)
         delimiter = (kw['delimiter'] if 'delimiter' in kw else ',')
 
         # Set up the request headers and initialize.
@@ -2496,7 +2496,7 @@ class queryClient (object):
         tmp_file = NamedTemporaryFile(delete=True, dir='/tmp').name
         params = { 'table' : table,
                    'delimiter' : str(delimiter),
-                   'drop' : str(drop),
+                   'append' : str(append),
                    'profile' : self.svc_profile,
                    'csv_header' : str(csv_header) }
 

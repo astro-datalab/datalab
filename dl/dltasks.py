@@ -31,6 +31,7 @@ import glob
 import os
 import logging
 import shutil
+import socket
 from subprocess import Popen, PIPE
 from time import gmtime, strftime, sleep
 import httplib2
@@ -84,18 +85,26 @@ from dl import resClient
 httplib2.debuglevel = 0
 HTTPConnection.debuglevel = 0
 
-TEST = False
+# Allow the service URL for dev/test systems to override the default.
+THIS_HOST = socket.gethostname()                        # host name
+sock = socket.socket(type=socket.SOCK_DGRAM)     # host IP address
+sock.connect(('8.8.8.8', 1))        # Example IP address, see RFC 5737
+THIS_IP, _ = sock.getsockname()
 
-if TEST:
+
+if THIS_HOST[:5] == 'dldev':
+    DEF_SERVICE_ROOT = 'http://dldev.datalab.noao.edu'
     AM_URL = "http://dldev.datalab.noao.edu/auth"       # Auth Manager
     SM_URL = "http://dldev.datalab.noao.edu/storage"    # Storage Manager
     QM_URL = "http://dldev.datalab.noao.edu/query"      # Query Manager
     RES_URL = "http://dldev.datalab.noao.edu/res"       # Resource Manager
-else:
-    AM_URL = "https://datalab.noao.edu/auth"      	# Auth Manager
-    SM_URL = "https://datalab.noao.edu/storage"   	# Storage Manager
-    QM_URL = "https://datalab.noao.edu/query"     	# Query Manager
-    RES_URL = "https://datalab.noao.edu/res"     	# Resource Manager
+elif THIS_HOST[:6] == 'dltest':
+    DEF_SERVICE_ROOT = 'http://dltest.datalab.noao.edu'
+    AM_URL = "http://dltest.datalab.noao.edu/auth"       # Auth Manager
+    SM_URL = "http://dltest.datalab.noao.edu/storage"    # Storage Manager
+    QM_URL = "http://dltest.datalab.noao.edu/query"      # Query Manager
+    RES_URL = "http://dltest.datalab.noao.edu/res"       # Resource Manager
+
 
 
 
@@ -1139,13 +1148,16 @@ class MyDB_Import(Task):
             Option("table", "", "Table name to create", required=True))
         self.addOption("data",
             Option("data", "", "Data file to load", required=True))
+        self.addOption("append",
+            Option("append", False, "Append existing table?", required=False))
         self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
         try:
             res = queryClient.mydb_import (token, self.table.value,
-                                           self.data.value)
+                                           self.data.value,
+                                           append=self.append.value)
         except Exception as e:
             print ("Error importing table '%s': %s" % \
                      (self.table.value, str(e)))
@@ -1164,15 +1176,25 @@ class MyDB_Insert(Task):
             Option("table", "", "Table name to create", required=True))
         self.addOption("data",
             Option("data", "", "Data file to load", required=True))
+        self.addOption("csv_header",
+            Option("csv_header", True, "Data file has csv header?",
+                   required=False))
         self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
         try:
-            res = queryClient.mydb_import (token, self.table.value,
-                                           self.data.value)
+            res = queryClient.mydb_list (token, table=self.table.value)
+            if res.find('not known') > 0:
+                res = "Error: MyDB table '%s' does not exist" % self.table.value
+
+            else:
+                # Table exists, so just insert the data.
+                res = queryClient.mydb_insert (token, self.table.value,
+                                               self.data.value,
+                                               csv_header=self.csv_header.value)
         except Exception as e:
-            print ("Error importing table '%s': %s" % (self.table.value,str(e)))
+            print (str(e))
         else:
             print (res)
 

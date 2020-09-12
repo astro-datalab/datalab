@@ -2501,16 +2501,24 @@ class queryClient (object):
                    'csv_header' : str(csv_header) }
 
         if isinstance (data, str):
+            if data.find('[') > 0:
+                fname = data.split('[')[0]
+                extn = data.split('[')[1].split(']')[0]
+                par = 'extnum' if isinstance(extn,int) else 'extname'
+                params[par] = extn
+            else:
+                fname, extn = data, None
+
             if data.startswith ('http://') or \
                data.startswith ('https://') or \
                data.startswith ('vos://'):
                     # Passing a URI in the filename to be loaded on server-side
-                    params['filename'] = data
+                     params['filename'] = fname if data.find('[') > 0 else data
 
-            elif os.path.exists (data):
+            elif os.path.exists (fname):
                 # Upload the file to the staging area.
-                data_name = os.path.basename (data)
-                storeClient.chunked_upload (token, data, data_name)
+                data_name = os.path.basename (fname)
+                storeClient.chunked_upload (token, fname, data_name)
                 params['filename'] = data_name
 
             else:

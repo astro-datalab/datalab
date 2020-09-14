@@ -2504,7 +2504,8 @@ class queryClient (object):
             if data.find('[') > 0:
                 fname = data.split('[')[0]
                 extn = data.split('[')[1].split(']')[0]
-                par = 'extnum' if isinstance(extn,int) else 'extname'
+                extn = extn.replace("'","").replace('"','')
+                par = 'extnum' if extn[0].isdigit() else 'extname'
                 params[par] = extn
             else:
                 fname, extn = data, None

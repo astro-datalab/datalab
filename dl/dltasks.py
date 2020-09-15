@@ -602,7 +602,6 @@ class Login(Task):
             print ('login error: tok = ' + self.token)
             return False
         else:
-            print ('login success: tok = ' + self.token)
             self.login_error = None
             return True
 

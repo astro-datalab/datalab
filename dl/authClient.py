@@ -6,7 +6,7 @@
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = 'v2.18.5'
+__version__ = 'v2.18.6'
 
 
 '''
@@ -1057,7 +1057,7 @@ class authClient(object):
         '''Get something from a URL.  Return a 'response' object.
         '''
         try:
-            hdrs = self.qc_getHeaders(token)
+            hdrs = self.getHeaders(token)
             resp = requests.get("%s%s" % (svc_url, path), headers=hdrs)
 
         except Exception as e:

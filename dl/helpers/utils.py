@@ -106,6 +106,8 @@ def convert(inp,outfmt='pandas',verbose=False,**kwargs):
        df = convert(inp,'pandas',na_values='Infinity') # na_values is a kwarg; adds 'Infinity' to list of values converter to np.inf
 
     """
+    # When there are duplicate column names in the table, it would not work when converting to Astropy Table and Votable, so we
+    # have to add '_n' as an identifier to the duplicate column names.
     index = inp.find('\n')
     header = inp[0:index]
     inp = inp[index+1:]

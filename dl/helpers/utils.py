@@ -106,6 +106,22 @@ def convert(inp,outfmt='pandas',verbose=False,**kwargs):
        df = convert(inp,'pandas',na_values='Infinity') # na_values is a kwarg; adds 'Infinity' to list of values converter to np.inf
 
     """
+    index = inp.find('\n')
+    header = inp[0:index]
+    inp = inp[index+1:]
+    list = header.split(',')
+    col_dict = {}
+    new_s = ''
+    for l in list:
+        if l in col_dict.keys():
+            n = col_dict.get(l)
+            col_dict[l] = n+1
+            new_s += (l+'_'+str(n)+',')
+        else:
+            new_s += (l+',')
+            col_dict[l]=1
+    inp = new_s[:-1]+'\n'+inp
+
 
     # map outfmt container types to a tuple:
     # (:func:`queryClient.query()` fmt-value, descriptive title,

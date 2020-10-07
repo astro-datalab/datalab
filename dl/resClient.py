@@ -8,22 +8,29 @@
     Resource Manager
     ----------------
             createUser  (username, password, email, name, institute)
+               getUser  (token, username, keyword)
+               setUser  (token, username, keyword, value)
             deleteUser  (token, username)
-               getUser  (token, keyword)
-               setUser  (token, keyword, value)
          passwordReset  (token, user, password)
       sendPasswordLink  (token, user)
             listFields  ()
 
-           createGroup  (token, groupName)
-              getGroup  (token, keyword)
-              setGroup  (token, keyword, value)
-           deleteGroup  (token, groupName)
+           createGroup  (token, group)
+              getGroup  (token, group, keyword)
+              setGroup  (token, group, keyword, value)
+           deleteGroup  (token, group)
 
         createResource  (token, resource)
-           getResource  (token, keyword)
-           setResource  (token, keyword, value)
+           getResource  (token, resource, keyword)
+           setResource  (token, resource, keyword, value)
         deleteResource  (token, resource)
+
+             createJob  (token, jobid, job_type, query=None, task=None)
+                getJob  (token, jobid, keyword)
+                setJob  (token, jobid, keyword, value)
+             deleteJob  (token, jobid)
+              findJobs  (token, jobid, format='text', status='all',
+                         option='list')
 
            set_svc_url  (svc_url)
            get_svc_url  ()
@@ -42,7 +49,7 @@ Import via
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
-__version__ = '2.18.5'  # yyyymmdd
+__version__ = 'v2.18.5'
 
 
 import requests
@@ -63,6 +70,11 @@ DEF_SERVICE_PROFILE = "default"
 # API debug flag.
 DEBUG = False
 
+
+keys = {'user':None,
+        'group':'group',
+        'resource':'resource',
+        'job':'jobid'}
 
 
 # ######################################################################
@@ -89,11 +101,11 @@ def createUser(username, password, email, name, institute, profile='default'):
 def deleteUser(token, username, profile='default'):
     return client.deleteUser(token, username, profile=profile)
 
-def getUser(token, keyword, profile='default'):
-    return client.getUser(token, keyword, profile=profile)
+def getUser(token, username, keyword, profile='default'):
+    return client.getUser(token, username, keyword, profile=profile)
 
-def setUser(token, keyword, value, profile='default'):
-    return client.setUser(token, keyword, value, profile=profile)
+def setUser(token, username, keyword, value, profile='default'):
+    return client.setUser(token, username, keyword, value, profile=profile)
 
 def passwordReset(token, user, password, profile='default'):
     return client.passwordReset(token, user, password, profile=profile)
@@ -106,31 +118,50 @@ def listFields(profile='default'):
 
 
 # Group functions
-def createGroup(token, groupName, profile='default'):
-    return client.createGroup(token, groupName, profile=profile)
+def createGroup(token, group, profile='default'):
+    return client.createGroup(token, group, profile=profile)
 
-def getGroup(token, keyword, profile='default'):
-    return client.getGroup(token, keyword, profile=profile)
+def getGroup(token, group, keyword, profile='default'):
+    return client.getGroup(token, group, keyword, profile=profile)
 
-def setGroup(token, keyword, value, profile='default'):
-    return client.setGroup(token, keyword, value, profile=profile)
+def setGroup(token, group, keyword, value, profile='default'):
+    return client.setGroup(token, group, keyword, value, profile=profile)
 
-def deleteGroup(token, groupName, profile='default'):
-    return client.deleeteGroup(token, groupName, profile=profile)
+def deleteGroup(token, group, profile='default'):
+    return client.deleeteGroup(token, group, profile=profile)
 
 
 # Resource functions
 def createResource(token, resource, profile='default'):
     return client.createResource(token, resource, profile=profile)
 
-def getResource(token, keyword, profile='default'):
-    return client.getResource(token, keyword, profile=profile)
+def getResource(token, resource, keyword, profile='default'):
+    return client.getResource(token, resource, keyword, profile=profile)
 
-def setResource(token, keyword, value, profile='default'):
-    return client.setResource(token, keyword, value, profile=profile)
+def setResource(token, resource, keyword, value, profile='default'):
+    return client.setResource(token, resource, keyword, value, profile=profile)
 
 def deleteResource(token, resource, profile='default'):
     return client.deleteResource(token, resource, profile=profile)
+
+
+# Job functions
+def createJob(token, jobid, job_type, query=None, task=None, profile='default'):
+    return client.createJob(token, jobid, job_type, query=query, task=task,
+                            profile=profile)
+
+def getJob(token, jobid, keyword, profile='default'):
+    return client.getJob(token, jobid, keyword, profile=profile)
+
+def setJob(token, jobid, keyword, value, profile='default'):
+    return client.setJob(token, jobid, keyword, value, profile=profile)
+
+def deleteJob(token, jobid, profile='default'):
+    return client.deleteJob(token, jobid, profile=profile)
+
+def findJobs(token, jobid, format='text', status='all', option='list'):
+    return client.findJobs(token, jobid, format=format, status=status,
+                           option=option)
 
 
 # Service methods
@@ -370,11 +401,13 @@ class resClient(object):
 
         return response
 
-    def getUser(self, keyword, profile='default'):
+    def getUser(self, username, keyword, profile='default'):
         '''Read info about a user in the system.
 
         Parameters
         ----------
+        username : str
+            User name
         keyword : str
             User record field to be set
 
@@ -389,13 +422,16 @@ class resClient(object):
             from dl import resClient
             resClient.client.set_svc_url("http://localhost:7001/")
         '''
-        return self.clientRead("user", keyword, profile=profile)
+        return self.clientRead(token, "user", username, keyword,
+                               profile=profile)
 
-    def setUser(self, keyword, value, profile='default'):
+    def setUser(self, username, keyword, value, profile='default'):
         '''Update info about a user in the system.
 
         Parameters
         ----------
+        username : str
+            User name
         keyword : str
             User record field to be set
         value : str
@@ -405,7 +441,8 @@ class resClient(object):
         -------
         Service response
         '''
-        return self.clientUpdate("user", keyword, profile=profile)
+        return self.clientUpdate(token, "user", username, keyword,
+                                 profile=profile)
 
     def deleteUser(self, token, username, profile='default'):
         '''Delete a user in the system.
@@ -451,7 +488,7 @@ class resClient(object):
             if self.debug:
                 print("url = '" + url + "'")
 
-            # Add the auth token to the reauest header.
+            # Add the auth token to the request header.
             headers = {'X-DL-AuthToken': token}
             r = requests.get(url, headers=headers)
             response = r.text
@@ -494,7 +531,6 @@ class resClient(object):
 
         try:
             resp = self.svcGet(token, url)
-            print(resp)
         except Exception as e:
             raise Exception(str(e))
         else:
@@ -522,7 +558,7 @@ class resClient(object):
         url = self.svc_url + ("/pwResetLink?user=%s&profile=%s" % (user,profile))
 
         try:
-            # Add the auth token to the reauest header.
+            # Add the auth token to the request header.
             headers = {'X-DL-AuthToken': token}
             r = requests.get(url, headers=headers)
 
@@ -694,12 +730,14 @@ class resClient(object):
     #  GROUP MANAGEMENT
     ###################################################
 
-    def createGroup(self, token, name, profile='default'):
+    def createGroup(self, token, group, profile='default'):
         '''Create a new Group in the system.
 
         Parameters
         ----------
-        name : str
+        token : str
+            User identity token
+        group : str
             Group name to create
 
         Returns
@@ -709,14 +747,14 @@ class resClient(object):
         '''
         url = self.svc_url + "/create?what=group&"
 
-        query_args = {"name" : name,
+        query_args = {"group" : group,
                       "profile" : (profile if profile != 'default' else self.svc_profile),
                       "debug" : self.debug}
         try:
             if self.debug:
-                print("createGroup: " + name)
+                print("createGroup: " + group)
 
-            # Add the auth token to the reauest header.
+            # Add the auth token to the request header.
             headers = {'X-DL-AuthToken': self.auth_token}
 
             r = requests.get(url, params=query_args, headers=headers)
@@ -732,11 +770,15 @@ class resClient(object):
 
         return response
 
-    def getGroup(self, token, keyword, profile='default'):
+    def getGroup(self, token, group, keyword, profile='default'):
         '''Read info about a Group in the system.
 
         Parameters
         ----------
+        token : str
+            User identity token
+        group : str
+            Group name to create
         keyword : str
             Group record field to retrieve
 
@@ -745,13 +787,17 @@ class resClient(object):
         value : str
             Value of record field
         '''
-        return self.clientRead("group", keyword, profile=profile)
+        return self.clientRead(token, "group", group, keyword, profile=profile)
 
-    def setGroup(self, token, keyword, value, profile='default'):
+    def setGroup(self, token, group, keyword, value, profile='default'):
         '''Update info about a Group in the system.
 
         Parameters
         ----------
+        token : str
+            User identity token
+        group : str
+            Group name to create
         keyword : str
             Group record field to be set
         value : str
@@ -760,7 +806,8 @@ class resClient(object):
         Returns
         -------
         '''
-        return self.clientUpdate("group", keyword, value, profile=profile)
+        return self.clientUpdate(token, "group", group, keyword, value,
+                                 profile=profile)
 
     def deleteGroup(self, token, group, profile='default'):
         '''Delete a Group in the system.
@@ -794,6 +841,8 @@ class resClient(object):
 
         Parameters
         ----------
+        token : str
+            User identity token
         resource : str
             Resource URI to create
 
@@ -811,7 +860,7 @@ class resClient(object):
             if self.debug:
                 print("createResource: " + resource)
 
-            # Add the auth token to the reauest header.
+            # Add the auth token to the request header.
             headers = {'X-DL-AuthToken': self.auth_token}
 
             r = requests.get(url, params=query_args, headers=headers)
@@ -827,11 +876,15 @@ class resClient(object):
 
         return response
 
-    def getResource(self, token, keyword, profile='default'):
+    def getResource(self, token, resource, keyword, profile='default'):
         '''Read info about a Resource in the system.
 
         Parameters
         ----------
+        token : str
+            User identity token
+        resource : str
+            Resource URI to create
         keyword : str
             Resource record to retrieve
 
@@ -840,13 +893,17 @@ class resClient(object):
         value : str
             Resource record value
         '''
-        return self.clientRead("resource", keyword, profile=profile)
+        return self.clientRead(token, "resource", resource, keyword, profile=profile)
 
-    def setResource(self, token, keyword, value, profile='default'):
+    def setResource(self, token, resource, keyword, value, profile='default'):
         '''Update info about a Resource in the system.
 
         Parameters
         ----------
+        token : str
+            User identity token
+        resource : str
+            Resource URI to create
         keyword : str
             Resource record field to be set
         value : str
@@ -855,9 +912,10 @@ class resClient(object):
         Returns
         -------
         status : str
-            'OK' is record was set
+            'OK' if record was set
         '''
-        return self.clientUpdate("resource", keyword, value, profile=profile)
+        return self.clientUpdate(token, "resource", resource, keyword, value,
+                                 profile=profile)
 
     def deleteResource(self, token, resource, profile='default'):
         '''Delete a Resource in the system.
@@ -882,48 +940,46 @@ class resClient(object):
 
 
 
-
     ###################################################
-    #  PRIVATE UTILITY METHODS
+    #  JOB MANAGEMENT
     ###################################################
 
-    def debug(self, debug_val):
-        '''Set the debug flag.
+    def createJob(self, token, jobid, job_type, query=None, task=None,
+                  profile='default'):
+        '''Create a new Job record in the system.
+
+        Parameters
+        ----------
+        token : str
+            User identity token
+        jobid : str
+            Job ID to create
+        type : str
+            Type of job:  currently only 'query' or 'compute'
+        query : str
+            If 'type' is 'query', the SQL/ADQL query string>
+        task : str
+            If 'type' is 'compute', the name of the task being run.
+
+        Returns
+        -------
+        resp : str
+            Service response
         '''
-        self.debug = debug_val
+        url = self.svc_url + "/create?what=job&"
 
-    def retBoolValue(self, url):
-        '''Utility method to call a boolean service at the given URL.
-        '''
-        try:
-            # Add the auth token to the reauest header.
-            headers = {'X-DL-AuthToken': self.auth_token}
-
-            r = requests.get(url, headers=headers)
-            response = r.text
-
-            if r.status_code != 200:
-                raise Exception(r.text)
-
-        except Exception:
-            raise dlResError("Invalid user")
-        else:
-            return response
-
-    def clientRead(self, what, keyword):
-        '''Generic method to call a /get service.
-        '''
-        url = self.svc_url + "/get?what=" + what + "&"
-
-        query_args = {"keyword" : keyword,
-                      "profile" : self.svc_profile,
+        query_args = {"jobid" : jobid,
+                      "type" : job_type,
+                      "query" : query,
+                      "task" : task,
+                      "profile" : (profile if profile != 'default' else self.svc_profile),
                       "debug" : self.debug}
         try:
             if self.debug:
-                print("get" + what + ": url = '" + url + "'")
+                print("createJob: " + jobid)
 
-            # Add the auth token to the reauest header.
-            headers = {'X-DL-AuthToken': self.auth_token}
+            # Add the auth token to the request header.
+            headers = {'X-DL-AuthToken': token}
 
             r = requests.get(url, params=query_args, headers=headers)
             response = r.text
@@ -938,12 +994,191 @@ class resClient(object):
 
         return response
 
-    def clientUpdate(self, what, keyword, value):
+    def getJob(self, token, jobid, keyword, profile='default'):
+        '''Read info about a Job in the system.
+
+        Parameters
+        ----------
+        token : str
+            User identity token
+        jobid : str
+            Job ID to create
+        keyword : str
+            Job record to retrieve
+
+        Returns
+        -------
+        value : str
+            Job record value
+        '''
+        return self.clientRead(token, "job", jobid, keyword, profile=profile)
+
+
+    def setJob(self, token, jobid, keyword, value, profile='default'):
+        '''Update info about a Job in the system.
+
+        Parameters
+        ----------
+        token : str
+            User identity token
+        jobid : str
+            Job ID to create
+        keyword : str
+            Job record field to be set
+        value : str
+            Value of field to set
+
+        Returns
+        -------
+        status : str
+            'OK' if record was set
+        '''
+        return self.clientUpdate(token, "job", jobid, keyword, value,
+                                 profile=profile)
+
+    def deleteJob(self, token, jobid, profile='default'):
+        '''Delete a Job in the system.
+
+        Parameters
+        ----------
+        token : str
+            User identity token.  The token must identify the owner of the
+            Job to be deleted.
+        jobid : str
+            ID of Job to be deleted. The token must identify the owner
+            of the Job to be deleted.
+
+        Returns
+        -------
+        '''
+        query_args = {"jobid" : jobid,
+                      "profile" : (profile if profile != 'default' else self.svc_profile),
+                      "debug" : self.debug}
+
+        return self.clientDelete(token, "job", query_args)
+
+
+    def findJobs(self, token, jobid, format='text', status='all',
+                 option='list'):
+        '''Find job records.  If jobid is None or '*', all records for the user
+           identified by the token are returned, otherwise the specific job
+           record is returned.
+
+        Parameters
+        ----------
+        token : str
+            User identity token.  The token must identify the owner of the
+            Job to be deleted.
+        jobid : str
+            Job ID to match.
+        format : str
+            Output format: 'text' or 'json'
+        status : str
+            Job phase status to match.  Default to 'all' but may be one of
+            EXECUTING, COMPLETED, ERROR, ABORT or WAITING.
+        option : str
+            Processing option:  'list' will return a listing of the matching
+            records in the format specified by 'format'; 'delete' will delete
+            all matching records from the server except for EXECUTING jobs.
+
+        Returns
+        -------
+            A JSON string of Job records matching the user or jobid. 
+        '''
+        url = self.svc_url + "/findJobs"
+
+        query_args = {"jobid" : jobid,
+                      "format" : format,
+                      "status" : status,
+                      "option" : option,
+                      "profile" : self.svc_profile,
+                      "debug" : self.debug}
+        try:
+            # Add the auth token to the request header.
+            headers = {'X-DL-AuthToken': token}
+
+            r = requests.get(url, params=query_args, headers=headers)
+            response = r.text
+
+            if r.status_code != 200:
+                raise Exception(r.text)
+
+        except Exception:
+            raise dlResError(response)
+
+        if format == 'json':
+            import json
+            return json.loads(response.replace("'",'"'))
+        else:
+            return response
+
+
+
+    ###################################################
+    #  PRIVATE UTILITY METHODS
+    ###################################################
+
+    def debug(self, debug_val):
+        '''Set the debug flag.
+        '''
+        self.debug = debug_val
+
+    def retBoolValue(self, url):
+        '''Utility method to call a boolean service at the given URL.
+        '''
+        try:
+            # Add the auth token to the request header.
+            headers = {'X-DL-AuthToken': token}
+
+            r = requests.get(url, headers=headers)
+            response = r.text
+
+            if r.status_code != 200:
+                raise Exception(r.text)
+
+        except Exception:
+            raise dlResError("Invalid user")
+        else:
+            return response
+
+    def clientRead(self, token, what, key, keyword, profile='default'):
+        '''Generic method to call a /get service.
+        '''
+        url = self.svc_url + "/get?what=" + what #+ "&"
+
+        _key = keys[what]
+        query_args = {_key : key,
+                      "keyword" : keyword,
+                      "profile" : self.svc_profile,
+                      "debug" : self.debug}
+        try:
+            if self.debug:
+                print("get" + what + ": url = '" + url + "'")
+
+            # Add the auth token to the request header.
+            headers = {'X-DL-AuthToken': token}
+
+            r = requests.get(url, params=query_args, headers=headers)
+            response = r.text
+
+            if r.status_code != 200:
+                raise Exception(r.text)
+
+        except Exception:
+            raise dlResError(response)
+        else:
+            pass
+
+        return response
+
+    def clientUpdate(self, token, what, key, keyword, value, profile='default'):
         '''Generic method to call a /set service.
         '''
-        url = self.svc_url + "/set?what=" + what + "&"
+        url = self.svc_url + "/set?what=" + what #+ "&"
 
-        query_args = {"keyword" : keyword,
+        _key = keys[what]
+        query_args = {_key : key,
+                      "keyword" : keyword,
                       "value" : value,
                       "profile" : self.svc_profile,
                       "debug" : self.debug}
@@ -951,8 +1186,8 @@ class resClient(object):
             if self.debug:
                 print("set" + what + ": url = '" + url + "'")
 
-            # Add the auth token to the reauest header.
-            headers = {'X-DL-AuthToken': self.auth_token}
+            # Add the auth token to the request header.
+            headers = {'X-DL-AuthToken': token}
 
             r = requests.get(url, params=query_args, headers=headers)
             response = r.text
@@ -976,7 +1211,7 @@ class resClient(object):
             if self.debug:
                 print("delete" + what + ": url = '" + url + "'")
 
-            # Add the auth token to the reauest header.
+            # Add the auth token to the request header.
             headers = {'X-DL-AuthToken': token}
 
             r = requests.get(url, params=query_args, headers=headers)

@@ -94,8 +94,11 @@ try:
     from urllib import quote_plus               # Python 2
 except ImportError:
     from urllib.parse import quote_plus         # Python 3
-from io import StringIO			        # Python 2/3 compatible
-from io import BytesIO			        # Python 2/3 compatible
+try:
+    from cStringIO import StringIO
+except:
+    from io import StringIO			# Python 2/3 compatible
+from io import BytesIO
 import socket
 import json
 import time
@@ -1501,7 +1504,6 @@ def mydb_rename(token, source, target):
     return qc_client._mydb_rename (token=def_token(token),
                                 source=source, target=target)
 
-
 @multimethod('qc',2,False)
 def mydb_rename(source, target, token=None):
     '''Rename a table in the user's MyDB to a new name
@@ -1940,7 +1942,7 @@ class queryClient (object):
         if async_ and 'wait' in kw:
             self.async_wait = wait = kw['wait']
 
-        stream = False 		        # set a streaming request and adjust 
+        stream = False 		        # set a streaming request and adjust
         if 'stream' in kw:
             stream = kw['stream']
             if stream:
@@ -1989,7 +1991,7 @@ class queryClient (object):
         # Make the service call.  In a streaming request we force a Sync
         # operation and by setting the timeout to zero let it run as long as
         # needed.  Once a JM is implemented an ASync save will be possible.
-        # Note:  Results may still be limited by the memory available to 
+        # Note:  Results may still be limited by the memory available to
         # contain the result string, especially in notebook environments.
         if stream:
             if (out is not None and out != '') and not async_:

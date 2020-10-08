@@ -54,6 +54,7 @@ __version__ = 'v2.18.7'
 
 import requests
 import os
+import json
 
 
 # The URL of the ResManager service to contact.  This may be changed by
@@ -1098,7 +1099,7 @@ class resClient(object):
             headers = {'X-DL-AuthToken': token}
 
             r = requests.get(url, params=query_args, headers=headers)
-            response = r.text
+            response = str(r.text)
 
             if r.status_code != 200:
                 raise Exception(r.text)
@@ -1107,8 +1108,12 @@ class resClient(object):
             raise dlResError(response)
 
         if format == 'json':
-            import json
-            return json.loads(response.replace("'",'"'))
+            try:
+                jstr_ = response.replace("'",'"')[1:-1]
+                jstr = json.loads(jstr_)
+            except Exception as e:
+                raise dlResError(str(e))
+            return jstr
         else:
             return response
 

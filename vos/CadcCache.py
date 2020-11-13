@@ -13,10 +13,8 @@ except:
     from queue import Queue
 import traceback
 import errno
-try:
-    from contextlib import nested  # Python 2
-except ImportError:
-    from contextlib import ExitStack, contextmanager
+
+from contextlib import ExitStack, contextmanager
 
     @contextmanager
     def nested(*contexts):

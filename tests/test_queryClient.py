@@ -7,12 +7,9 @@
 from dl import authClient, storeClient, queryClient
 import os
 import unittest
-try:
-    from urllib import urlencode, quote_plus	        # Python 2
-    from urllib2 import urlopen, Request                # Python 2
-except ImportError:
-    from urllib.parse import urlencode, quote_plus      # Python 3
-    from urllib.request import urlopen, Request         # Python 3
+
+from urllib.parse import urlencode, quote_plus      # Python 3
+from urllib.request import urlopen, Request         # Python 3
 import requests
 from astropy.table import Table
 import numpy as np

@@ -43,17 +43,12 @@ try:
 except NameError:
     raw_input = input
 
-try:
-    import ConfigParser                         # Python 2
-    from urllib import quote_plus               # Python 2
-except ImportError:
-    import configparser as ConfigParser          # Python 2
-    from urllib.parse import quote_plus         # Python 3
+import configparser as ConfigParser
+from urllib.parse import quote_plus
 
-try:
-    from http.client import HTTPConnection # py3
-except ImportError:
-    from httplib import HTTPConnection # py2
+
+from http.client import HTTPConnection # py3
+
 
 import requests             # need to standarize on one library at some point
 

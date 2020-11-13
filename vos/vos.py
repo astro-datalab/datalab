@@ -41,10 +41,8 @@ except NameError:
             pass
         _unicode = unicode
 
-try:
-    from contextlib import nested  # Python 2
-except ImportError:
-    from contextlib import ExitStack, contextmanager
+
+from contextlib import ExitStack, contextmanager
 
     @contextmanager
     def nested(*contexts):
@@ -56,18 +54,12 @@ except ImportError:
                 stack.enter_context(ctx)
             yield contexts
 
-try:
-    import ConfigParser                                 # Python 2
-    from urllib import splittag, splitquery, urlencode
-    from urlparse import parse_qs, urlparse
-    from cStringIO import StringIO
-    import httplib as http_client
-except ImportError:
-    import configparser as ConfigParser                 # Python 3
-    from urllib.parse import splittag, splitquery, urlencode
-    from urllib.parse import parse_qs, urlparse
-    from io import StringIO
-    import http.client as http_client
+
+import configparser as ConfigParser                 # Python 3
+from urllib.parse import splittag, splitquery, urlencode
+from urllib.parse import parse_qs, urlparse
+from io import StringIO
+import http.client as http_client
 
 http_client.HTTPConnection.debuglevel = 0  #1
 

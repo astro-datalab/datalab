@@ -48,12 +48,8 @@ import os
 import sys
 from time import gmtime, strftime
 
-try:
-    from urllib import urlencode                # Python 2
-    import ConfigParser                         # Python 2
-except ImportError:
-    from urllib.parse import urlencode          # Python 3
-    import configparser as ConfigParser         # Python 3
+from urllib.parse import urlencode          # Python 3
+import configparser as ConfigParser         # Python 3
 
 #if os.path.isfile('./Util.py'):                # use local dev copy
 #    from Util import def_token
@@ -1124,16 +1120,11 @@ def acToString(s):
     '''acToString -- Force a return value to be type 'string' for all
                       Python versions.
     '''
-    if is_py3:
-        if isinstance(s,bytes):
-            strval = str(s.decode())
-        elif isinstance(s,str):
-            strval = s
-    else:
-        if isinstance(s,bytes) or isinstance(s,unicode):
-            strval = str(s)
-        else:
-            strval = s
+
+    if isinstance(s,bytes):
+        strval = str(s.decode())
+    elif isinstance(s,str):
+        strval = s
 
     return strval
 

@@ -1791,10 +1791,8 @@ class storeClient(object):
     def _load(self, token=None, name='', endpoint='', is_vospace=False):
         '''Implementation of the load() method.
         '''
-        try:
-            from urllib import quote_plus               # Python 2
-        except ImportError:
-            from urllib.parse import quote_plus         # Python 3
+
+        from urllib.parse import quote_plus
 
         uri = (name if name.count('://') > 0 else 'vos://' + name)
         r = self.getFromURL(self.svc_url,

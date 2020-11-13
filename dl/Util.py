@@ -26,10 +26,8 @@ import random
 import string
 from functools import partial
 
-try:
-    import ConfigParser                         # Python 2
-except ImportError:
-    import configparser as ConfigParser         # Python 3
+
+import configparser as ConfigParser
 
 
 # =========================================================================

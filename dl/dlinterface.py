@@ -23,16 +23,11 @@ Import via
 import os
 from subprocess import Popen, PIPE
 import time
-try:
-    import ConfigParser
-    from urllib import quote_plus, urlencode		# Python 2
-    from urllib2 import urlopen, Request                # Python 2
-    from cStringIO import StringIO
-except ImportError:
-    import configparser as ConfigParser                  # Python 2
-    from urllib.parse import quote_plus, urlencode      # Python 3
-    from urllib.request import urlopen, Request         # Python 3
-    from io import StringIO
+
+import configparser as ConfigParser
+from io import StringIO
+from urllib.parse import quote_plus, urlencode
+from urllib.request import urlopen, Request
 import requests
 from io import BytesIO
 

@@ -90,14 +90,9 @@ Import via
 '''
 
 import requests
-try:
-    from urllib import quote_plus               # Python 2
-except ImportError:
-    from urllib.parse import quote_plus         # Python 3
-try:
-    from cStringIO import StringIO
-except:
-    from io import StringIO			# Python 2/3 compatible
+from urllib.parse import quote_plus
+
+from io import StringIO
 from io import BytesIO
 import socket
 import json

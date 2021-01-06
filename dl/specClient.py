@@ -78,7 +78,9 @@ from astropy.utils.exceptions import AstropyWarning
 warnings.simplefilter('ignore', AstropyWarning)
 
 import logging
+logging.disable(logging.WARNING)
 logging.getLogger("specutils").setLevel(logging.CRITICAL)
+from specutils.io.registers import data_loader
 from specutils import Spectrum1D
 from specutils import SpectrumCollection
 

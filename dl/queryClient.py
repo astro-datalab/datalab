@@ -444,6 +444,7 @@ def query(token=None, adql=None, sql=None, fmt='csv', out=None, async_=False, dr
           * 'csv'          The returned result is a comma-separated string
                            that looks like a csv file (newlines at the end
                            of every row) [DEFAULT]
+          * 'csv-noheader' A csv result with no column headers (data only)
           * 'ascii'        Same, but the column separator is a tab \t
           * 'array'        Returns a NumPy array
           * 'pandas'       Returns a Pandas DataFrame
@@ -1966,7 +1967,7 @@ class queryClient (object):
                    'X-DL-OriginHost': self.hostname,
                    'X-DL-AuthToken': def_token(token)}  # application/x-sql
 
-        if fmt in ['pandas','array','structarray','table']:
+        if fmt in ['pandas','array','structarray','table','csv-noheader']:
             qfmt = 'csv'
         else:
             qfmt = fmt
@@ -2008,15 +2009,20 @@ class queryClient (object):
                 except Exception as e:
                     print ('Error in getStreamURL: %s' %  qcToString(str(e)))
                     return qcToString(str(e))
+
+                if 'noheader' in fmt:
+                    strval = qcToString(resp).strip()
+                    strval = strval[strval.find('\n')+1:]
+                else:
+                    strval = qcToString(resp)
                 if (out is not None and out != ''):
-                    return qcToString(resp)
+                    return strval
                 else:
                     # Otherwise, simply return the result of the query.
-                    strval = qcToString(resp)
                     if fmt in ['pandas','array','structarray','table']:
-                        return convert (strval,fmt)
+                        return convert (strval,fmt,**kw)
                     else:
-                        return qcToString(resp)
+                        return strval
 
         # If we're not streaming the request result, process it here.
         r = requests.get (dburl, headers=headers, timeout=timeout)
@@ -2078,9 +2084,13 @@ class queryClient (object):
             return 'OK'
         else:
             # Otherwise, simply return the result of the query.
-            strval = qcToString(resp)
+            if 'noheader' in fmt:
+                strval = qcToString(resp).strip()
+                strval = strval[strval.find('\n')+1:]
+            else:
+                strval = qcToString(resp)
             if fmt in ['pandas','array','structarray','table']:
-                return convert (strval,fmt)
+                return convert (strval, fmt, **kw)
             else:
                 return strval
 

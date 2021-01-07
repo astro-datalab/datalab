@@ -958,9 +958,9 @@ class resClient(object):
         type : str
             Type of job:  currently only 'query' or 'compute'
         query : str
-            If 'type' is 'query', the SQL/ADQL query string>
+            If 'type' is 'query', the SQL/ADQL query string
         task : str
-            If 'type' is 'compute', the name of the task being run.
+            If 'type' is 'compute', the name of the task being run
 
         Returns
         -------

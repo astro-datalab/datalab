@@ -2020,7 +2020,7 @@ class queryClient (object):
                 else:
                     # Otherwise, simply return the result of the query.
                     if fmt in ['pandas','array','structarray','table']:
-                        return convert (strval,fmt,**kw)
+                        return convert (strval,fmt)
                     else:
                         return strval
 
@@ -2090,7 +2090,7 @@ class queryClient (object):
             else:
                 strval = qcToString(resp)
             if fmt in ['pandas','array','structarray','table']:
-                return convert (strval, fmt, **kw)
+                return convert (strval, fmt)
             else:
                 return strval
 

@@ -1505,11 +1505,11 @@ class specClient(object):
             print('ty ids: ' + str(type(ids)))
 
         # Initialize the payload.
-        data = {'id_list': ids,
+        data = {'id_list': str(ids),
                 'values': values,
                 'format': fmt,
                 'align': align,
-                'cutout': cutout,
+                'cutout': str(cutout),
                 'w0': 0.0,
                 'w1': 0.0,
                 'context': context,
@@ -1535,7 +1535,7 @@ class specClient(object):
             # so we can return a list object.
             _data = []
             for id in ids:
-                data['id_list'] = id
+                data['id_list'] = str(id)
                 resp = requests.post(url, data=data, headers=headers)
                 if fmt.lower() == 'fits':
                     _data.append(resp.content)
@@ -1950,13 +1950,14 @@ class specClient(object):
             ids = id_list
 
         # Initialize the payload.
-        data = {'id_list': list(ids),
+        data = {'id_list': str(list(ids)),
                 'ncols': ny,
                 'context': context,
                 'profile': profile,
                 'debug': debug,
                 'verbose': verbose
               }
+
 
         resp = requests.post(url, data=data, headers=headers)
         if fmt == 'png':
@@ -2038,7 +2039,7 @@ class specClient(object):
         url = '%s/stackedImage' % self.svc_url
 
         # Initialize the payload.
-        data = {'id_list': list(id_list),
+        data = {'id_list': str(list(id_list)),
                 'context': context,
                 'xscale': xscale,
                 'yscale': yscale,

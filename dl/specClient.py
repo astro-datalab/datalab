@@ -89,10 +89,7 @@ from astropy.nddata import InverseVariance
 from astropy.table import Table
 from matplotlib import pyplot as plt      	# visualization libs
 
-try:
-    import pycurl_requests as requests		# faster 'requests' lib
-except ImportError:
-    import requests				# fall-back 'requests' lib
+import pycurl_requests as requests		# faster 'requests' lib
 import pycurl					# low-level interface
 from urllib.parse import quote_plus		# URL encoding
 

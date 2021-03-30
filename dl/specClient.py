@@ -115,8 +115,8 @@ if THIS_HOST[:5] == 'dldev':
     DEF_SERVICE_ROOT = "http://dldev.datalab.noao.edu"
 elif THIS_HOST[:6] == 'dltest':
     DEF_SERVICE_ROOT = "http://dltest.datalab.noao.edu"
-#elif THIS_HOST[:5] == 'munch':                          # DELETE ME
-#    DEF_SERVICE_ROOT = "http://localhost:6998"          # DELETE ME
+elif THIS_HOST[:4] == 'gp12':
+    DEF_SERVICE_ROOT = "http://gp06.datalab.noao.edu:6998"
 
 
 # Allow the service URL for dev/test systems to override the default.
@@ -1327,7 +1327,7 @@ class specClient(object):
         if context in [None, '']:
             context = self.svc_context
         if profile in [None, '']:
-            rofile = self.svc_profile
+            profile = self.svc_profile
 
         # Process optional keyword arguments.
         ofields = kw['fields'] if 'fields' in kw else self.context['id_main']

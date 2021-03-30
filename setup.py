@@ -54,6 +54,10 @@ setup(name="noaodatalab",
           'Programming Language :: Python',
           'Topic :: Scientific/Engineering :: Astronomy',
         ], 
-      install_requires=['requests>=2.7', 'httplib2', 'numpy>=1.13', 'astropy', 'pyvo', 'matplotlib','pandas'],
-      requires=['requests (>=2.7)', 'httplib2', 'numpy (>=1.13)', 'astropy', 'pyvo', 'matplotlib','pandas','pycurl_requests']
+      install_requires=['requests>=2.7', 'httplib2', 'numpy>=1.13',
+                        'astropy', 'pyvo', 'matplotlib','pandas',
+                        'pycurl_requests','specutils'],
+      requires=['requests (>=2.7)', 'httplib2', 'numpy (>=1.13)', 
+                'astropy', 'pyvo', 'matplotlib','pandas',
+                'pycurl_requests','specutils']
       )

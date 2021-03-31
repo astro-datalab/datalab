@@ -2,7 +2,7 @@
 
 # THE DATALAB COMMAND LINE CLIENT
 
-``datalab`` is command-line Python client for the [NOAO Data Lab](https://datalab.noao.edu).
+``datalab`` is command-line Python client for the [Astro Data Lab](https://datalab.noirlab.edu).
 
 It provides easy access to Data Lab functionalities:
 
@@ -19,6 +19,10 @@ Authentication to Data Lab is based on a username and password.
 * Python 3.x (Python 3.8 recommended; **We are no longer supporting Python 2**)
 * fuse or OSX-FUSE (if you want to mount the remote storage as a local filesystem)
 
+For Ubuntu users:
+
+* If the pip installation instructions below fail for you complaining about a missing library `libcurl4-openssl-dev`, please install it using your software/package manager.
+
 ## Installation
 
 The ``noaodatalab`` package installs the ``datalab`` command line
@@ -34,7 +38,7 @@ The easiest way to install the ``datalab`` client is via pip:
 pip install --ignore-installed --no-cache-dir noaodatalab
 ```
 
-The flags `--ignore-installed` and `--no-cache-dir` should ensure that the lastest version is pulled freshly from the internet.
+The flags `--ignore-installed` and `--no-cache-dir` should ensure that the latest version is pulled freshly from the internet.
 
 ### Install from sources
 
@@ -69,7 +73,7 @@ To check the currently installed version of `datalab`:
 ```
 datalab --version
 
-Task Version:  2.18.3
+Task Version:  2.19.1
 ```
 
 To get a list of available datalab commands (tasks):
@@ -173,10 +177,10 @@ ra,dec
 175.34222308206,-38.4433633662239
 ```
 
-A very comprehensive [user
-manual](https://datalab.noao.edu/docs/manual/) explains the many
-features of Data Lab.
-  
+A comprehensive [user manual](https://datalab.noirlab.edu/docs/manual/)
+explains the many features of Data Lab.
+
+<!---
 ### To mount virtual storage as a local directory at login
 
 You can mount the virtual storage as a local directory at login by
@@ -210,3 +214,4 @@ or unmount the space when you log out of Data Lab:
 ```
 datalab logout --unmount=/tmp/vospace
 ```
+-->

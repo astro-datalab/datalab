@@ -2472,7 +2472,7 @@ class queryClient (object):
             dburl += "&profile=%s" % self.svc_profile
 
         r = requests.get (dburl, headers=headers)
-        if verbose:
+        if verbose is True:
             return qcToString(r.content)
         else:
             return removeComment(qcToString(r.content))

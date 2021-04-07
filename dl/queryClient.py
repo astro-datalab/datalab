@@ -55,8 +55,8 @@ Query Manager Client Interface
                   wait  (optval, jobId=None, wait=3, verbose=False)
                   wait  (token=None, jobId=None, wait=3, verbose=False)
 
-             mydb_list  (optval, table=None)
-             mydb_list  (table=None, token=None)
+             mydb_list  (optval, table=None, **kw)
+             mydb_list  (table=None, token=None, **kw)
            mydb_create  (token, table, schema, **kw)
            mydb_create  (table, schema, token=None, **kw)
            mydb_insert  (token, table, data, **kw)
@@ -1098,22 +1098,22 @@ def drop(table=None, token=None):
 # MYDB_LIST -- List the tables or table schema in a user's MyDB.
 #
 @multimethod('qc',1,False)
-def mydb_list(optval, table=None, index=False):
+def mydb_list(optval, table=None, index=False, **kw):
     if optval is not None and len(optval.split('.')) >= 4:
         # optval looks like a token
         return qc_client._mydb_list (token=def_token(optval), table=table,
-                                     index=index)
+                                     index=index, **kw)
     else:
         # optval is likely a table name
         return qc_client._mydb_list (token=def_token(None), table=optval,
-                                     index=index)
+                                     index=index, **kw)
 
 @multimethod('qc',0,False)
-def mydb_list(table=None, token=None, index=False):
+def mydb_list(table=None, token=None, index=False, **kw):
     '''List the tables or table schema in the user's MyDB.
 
     Usage:
-        mydb_list (table=None, token=None)
+        mydb_list (table=None, token=None, **kw)
 
     MultiMethod Usage:
     ------------------
@@ -1144,7 +1144,7 @@ def mydb_list(table=None, token=None, index=False):
         queryClient.mydb_list()
     '''
     return qc_client._mydb_list (token=def_token(token), table=table,
-                                 index=index)
+                                 index=index, **kw)
 
 
 # --------------------------------------------------------------------
@@ -2438,31 +2438,33 @@ class queryClient (object):
     # MYDB_LIST -- List the tables or table schema in a user's MyDB.
     #
     @multimethod('_qc',1,True)
-    def mydb_list(self, optval, table=None, index=False):
+    def mydb_list(self, optval, table=None, index=False, **kw):
         '''Usage:  queryClient.mydb_list (table)
                      queryClient.mydb_list (token, table=<str>)
         '''
         if optval is not None and len(optval.split('.')) >= 4:
             # optval looks like a token
             return self._mydb_list (token=def_token(optval), table=table,
-                                    index=index)
+                                    index=index, **kw)
         else:
             # optval is probably a table
             return self._mydb_list (token=def_token(None), table=optval,
-                                    index=index)
+                                    index=index, **kw)
 
     @multimethod('_qc',0,True)
-    def mydb_list(self, token=None, table=None, index=False):
+    def mydb_list(self, token=None, table=None, index=False, **kw):
         '''Usage:  queryClient.mydb_list (table=<str>)
         '''
         return self._mydb_list (token=def_token(token), table=table,
-                                index=index)
+                                index=index, **kw)
 
-    def _mydb_list(self, token=None, table=None, index=False):
+    def _mydb_list(self, token=None, table=None, index=False, **kw):
         '''Implementation of the mydb_list() method.
         '''
         headers = self.getHeaders (token)
-
+        verbose = False
+        if 'verbose' in kw:
+            verbose = kw['verbose']
         if table is None:
             table = ''
         dburl = '%s/list?table=%s&index=%s' % (self.svc_url, table, str(index))
@@ -2470,7 +2472,10 @@ class queryClient (object):
             dburl += "&profile=%s" % self.svc_profile
 
         r = requests.get (dburl, headers=headers)
-        return qcToString(r.content)
+        if verbose is True:
+            return qcToString(r.content)
+        else:
+            return removeComment(qcToString(r.content))
 
 
     # --------------------------------------------------------------------
@@ -3226,3 +3231,11 @@ def qcToString(s):
         strval = s
 
     return strval
+
+# remove "created at <time>" comment from mydb_list
+def removeComment(s):
+    list = s.split('\n')
+    new_list = []
+    for table in list:
+        new_list.append(table.split(',created:')[0])
+    return '\n'.join(new_list)

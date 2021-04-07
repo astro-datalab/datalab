@@ -2843,7 +2843,7 @@ class queryClient (object):
             dburl += "&profile=%s" % self.svc_profile
 
         r = requests.get (dburl, headers=headers)
-        if r.content[:5].lower() == 'error':
+        if 'error' in str(r.content).lower() or 'not' in str(r.content).lower():
             return qcToString(r.content)
         else:
             return 'OK'

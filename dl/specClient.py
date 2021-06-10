@@ -89,13 +89,12 @@ from astropy.nddata import InverseVariance
 from astropy.table import Table
 from matplotlib import pyplot as plt      	# visualization libs
 
-import requests as req				# standard 'requests' lib
-import pycurl_requests as requests		# faster 'requests' lib
+try:
+    import pycurl_requests as requests		# faster 'requests' lib
+except ImportError:
+    import requests
 import pycurl					# low-level interface
 from urllib.parse import quote_plus		# URL encoding
-from requests_futures import sessions		# for threaded client queries
-from concurrent.futures import ThreadPoolExecutor as PoolExecutor
-
 
 # Data Lab imports.
 #from dl import queryClient
@@ -119,7 +118,7 @@ if THIS_HOST[:5] == 'dldev':
     DEF_SERVICE_ROOT = "http://dldev.datalab.noao.edu"
 elif THIS_HOST[:6] == 'dltest':
     DEF_SERVICE_ROOT = "http://dltest.datalab.noao.edu"
-elif THIS_HOST[:4] == 'gp12':
+elif THIS_HOST[:5] == 'gp12':
     DEF_SERVICE_ROOT = "http://gp06.datalab.noao.edu:6998"
 
 
@@ -1473,12 +1472,6 @@ class specClient(object):
                      different sizes
         '''
 
-        def getSingleSpec (id):
-            '''Utility function for threaded queries.
-            '''
-            data['id_list'] = str(id)
-            return requests.post(url, data=data) 
-
         if context in [None, '']:
             context = self.svc_context
         if profile in [None, '']:
@@ -1525,14 +1518,14 @@ class specClient(object):
                 'verbose': verbose
               }
 
+        # Get the limits of the collection
+        url = '%s/listSpan' % self.svc_url
+        resp = requests.post(url, data=data, headers=headers)
+        v = json.loads(resp.text)
+        data['w0'], data['w1'] = v['w0'], v['w1']
+
         url = '%s/getSpec' % self.svc_url
         if align:
-            # Get the limits of the collection
-            ls_url = '%s/listSpan' % self.svc_url
-            resp = requests.post(ls_url, data=data, headers=headers)
-            v = json.loads(resp.text)
-            data['w0'], data['w1'] = v['w0'], v['w1']
-
             # If we're aligning columns, the server will pad the values
             # and return a common array size.
             resp = requests.post(url, data=data, headers=headers)
@@ -1540,25 +1533,18 @@ class specClient(object):
         else:
             # If not aligning columns, request each spectrum individually
             # so we can return a list object.
-            if not (isinstance(id_list,list) or isinstance(id_list,np.ndarray)):
-                id_list = [ id_list ]
             _data = []
-            with PoolExecutor(max_workers=8) as executor:
-                _f = {}                         # mapping of futures by id
-                for id in id_list:
-                    _f[id] = executor.submit(getSingleSpec, id)
-
-                # Gather the results in the same order as the input id_list,
-                # even if that means we need to wait for a thread to complete.
-                for id in id_list:
-                    res = _f[id].result()
-                    np_data = np.load(BytesIO(res.content), allow_pickle=False)
+            for id in ids:
+                data['id_list'] = str(id)
+                resp = requests.post(url, data=data, headers=headers)
+                if fmt.lower() == 'fits':
+                    _data.append(resp.content)
+                else:
+                    np_data = np.load(BytesIO(resp.content), allow_pickle=False)
                     _data.append(np_data)
-
             if fmt.lower() != 'fits':
                 _data = np.array(_data)
 
-        # Convert to the requested output format.
         if fmt.lower() == 'fits':
             # Note: assumes a single file is requested.
             if len(_data) == 1:

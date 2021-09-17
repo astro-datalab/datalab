@@ -91,6 +91,7 @@ import glob
 import socket
 import json
 import time
+import re 
 
 if os.path.isfile('./Util.py'):                # use local dev copy
     from Util import multimethod
@@ -371,6 +372,52 @@ def stat(path, token=None, verbose=True):
             print('File size is: ' + stat['size'])
     '''
     return sc_client._stat(path=path, token=def_token(token), verbose=verbose)
+
+
+
+# --------------------------------------------------------------------
+# IS_AUTH_TOKEN -- returns True if the the string pass is a token
+#                  False otherwise
+#
+def is_auth_token(token):
+    """Check if passed in string is an auth token
+    Usage:
+        is_auth_token(token)
+
+    Parameters
+    ----------
+    token : str
+        A string auth token
+        E.g.
+        "testuser.3666.3666.$1$PKCFmMzy$OPpZg/ThBmZe/V8LVPvpi/%"
+
+    Returns
+    -------
+    return: boolean
+         True if string is a auth token
+    """
+
+    """
+    E.g. token "testuser.3666.3666.$1$PKCFmMzy$OPpZg/ThBmZe/V8LVPvpi/%"
+    Regex deconstruction and explanation:
+    -------------------------------------
+    1.   ([^\/\s]+)     any string with no "/" or spaces
+    2.   \.             separated by a .
+    3.   \d+            followed by any number of digits
+    4.   \.             separated by a .
+    5.   \d+            followed by any number of digits
+    6.   \.             separated by a .
+    7.a) (\$1\$\S{22,}) A string that starts with $1$ (that's how a md5 hash
+                        starts) and that is followed by any non space 
+                        characters of 22 chars or longer
+    7.b) |              or
+    7.c) (\S+_access)   A string that ends in _access. This is a special
+                        case for special tokens such as:
+                          anonymous.0.0.anon_access
+                          dldemo.99999.99999.demo_access
+    """
+
+    return re.match(r'([^\/\s]+)\.\d+\.\d+\.((\$1\$\S{22,})|(\S+_access))', token)
 
 
 
@@ -669,7 +716,7 @@ def ls(token, name, format='csv', verbose=False):
 
 @multimethod('sc',1,False)
 def ls(optval, name='vos://', token=None, format='csv', verbose=False):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return sc_client._ls(name=name, format=format,
                           token=def_token(optval), verbose=verbose)
@@ -1940,7 +1987,7 @@ class storeClient(object):
         ''' Usage:  storeClient.ls(name)
              Usage:  storeClient.ls(token, name='foo')
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._ls(name=name, format=format,
                              token=def_token(optval), verbose=verbose)

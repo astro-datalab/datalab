@@ -5,8 +5,7 @@
 
 from __future__ import print_function
 
-__authors__ = 'Mike Fitzpatrick <mike.fitzpatrick@noirlab.edu>, Data Lab
-<datalab@noirlab.edu>'
+__authors__ = 'Mike Fitzpatrick <mike.fitzpatrick@noirlab.edu>, Data Lab <datalab@noirlab.edu>'
 __version__ = 'v2.18.6'
 
 

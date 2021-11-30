@@ -1,4 +1,4 @@
-__author__ = 'Robert Nikutta <nikutta@noao.edu>, NOAO Data Lab <datalab@noao.edu>'
+__author__ = 'Robert Nikutta <robert.nikutta@noirlab.edu>, NOAO Data Lab <datalab@noirlab.edu>'
 __version__ = '20180131' #yyyymmdd
 
 import unittest

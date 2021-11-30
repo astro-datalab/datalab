@@ -7,7 +7,7 @@
 
 """
 
-__authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
+__authors__ = 'Robert Nikutta <robert.nikutta@noirlab.edu>, Data Lab <datalab@noirlab.edu>'
 __version__ = '20171220' # yyyymmdd
 
 from helpers.utils import *

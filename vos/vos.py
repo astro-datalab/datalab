@@ -1121,8 +1121,8 @@ class VOFile(object):
 
 class EndPoints(object):
     CADC_SERVER = 'www.canfar.phys.uvic.ca'
-#    NOAO_TEST_SERVER = "dldemo.sdm.noao.edu:8080/vospace-2.0"
-    NOAO_TEST_SERVER = "dldb1.sdm.noao.edu:8080/vospace-2.0"
+#    NOAO_TEST_SERVER = "dldemo.datalab.noirlab.edu:8080/vospace-2.0"
+    NOAO_TEST_SERVER = "dldb1.datalab.noirlab.edu:8080/vospace-2.0"
     LOCAL_TEST_SERVER = 'localhost:8080/vospace-2.0'
     DEFAULT_VOSPACE_URI = 'datalab.noao.edu!vospace'
 #    DEFAULT_VOSPACE_URI = 'nvo.caltech!vospace'

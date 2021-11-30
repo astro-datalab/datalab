@@ -5,7 +5,8 @@
 
 from __future__ import print_function
 
-__authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
+__authors__ = 'Mike Fitzpatrick <mike.fitzpatrick@noirlab.edu>, Data Lab
+<datalab@noirlab.edu>'
 __version__ = 'v2.18.6'
 
 
@@ -84,14 +85,14 @@ DEF_USERS = {'anonymous': ANON_TOKEN,
 # The URL of the AuthManager service to contact.  This may be changed by
 # passing a new URL into the set_svc_url() method before beginning.
 
-DEF_SERVICE_ROOT = "https://datalab.noao.edu"
+DEF_SERVICE_ROOT = "https://datalab.noirlab.edu"
 
 # Allow the service URL for dev/test systems to override the default.
 THIS_HOST = socket.gethostname()
 if THIS_HOST[:5] == 'dldev':
-    DEF_SERVICE_ROOT = "http://dldev.datalab.noao.edu"
+    DEF_SERVICE_ROOT = "http://dldev.datalab.noirlab.edu"
 elif THIS_HOST[:6] == 'dltest':
-    DEF_SERVICE_ROOT = "http://dltest.datalab.noao.edu"
+    DEF_SERVICE_ROOT = "http://dltest.datalab.noirlab.edu"
 
 DEF_SERVICE_URL = DEF_SERVICE_ROOT + "/auth"
 SM_SERVICE_URL  = DEF_SERVICE_ROOT + "/storage"

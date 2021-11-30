@@ -48,7 +48,7 @@ Import via
 
 from __future__ import print_function
 
-__authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
+__authors__ = 'Mike Fitzpatrick <mike.fitzpatrick@noirlab.edu>, Data Lab <datalab@noirlab.edu>'
 __version__ = 'v2.18.7'
 
 
@@ -60,7 +60,7 @@ import json
 # The URL of the ResManager service to contact.  This may be changed by
 # passing a new URL into the set_svc_url() method before beginning.
 
-DEF_SERVICE_URL = "https://datalab.noao.edu/res"
+DEF_SERVICE_URL = "https://datalab.noirlab.edu/res"
 
 # The requested service "profile".  A profile refers to the specific
 # machines and services used by the ResManager on the server.

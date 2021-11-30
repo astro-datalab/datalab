@@ -2,7 +2,7 @@
 
 # THE DATALAB COMMAND LINE CLIENT
 
-``datalab`` is command-line Python client for the [NOAO Data Lab](https://datalab.noao.edu).
+``datalab`` is command-line Python client for the [NOAO Data Lab](https://datalab.noirlab.edu).
 
 It provides easy access to Data Lab functionalities:
 
@@ -173,8 +173,7 @@ ra,dec
 175.34222308206,-38.4433633662239
 ```
 
-A very comprehensive [user
-manual](https://datalab.noao.edu/docs/manual/) explains the many
+A very comprehensive [user manual](https://datalab.noirlab.edu/docs/manual/) explains the many
 features of Data Lab.
   
 ### To mount virtual storage as a local directory at login

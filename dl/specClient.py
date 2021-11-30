@@ -3,7 +3,7 @@
 # SPECCLIENT -- Client methods for the Spectroscopic Data Service
 #
 
-__authors__ = 'Mike Fitzpatrick <fitz@noao.edu>'
+__authors__ = 'Mike Fitzpatrick <mike.fitzpatrick@noirlab.edu>'
 __version__ = 'v1.2.0'
 
 
@@ -110,16 +110,16 @@ is_py3 = sys.version_info.major == 3
 
 # The URL of the service to access.  This may be changed by passing a new
 # URL into the set_svc_url() method before beginning.
-DEF_SERVICE_ROOT = "https://datalab.noao.edu"
+DEF_SERVICE_ROOT = "https://datalab.noirlab.edu"
 
 # Allow the service URL for dev/test systems to override the default.
 THIS_HOST = socket.gethostname()
 if THIS_HOST[:5] == 'dldev':
-    DEF_SERVICE_ROOT = "http://dldev.datalab.noao.edu"
+    DEF_SERVICE_ROOT = "https://dldev.datalab.noirlab.edu"
 elif THIS_HOST[:6] == 'dltest':
-    DEF_SERVICE_ROOT = "http://dltest.datalab.noao.edu"
+    DEF_SERVICE_ROOT = "https://dltest.datalab.noirlab.edu"
 elif THIS_HOST[:5] == 'gp12':
-    DEF_SERVICE_ROOT = "http://gp06.datalab.noao.edu:6998"
+    DEF_SERVICE_ROOT = "http://gp06.datalab.noirlab.edu:6998"
 
 
 # Allow the service URL for dev/test systems to override the default.

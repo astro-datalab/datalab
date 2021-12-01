@@ -5,7 +5,7 @@
 
 from __future__ import print_function
 
-__authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Matthew Graham <graham@noao.edu>, Data Lab <datalab@noao.edu>'
+__authors__ = 'Mike Fitzpatrick <mike.fitzpatrick@noirlab.edu>, Matthew Graham <mjg@caltech.edu.edu>, Data Lab <datalab@noirlab.edu>'
 __version__ = 'v2.18.12'
 
 
@@ -131,8 +131,8 @@ is_py3 = sys.version_info.major == 3
 # The URL of the QueryManager service to contact.  This may be changed by
 # passing a new URL into the set_svc_url() method before beginning.
 
-DEF_SERVICE_ROOT = 'https://datalab.noao.edu'
-DAL_SERVICE_URL = 'https://datalab.noao.edu' 	# The base DAL service URL
+DEF_SERVICE_ROOT = 'https://datalab.noirlab.edu'
+DAL_SERVICE_URL = 'https://datalab.noirlab.edu' 	# The base DAL service URL
 
 # Allow the service URL for dev/test systems to override the default.
 THIS_HOST = socket.gethostname()			# host name
@@ -142,9 +142,9 @@ THIS_IP, _ = sock.getsockname()
 
 
 if THIS_HOST[:5] == 'dldev':
-    DEF_SERVICE_ROOT = 'http://dldev.datalab.noao.edu'
+    DEF_SERVICE_ROOT = 'http://dldev.datalab.noirlab.edu'
 elif THIS_HOST[:6] == 'dltest':
-    DEF_SERVICE_ROOT = 'http://dltest.datalab.noao.edu'
+    DEF_SERVICE_ROOT = 'http://dltest.datalab.noirlab.edu'
 
 DEF_SERVICE_URL = DEF_SERVICE_ROOT + '/query'
 SM_SERVICE_URL  = DEF_SERVICE_ROOT + '/storage'
@@ -3239,3 +3239,4 @@ def removeComment(s):
     for table in list:
         new_list.append(table.split(',created:')[0])
     return '\n'.join(new_list)
+

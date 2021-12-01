@@ -190,7 +190,7 @@ using the optional <i>mount</i> argument.
 datalab login --user=<user> --password=<password> --mount=/tmp/vospace
 ```
 
-This will attempt to mount the default virtual storage (at NOAO). If
+This will attempt to mount the default virtual storage (at NOIRLab). If
 you need to mount another one, you should use the ``datalab mount`` option.
 
 ### To mount virtual storage as a local directory once logged in

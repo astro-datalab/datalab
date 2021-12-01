@@ -131,17 +131,17 @@ following structure:
 
     [auth]
     profile = default
-    svc_url = http://datalab.noao.edu/auth
+    svc_url = https://datalab.noirlab.edu/auth
 
     [query]
     profile = default
-    svc_url = http://datalab.noao.edu/query
+    svc_url = https://datalab.noirlab.edu/query
     sync_timeout = 120
     async_timeout = 86400
 
     [store]
     profile = default
-    svc_url = http://datalab.noao.edu/store
+    svc_url = https://datalab.noirlab.edu/store
 
 
     # User section:

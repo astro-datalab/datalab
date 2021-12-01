@@ -4,7 +4,7 @@
 
 from __future__ import print_function
 
-__authors__ = 'Mike Fitzpatrick <fitz@noao.edu>, Matthew Graham <graham@noao.edu>, Data Lab <datalab@noao.edu>'
+__authors__ = 'Mike Fitzpatrick <mike.fitzpatrick@noirlab.edu>, Matthew Graham <mjg@caltech.edu>, Data Lab <datalab@noirlab.edu>'
 __version__ = 'v2.18.6'
 
 
@@ -114,7 +114,7 @@ is_py3 = sys.version_info.major == 3
 # The URL of the Storage Manager service to contact.  This may be changed by
 # passing a new URL into the set_svc_url() method before beginning.
 
-DEF_SERVICE_ROOT = 'https://datalab.noao.edu'
+DEF_SERVICE_ROOT = 'https://datalab.noirlab.edu'
 
 # Allow the service URL for dev/test systems to override the default.
 THIS_HOST = socket.gethostname()                        # host name
@@ -123,9 +123,9 @@ sock.connect(('8.8.8.8', 1))  	# Example IP address, see RFC 5737
 THIS_IP, _ = sock.getsockname()
 
 if THIS_HOST[:5] == 'dldev':
-    DEF_SERVICE_ROOT = 'http://dldev.datalab.noao.edu'
+    DEF_SERVICE_ROOT = 'https://dldev.datalab.noirlab.edu'
 elif THIS_HOST[:6] == 'dltest':
-    DEF_SERVICE_ROOT = 'http://dltest.datalab.noao.edu'
+    DEF_SERVICE_ROOT = 'https://dltest.datalab.noirlab.edu'
 
 DEF_SERVICE_URL = DEF_SERVICE_ROOT + '/storage'
 QM_SERVICE_URL = DEF_SERVICE_ROOT + '/query'
@@ -1202,7 +1202,7 @@ class storeClient(object):
         -------
         .. code-block:: python
 
-            storeClient.set_scv_url("http://demo.datalab.noao.edu:7003")
+            storeClient.set_scv_url("http://demo.datalab.noirlab.edu:7003")
         '''
         self.svc_url = scToString(svc_url.strip('/'))
 

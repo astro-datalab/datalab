@@ -5,7 +5,7 @@
 
 from __future__ import print_function
 
-__authors__ = 'Matthew Graham <graham@noao.edu>, Mike Fitzpatrick <fitz@noao.edu>, Data Lab <datalab@noao.edu>'
+__authors__ = 'Matthew Graham <mjg@caltech.edu>, Mike Fitzpatrick <mike.fitzpatrick@noirlab.edu>, Data Lab <datalab@noirlab.edu>'
 __version__ = '20170520'  # yyyymmdd
 
 
@@ -93,17 +93,17 @@ THIS_IP, _ = sock.getsockname()
 
 
 if THIS_HOST[:5] == 'dldev':
-    DEF_SERVICE_ROOT = 'http://dldev.datalab.noao.edu'
-    AM_URL = "http://dldev.datalab.noao.edu/auth"       # Auth Manager
-    SM_URL = "http://dldev.datalab.noao.edu/storage"    # Storage Manager
-    QM_URL = "http://dldev.datalab.noao.edu/query"      # Query Manager
-    RES_URL = "http://dldev.datalab.noao.edu/res"       # Resource Manager
+    DEF_SERVICE_ROOT = 'http://dldev.datalab.noirlab.edu'
+    AM_URL = "http://dldev.datalab.noirlab.edu/auth"       # Auth Manager
+    SM_URL = "http://dldev.datalab.noirlab.edu/storage"    # Storage Manager
+    QM_URL = "http://dldev.datalab.noirlab.edu/query"      # Query Manager
+    RES_URL = "http://dldev.datalab.noirlab.edu/res"       # Resource Manager
 elif THIS_HOST[:6] == 'dltest':
-    DEF_SERVICE_ROOT = 'http://dltest.datalab.noao.edu'
-    AM_URL = "http://dltest.datalab.noao.edu/auth"       # Auth Manager
-    SM_URL = "http://dltest.datalab.noao.edu/storage"    # Storage Manager
-    QM_URL = "http://dltest.datalab.noao.edu/query"      # Query Manager
-    RES_URL = "http://dltest.datalab.noao.edu/res"       # Resource Manager
+    DEF_SERVICE_ROOT = 'http://dltest.datalab.noirlab.edu'
+    AM_URL = "http://dltest.datalab.noirlab.edu/auth"       # Auth Manager
+    SM_URL = "http://dltest.datalab.noirlab.edu/storage"    # Storage Manager
+    QM_URL = "http://dltest.datalab.noirlab.edu/query"      # Query Manager
+    RES_URL = "http://dltest.datalab.noirlab.edu/res"       # Resource Manager
 
 
 

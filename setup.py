@@ -35,7 +35,7 @@ setup(name="noaodatalab",
       url="https://github.com/noaodatalab/datalab/",
       description="Tools for interacting with NOAO Data Lab.",
       author="M.J. Graham, M.J. Fitzpatrick, D.L. Nidever, R. Nikutta",
-      author_email="graham@noao.edu, fitz@noao.edu, dnidever@noao.edu, nikutta@noao.edu",
+      author_email="mjg@caltech.edu, mike.fitzpatrick@noirlab.edu, robert.nikutta@noirlab.edu",
       long_description="Tools for interacting with the NOAO Data Lab services",
       packages=find_packages(exclude=['test.*']),
       package_data ={

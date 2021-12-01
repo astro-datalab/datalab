@@ -12,9 +12,9 @@ import numpy as np
 from io import StringIO
 
 # Service URLs
-AM_URL = "http://dlsvcs.datalab.noao.edu/auth"      # Auth Manager
-SM_URL = "http://dlsvcs.datalab.noao.edu/storage"   # Storage Manager
-QM_URL = "http://dlsvcs.datalab.noao.edu/query"     # Query Manager
+AM_URL = "https://dlsvcs.datalab.noirlab.edu/auth"      # Auth Manager
+SM_URL = "https://dlsvcs.datalab.noirlab.edu/storage"   # Storage Manager
+QM_URL = "https://dlsvcs.datalab.noirlab.edu/query"     # Query Manager
 # Test token
 TEST_TOKEN = "dltest.99998.99998.test_access"
 
@@ -164,7 +164,7 @@ class TestLoad(unittest.TestCase):
     def setUp(self):
         # Download the url from the web
         self.file = 'loadtest.txt'
-        self.url = 'http://datalab.noao.edu/tests/loadtest.txt'
+        self.url = 'https://datalab.noirlab.edu/tests/loadtest.txt'
         # Get the webpage contents
         self.testdata = requests.get(self.url).content
         # Delete input file if it exists already

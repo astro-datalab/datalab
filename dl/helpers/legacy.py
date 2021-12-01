@@ -1,6 +1,6 @@
 """Legacy helpers for Data Lab. Most are deprecated."""
 
-__authors__ = 'Robert Nikutta <nikutta@noao.edu>, Data Lab <datalab@noao.edu>'
+__authors__ = 'Robert Nikutta <robert.nikutta@noirlab.edu>, Data Lab <datalab@noirlab.edu>'
 __version__ = '20200204' # yyyymmdd
 
 # std lib imports

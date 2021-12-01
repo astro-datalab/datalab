@@ -1,6 +1,6 @@
 """Data Lab helpers for (local) positional cross-matching."""
 
-__authors__ = 'Robert Nikutta <nikutta@noao.edu>, NOAO Data Lab Team <datalab@noao.edu>'
+__authors__ = 'Robert Nikutta <robert.nikutta@noirlab.edu>, NOAO Data Lab Team <datalab@noirlab.edu>'
 __version__ = '20200204'
 
 from astropy.coordinates import SkyCoord

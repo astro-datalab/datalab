@@ -2,7 +2,7 @@
 
 # THE DATALAB COMMAND LINE CLIENT
 
-``datalab`` is command-line Python client for the [NOAO Data Lab](https://datalab.noirlab.edu).
+``datalab`` is command-line Python client for NOIRLab's [Astro Data Lab](https://datalab.noirlab.edu).
 
 It provides easy access to Data Lab functionalities:
 
@@ -21,10 +21,10 @@ Authentication to Data Lab is based on a username and password.
 
 ## Installation
 
-The ``noaodatalab`` package installs the ``datalab`` command line
-client, and some Data Lab Python libraries that allow you to use Data
-Lab functionality locally on your computer (for instance in Ipython
-etc.)
+The ``noaodatalab`` package (the name is historical) installs the
+``datalab`` command line client, and some Data Lab Python libraries
+that allow you to use Data Lab functionality locally on your computer
+(for instance in Ipython etc.)
 
 ### Install via pip
 
@@ -185,8 +185,9 @@ using the optional <i>mount</i> argument.
 datalab login --user=<user> --password=<password> --mount=/tmp/vospace
 ```
 
-This will attempt to mount the default virtual storage (at NOAO). If
-you need to mount another one, you should use the ``datalab mount`` option.
+This will attempt to mount the default virtual storage (at Data
+Lab). If you need to mount another one, you should use the ``datalab
+mount`` option.
 
 ### To mount virtual storage as a local directory once logged in
 

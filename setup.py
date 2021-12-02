@@ -1,4 +1,3 @@
-
 from distutils.core import setup
 import sys
 import os
@@ -33,10 +32,10 @@ def my_test_suite():
 setup(name="noaodatalab",
       version=dl_version,
       url="https://github.com/noaodatalab/datalab/",
-      description="Tools for interacting with NOAO Data Lab.",
+      description="Tools for interacting with NOIRLab's Astro Data Lab.",
       author="M.J. Graham, M.J. Fitzpatrick, D.L. Nidever, R. Nikutta",
       author_email="mjg@caltech.edu, mike.fitzpatrick@noirlab.edu, robert.nikutta@noirlab.edu",
-      long_description="Tools for interacting with the NOAO Data Lab services",
+      long_description="Tools for interacting with NOIRLab's Astro Data Lab services",
       packages=find_packages(exclude=['test.*']),
       package_data ={
         'datalab': ['caps/*']

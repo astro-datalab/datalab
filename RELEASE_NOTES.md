@@ -2,7 +2,7 @@
 
 Tagging this as a release, with most changes made such that clients
 call services at the noirlab.edu domain. The old noao.edu domain
-expired on Dec 29, 2021.
+expired on Nov 29, 2021.
 
 Also contains all enhancements, bugfixes, and package updates
 accumulated since the last tagged release.

@@ -1,3 +1,12 @@
+# Data Lab 2.20.0 release notes [20211201]
+
+Tagging this as a release, with most changes made such that clients
+call services at the noirlab.edu domain. The old noao.edu domain
+expired on Dec 29, 2021.
+
+Also contains all enhancements, bugfixes, and package updates
+accumulated since the last tagged release.
+
 # Data Lab 2.17.1 release notes [20190701]
 
 The following changes have been implemented:

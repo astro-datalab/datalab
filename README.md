@@ -64,9 +64,10 @@ touch ~/.netrc
 ## Configuration update: If you upgraded from a version prior to v2.20.0
 
 With version v2.20.0, the `datalab` package changed internal service
-URLs to point to out new noirlab.edu domain (the old noao.edu domain
+URLs to point to our new noirlab.edu domain (the old noao.edu domain
 expired on Nov 29, 2021). If you had `datalab` installed previously,
-your local configuration file may still point to the old domain.
+your local configuration file will still point to the old domain and
+you will see 'connection' errors when executing most commands.
 
 To fix this, simply rename the old configuration file. When you first
 run a `datalab` command again, a new and updated configuration file will

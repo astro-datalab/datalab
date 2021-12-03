@@ -60,6 +60,33 @@ filesystem, you will need to touch a file in your home directory:
 ```
 touch ~/.netrc
 ```
+
+## Configuration update: If you upgraded from a version prior to v2.20.0
+
+With version v2.20.0, the `datalab` package changed internal service
+URLs to point to our new noirlab.edu domain (the old noao.edu domain
+expired on Nov 29, 2021). If you had `datalab` installed previously,
+your local configuration file will still point to the old domain and
+you will see 'connection' errors when executing most commands.
+
+To fix this, simply rename the old configuration file. When you first
+run a `datalab` command again, a new and updated configuration file will
+be created:
+
+```
+mv $HOME/.datalab/dl.conf $HOME/.datalab/dl.conf.bak  # renames old config file
+datalab version  # any datalab command will create a new config file
+```
+
+Finally, log in again:
+
+```
+datalab login
+```
+
+and that should be it.
+</div>
+
 ## Documentation
 
 ### ``datalab`` command line client

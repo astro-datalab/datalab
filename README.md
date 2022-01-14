@@ -2,7 +2,7 @@
 
 # THE DATALAB COMMAND LINE CLIENT
 
-``datalab`` is command-line Python client for the [Astro Data Lab](https://datalab.noirlab.edu).
+``datalab`` is command-line Python client for NOIRLab's [Astro Data Lab](https://datalab.noirlab.edu).
 
 It provides easy access to Data Lab functionalities:
 
@@ -25,10 +25,10 @@ For Ubuntu users:
 
 ## Installation
 
-The ``noaodatalab`` package installs the ``datalab`` command line
-client, and some Data Lab Python libraries that allow you to use Data
-Lab functionality locally on your computer (for instance in Ipython
-etc.)
+The ``noaodatalab`` package (the name is historical) installs the
+``datalab`` command line client, and some Data Lab Python libraries
+that allow you to use Data Lab functionality locally on your computer
+(for instance in Ipython etc.)
 
 ### Install via pip
 
@@ -64,6 +64,33 @@ filesystem, you will need to touch a file in your home directory:
 ```
 touch ~/.netrc
 ```
+
+## Configuration update: If you upgraded from a version prior to v2.20.0
+
+With version v2.20.0, the `datalab` package changed internal service
+URLs to point to our new noirlab.edu domain (the old noao.edu domain
+expired on Nov 29, 2021). If you had `datalab` installed previously,
+your local configuration file will still point to the old domain and
+you will see 'connection' errors when executing most commands.
+
+To fix this, simply rename the old configuration file. When you first
+run a `datalab` command again, a new and updated configuration file will
+be created:
+
+```
+mv $HOME/.datalab/dl.conf $HOME/.datalab/dl.conf.bak  # renames old config file
+datalab version  # any datalab command will create a new config file
+```
+
+Finally, log in again:
+
+```
+datalab login
+```
+
+and that should be it.
+</div>
+
 ## Documentation
 
 ### ``datalab`` command line client

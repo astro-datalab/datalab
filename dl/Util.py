@@ -137,9 +137,7 @@ def multimethod(module, nargs, cm):
         mf.register(nargs, function, module)
         mf.__lastreg__ = function
 
-        return mf
-        #if cm or nargs > 0:
-        if nargs > 0:
+        if not cm or nargs > 0:
             return mf
         else:
             mf.__call__ = classmethod(function)

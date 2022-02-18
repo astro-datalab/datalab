@@ -8,11 +8,11 @@
 from __future__ import print_function
 
 __authors__ = 'Matthew Graham <mjg@caltech.edu>, Mike Fitzpatrick <mike.fitzpatrick@noirlab.edu>, Data Lab <datalab@noirlab.edu>'
-__version__ = '20181231'  # yyyymmdd
+__version__ = '20220218'  # yyyymmdd
 
 
 """ 
-    Command-line task for the NOAO Data Lab
+    Command-line task for the Astro Data Lab
 """
 
 from dl import dltasks as dl

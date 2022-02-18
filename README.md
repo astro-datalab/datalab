@@ -1,5 +1,3 @@
-![github-actions](https://github.com/rnikutta/datalab/workflows/Build,%20test,%20deploy%20pip%20package%20of%20datalab%20cmd%20line%20client/badge.svg?branch=master)
-
 # THE DATALAB COMMAND LINE CLIENT
 
 ``datalab`` is command-line Python client for NOIRLab's [Astro Data Lab](https://datalab.noirlab.edu).
@@ -25,17 +23,17 @@ For Ubuntu users:
 
 ## Installation
 
-The ``noaodatalab`` package (the name is historical) installs the
-``datalab`` command line client, and some Data Lab Python libraries
-that allow you to use Data Lab functionality locally on your computer
-(for instance in Ipython etc.)
+The ``astrodatalab`` package installs the ``datalab`` command line
+client, and some Data Lab Python libraries that allow you to use Data
+Lab functionality locally on your computer (for instance in Ipython
+etc.)
 
 ### Install via pip
 
 The easiest way to install the ``datalab`` client is via pip:
 
 ```
-pip install --ignore-installed --no-cache-dir noaodatalab
+pip install --ignore-installed --no-cache-dir astro-datalab
 ```
 
 The flags `--ignore-installed` and `--no-cache-dir` should ensure that the latest version is pulled freshly from the internet.
@@ -43,10 +41,10 @@ The flags `--ignore-installed` and `--no-cache-dir` should ensure that the lates
 ### Install from sources
 
 You can also install the ``datalab`` client from source on
-[GitHub](https://github.com/noaodatalab/datalab.git):
+[GitHub](https://github.com/astro-datalab/datalab.git):
 
 ```
-git clone https://github.com/noaodatalab/datalab.git
+git clone https://github.com/astro-datalab/datalab.git
 cd datalab
 python setup.py install
 ```
@@ -100,13 +98,13 @@ To check the currently installed version of `datalab`:
 ```
 datalab --version
 
-Task Version:  2.19.1
+Task Version:  2.20.0
 ```
 
 To get a list of available datalab commands (tasks):
 
 ```
-datalab help
+datalab --help
 
 Usage:
 
@@ -178,7 +176,7 @@ Welcome to the Data Lab, foousername
 ```
 
 Documentation for the ``datalab`` commands can be also found in the
-[``docs/``](github.com/noaodatalab/datalab/tree/master/docs)
+[``docs/``](github.com/astro-datalab/datalab/tree/master/docs)
 directory:
 
 ### ``dl`` Data Lab Python module

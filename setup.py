@@ -29,9 +29,9 @@ def my_test_suite():
     test_suite = test_loader.discover('tests', pattern='test_*.py')
     return test_suite
 
-setup(name="noaodatalab",
+setup(name="astro-datalab",
       version=dl_version,
-      url="https://github.com/noaodatalab/datalab/",
+      url="https://github.com/astro-datalab/datalab/",
       description="Tools for interacting with NOIRLab's Astro Data Lab.",
       author="M.J. Graham, M.J. Fitzpatrick, D.L. Nidever, R. Nikutta",
       author_email="mjg@caltech.edu, mike.fitzpatrick@noirlab.edu, robert.nikutta@noirlab.edu",

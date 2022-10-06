@@ -4,9 +4,9 @@
 
 It provides easy access to Data Lab functionalities:
 
-1. remote storage (VOSpace)
-1. (a)synchronous data queries (TAP)
-1. job management
+* synchronous and asynchronous database queries (TAP)
+* your remote file storage (VOSpace)
+* your remote database tables (MyDB)
 
 Authentication to Data Lab is based on a username and password.
 
@@ -98,7 +98,7 @@ To check the currently installed version of `datalab`:
 ```
 datalab --version
 
-Task Version:  2.20.0
+Task Version:  2.20.1
 ```
 
 To get a list of available datalab commands (tasks):

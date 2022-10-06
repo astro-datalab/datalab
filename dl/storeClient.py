@@ -5,7 +5,7 @@
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <mike.fitzpatrick@noirlab.edu>, Matthew Graham <mjg@caltech.edu>, Data Lab <datalab@noirlab.edu>'
-__version__ = 'v2.18.6'
+__version__ = 'v2.18.8'
 
 
 '''
@@ -91,6 +91,7 @@ import glob
 import socket
 import json
 import time
+import re
 
 if os.path.isfile('./Util.py'):                # use local dev copy
     from Util import multimethod
@@ -129,6 +130,7 @@ elif THIS_HOST[:6] == 'dltest':
 
 DEF_SERVICE_URL = DEF_SERVICE_ROOT + '/storage'
 QM_SERVICE_URL = DEF_SERVICE_ROOT + '/query'
+AM_SERVICE_URL = DEF_SERVICE_ROOT + '/auth'
 
 # The requested query 'profile'.  A profile refers to the specific
 # machines and services used by the Storage Manager on the server.
@@ -139,6 +141,15 @@ DEBUG           = os.path.isfile('/tmp/SM_DEBUG')
 
         
 URI_RESERVED = ":;?/@&=+$,"          # RFC2396 reserved URI chars
+
+# DLC-1818. There are file names we served, that contain + signs
+# in their names. They need to be escaped for it to work on a URL.
+# For now we are only escaping the +/plus sign to minimize introducing
+# unwanted behaviours.
+# A deeper look at what characters are allowed system wide should be done at
+# some point.
+PLUS_REGEX = r'\+'
+PLUS_URL_ESC_CODE = "%2B"
 
 
 # ####################################################################
@@ -199,7 +210,7 @@ def services(name=None, svc_type='vos', format=None, profile='default'):
 #
 @multimethod('sc',1,False)
 def list_profiles(optval, profile=None, format='text', token=None):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return sc_client._list_profiles(token=def_token(optval),
                                          profile=profile, format=format)
@@ -373,6 +384,66 @@ def stat(path, token=None, verbose=True):
     return sc_client._stat(path=path, token=def_token(token), verbose=verbose)
 
 
+# --------------------------------------------------------------------
+# IS_AUTH_TOKEN -- returns True if the the string pass is a token
+#                  False otherwise
+#
+def is_auth_token(token):
+    """Check if passed in string is an auth token
+    Usage:
+        is_auth_token(token)
+
+    Parameters
+    ----------
+    token : str
+        A string auth token
+        E.g.
+        "testuser.3666.3666.$1$PKCFmMzy$OPpZg/ThBmZe/V8LVPvpi/%"
+
+    Returns
+    -------
+    return: boolean
+         True if string is a auth token
+    """
+
+    """
+    E.g. token "testuser.3666.3666.$1$PKCFmMzy$OPpZg/ThBmZe/V8LVPvpi/%"
+    Regex deconstruction and explanation:
+    -------------------------------------
+    1.   ([^\/\s]+)     any string with no "/" or spaces
+    2.   \.             separated by a .
+    3.   \d+            followed by any number of digits
+    4.   \.             separated by a .
+    5.   \d+            followed by any number of digits
+    6.   \.             separated by a .
+    7.a) (\$1\$\S{22,}) A string that starts with $1$ (that's how a md5 hash
+                        starts) and that is followed by any non space 
+                        characters of 22 chars or longer
+    7.b) |              or
+    7.c) (\S+_access)   A string that ends in _access. This is a special
+                        case for special tokens such as:
+                          anonymous.0.0.anon_access
+                          dldemo.99999.99999.demo_access
+    """
+
+    return re.match(r'([^\/\s]+)\.\d+\.\d+\.((\$1\$\S{22,})|(\S+_access))', token)
+
+
+# User validation.  Determing whether the user represented by the token
+# is a valid Data Lab user.
+def validToken(token):
+    if token == "" or token is None:
+        return False
+    else:
+        # Check with the Auth service whether the token is valid.
+        try:
+            r = requests.get("%s/isValidToken?token=%s" % (AM_SERVICE_URL, token))
+        except:
+            return False
+
+        return (False if r.status_code != 200 or r.text != 'OK' else True)
+
+
 
 # --------------------------------------------------------------------
 # GET -- Retrieve a file (or files) from the Store Manager service
@@ -386,7 +457,7 @@ def get(token, fr, to, mode='text', verbose=True, debug=False, timeout=30):
 @multimethod('sc',2,False)
 def get(opt1, opt2, fr='', to='', token=None, mode='text', verbose=True, 
         debug=False, timeout=30):
-    if opt1 is not None and len(opt1.split('.')) >= 4:
+    if opt1 is not None and is_auth_token(opt1):
         # opt1 looks like a token
         return sc_client._get(fr=opt2, to=to, token=def_token(opt1),
                             mode=mode, verbose=verbose, debug=debug,
@@ -400,7 +471,7 @@ def get(opt1, opt2, fr='', to='', token=None, mode='text', verbose=True,
 @multimethod('sc',1,False)
 def get(optval, fr='', to='', token=None, mode='text', verbose=True, 
         debug=False, timeout=30):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return sc_client._get(fr=fr, to=to, token=def_token(optval),
                             mode=mode, verbose=verbose, debug=debug,
@@ -500,7 +571,7 @@ def put(fr, to, token=None, verbose=True, debug=False):
 
 @multimethod('sc',1,False)
 def put(optval, fr='', to='vos://', token=None, verbose=True, debug=False):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return sc_client._put(fr=fr, to=to, token=def_token(optval),
                             verbose=verbose, debug=debug)
@@ -669,7 +740,7 @@ def ls(token, name, format='csv', verbose=False):
 
 @multimethod('sc',1,False)
 def ls(optval, name='vos://', token=None, format='csv', verbose=False):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return sc_client._ls(name=name, format=format,
                           token=def_token(optval), verbose=verbose)
@@ -760,7 +831,7 @@ def mkdir(optval, name='', token=None):
         # Create a directory in vospace
         storeClient.mkdir('foo')
     '''
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         return sc_client._mkdir(name=name, token=def_token(optval))
     else:
         return sc_client._mkdir(name=optval, token=def_token(token))
@@ -833,7 +904,7 @@ def rm(token, name, verbose=False):
 
 @multimethod('sc',1,False)
 def rm(optval, name='', token=None, verbose=False):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return sc_client._rm(name=name, token=def_token(optval),
                              verbose=verbose)
@@ -887,7 +958,7 @@ def rmdir(token, name, verbose=False):
 
 @multimethod('sc',1,False)
 def rmdir(optval, name='', token=None, verbose=False):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         return sc_client._rmdir(name=name, token=def_token(optval),
                             verbose=verbose)
     else:
@@ -1418,7 +1489,7 @@ class storeClient(object):
              mode='text', debug=False, timeout=30):
         ''' Usage:  storeClient.get(fr, to)
         '''
-        if opt1 is not None and len(opt1.split('.')) >= 4:
+        if opt1 is not None and is_auth_token(opt1):
             # opt1 looks like a token
             return self._get(fr=opt2, to=to, token=def_token(opt1),
                               mode=mode, verbose=verbose, debug=debug,
@@ -1434,7 +1505,7 @@ class storeClient(object):
              verbose=True, debug=False, timeout=30):
         ''' Usage:  storeClient.get(fr)
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._get(fr=fr, to=to, token=def_token(optval),
                               mode=mode, verbose=verbose, debug=debug,
@@ -1522,7 +1593,7 @@ class storeClient(object):
                     dlname = ((to + "/" + fn) if hasmeta(fr) else to)
 
                 # Get a single file.
-                res = requests.get(self.svc_url + "/get?name=%s" % f, 
+                res = requests.get(self.svc_url + "/get?name=%s" % re.sub(PLUS_REGEX, PLUS_URL_ESC_CODE, f),
                                    headers=hdrs)
 
                 if res.status_code != 200:
@@ -1597,7 +1668,7 @@ class storeClient(object):
 
         else:
             # Get a single file, return the raw contents to the caller.
-            url = requests.get(self.svc_url + "/get?name=%s" % nm,
+            url = requests.get(self.svc_url + "/get?name=%s" % re.sub(PLUS_REGEX, PLUS_URL_ESC_CODE, nm),
                                headers=hdrs)
             r = requests.get(url.text, stream=False, headers=hdrs)
             if mode == 'text':
@@ -1638,7 +1709,7 @@ class storeClient(object):
              debug=False):
         ''' Usage:  storeClient.put(fr)
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._put(fr=fr, to=to, token=def_token(optval),
                               verbose=verbose, debug=False)
@@ -1940,7 +2011,7 @@ class storeClient(object):
         ''' Usage:  storeClient.ls(name)
              Usage:  storeClient.ls(token, name='foo')
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._ls(name=name, format=format,
                              token=def_token(optval), verbose=verbose)
@@ -1981,7 +2052,7 @@ class storeClient(object):
     def mkdir(self, optval, name='', token=None):
         ''' Usage:  storeClient.mkdir(name)
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             return self._mkdir(name=name, token=def_token(optval))
         else:
             return self._mkdir(name=optval, token=def_token(token))
@@ -2098,7 +2169,7 @@ class storeClient(object):
     def rm(self, optval, name='', token=None, verbose=False):
         ''' Usage:  storeClient.rm(name)
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._rm(name=name,token=def_token(optval),verbose=verbose)
         else:
@@ -2162,7 +2233,7 @@ class storeClient(object):
     def rmdir(self, optval, name='', token=None, verbose=False):
         ''' Usage:  storeClient.rmdir(name)
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             return self._rmdir(name=name, token=def_token(optval),
                                 verbose=verbose)
         else:
@@ -2289,7 +2360,8 @@ class storeClient(object):
                     'X-DL-User': user,
                     'X-DL-AuthToken': tok}  		# application/x-sql
 
-            resp = requests.get("%s%s" % (svc_url, path), headers=hdrs)
+            resp = requests.get("%s%s" % (svc_url, re.sub(PLUS_REGEX, PLUS_URL_ESC_CODE, path)),
+                                headers=hdrs)
 
         except Exception as e:
             raise storeClientError(str(e))

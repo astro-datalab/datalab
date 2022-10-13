@@ -62,7 +62,7 @@ except ImportError:
 #    from Util import def_token
 #else:                                           # use distribution copy
 #    from dl.Util import def_token
-from dl.Util import def_token
+from dl.Util import def_token, split_auth_token
 
 is_py3 = sys.version_info.major == 3
 
@@ -171,7 +171,7 @@ def whoAmI():
     user = 'anonymous'
     try:
         token = def_token(None)
-        user, uid, gid, hash = token.strip().split('.', 3)
+        user, uid, gid, hash = split_auth_token(token.strip())
     except:
         return 'anonymous'
     else:
@@ -188,7 +188,7 @@ def isAlive(svc_url=DEF_SERVICE_URL):
 
 def isValidToken(token):
     try:
-        user, uid, gid, hash = token.strip().split('.', 3)
+        user, uid, gid, hash = split_auth_token(token.strip())
     except Exception:
         return False
 
@@ -385,7 +385,7 @@ class authClient(object):
         user = 'anonymous'
         try:
             token = def_token(None)
-            user, uid, gid, hash = token.strip().split('.', 3)
+            user, uid, gid, hash = split_auth_token(token.strip())
         except:
             return 'anonymous'
         else:
@@ -704,7 +704,7 @@ class authClient(object):
             print("logout: logged in = " + self.isTokenLoggedIn(token))
 
         try:
-            user, uid, gid, hash = token.strip().split('.', 3)
+            user, uid, gid, hash = split_auth_token(token.strip())
         except Exception:
             raise dlAuthError('Error: Invalid user token')
 
@@ -781,7 +781,7 @@ class authClient(object):
         # Reset the auth_token to the one passed in by the service call.
         self.auth_token = token
 
-        user, uid, gid, hash = self.auth_token.strip().split('.', 3)
+        user, uid, gid, hash = split_auth_token(self.auth_token.strip())
         if user != 'root' and user != username:
             raise Exception("Error: Invalid user or non-root token")
 
@@ -1061,7 +1061,7 @@ class authClient(object):
         '''Get default tracking headers.
         '''
         tok = def_token(token)
-        user, uid, gid, hash = tok.strip().split('.', 3)
+        user, uid, gid, hash = split_auth_token(tok.strip())
         hdrs = {'Content-Type': 'text/ascii',
                 'X-DL-ClientVersion': __version__,
                 'X-DL-OriginIP': self.hostip,

@@ -24,6 +24,7 @@ import os
 import mimetypes
 import random
 import string
+import re
 from functools import partial
 
 try:
@@ -216,7 +217,7 @@ def def_token(tok):
         # Check for a plane user name or valid token.  If we're given a
         # token just return it.  If it may be a user name, look for a token
         # id file and return that, otherwise we're just anonymous.
-        if len(tok.split('.')) >= 4:			# looks like a token
+        if is_auth_token(tok):                # is it a token?
             if TOK_DEBUG: print ('returning input tok:  ' + tok)
             return tok
         elif len(tok.split('.')) == 1:			# user name maybe?
@@ -226,6 +227,93 @@ def def_token(tok):
             if TOK_DEBUG: print ('returning ANON_TOKEN')
             return ANON_TOKEN
 
+
+def parse_auth_token(token):
+    """Parses string argument token
+    Usage:
+        parse_auth_token(token)
+
+    Parameters
+    ----------
+    token : str
+        A string auth token
+        E.g.
+        "testuser.3666.3666.$1$PKCFmMzy$OPpZg/ThBmZe/V8LVPvpi/"
+
+    Returns
+    -------
+    return: a regex Match object or None
+    """
+    r"""
+    Explanation of the Regular Expression used:
+    E.g. token "testuser.3666.3666.$1$PKCFmMzy$OPpZg/ThBmZe/V8LVPvpi/%"
+    Regex deconstruction and explanation:
+    -------------------------------------
+    1.   ([^\/\s]+)       any string with no "/" or spaces
+    2.   \.               separated by a .
+    3.   (\d+)            followed by any number of digits, user id
+    4.   \.               separated by a .
+    5.   (\d+)            followed by any number of digits, group id
+    6.   \.               separated by a .
+    7.a) (?:\$1\$\S{22,}) (Non capturing group) A string that starts with 
+                          $1$ (that's how a md5 hash starts)
+                          and that is followed by any non space characters
+                          of 22 chars or longer
+    7.b) |                or
+    7.c) (?:\S+_access)   (Non capturing group) A string that ends in _access.
+                          This is a special case for special tokens such as:
+                          anonymous.0.0.anon_access
+                          dldemo.99999.99999.demo_access
+    """
+
+    return re.match(r'([^\/\s]+)\.(\d+)\.(\d+)\.((?:\$1\$\S{22,})|(?:\S+_access))', token)
+
+
+def split_auth_token(token):
+    """ Given an auth token split it in its components
+    Usage:
+        split_auth_token(token)
+
+    Parameters
+    ----------
+    token : str
+        A string auth token
+        E.g.
+        "testuser.3666.3666.$1$PKCFmMzy$OPpZg/ThBmZe/V8LVPvpi/"
+
+    Returns
+    -------
+    return: [username, user_id, group_id, hash]
+            or None if not a token
+         E.g.
+         ["testuser", "3666", "3666" , "$1$PKCFmMzy$OPpZg/ThBmZe/V8LVPvpi/"]
+    """
+    res = parse_auth_token(token)
+    return res.groups() if res else None
+
+
+# --------------------------------------------------------------------
+# IS_AUTH_TOKEN -- returns True if the the string pass is a token
+#                  False otherwise
+#
+def is_auth_token(token):
+    """Check if passed in string is an auth token
+    Usage:
+        is_auth_token(token)
+
+    Parameters
+    ----------
+    token : str
+        A string auth token
+        E.g.
+        "testuser.3666.3666.$1$PKCFmMzy$OPpZg/ThBmZe/V8LVPvpi/"
+
+    Returns
+    -------
+    return: boolean
+         True if string is a auth token
+    """
+    return True if parse_auth_token(token) else False
 
 
 """Encode multipart form data to upload files via POST."""

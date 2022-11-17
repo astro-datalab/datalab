@@ -6,7 +6,10 @@
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <mike.fitzpatrick@noirlab.edu>, Data Lab <datalab@noirlab.edu>'
-__version__ = 'v2.18.6'
+try:
+    import authmanager.__version__
+except ImportError as e:
+    from __version__ import __version__
 
 
 '''
@@ -89,13 +92,25 @@ DEF_SERVICE_ROOT = "https://datalab.noirlab.edu"
 # Allow the service URL for dev/test systems to override the default.
 THIS_HOST = socket.gethostname()
 if THIS_HOST[:5] == 'dldev':
-    DEF_SERVICE_ROOT = "http://dldev.datalab.noirlab.edu"
+    DEF_SERVICE_ROOT = "https://dldev.datalab.noirlab.edu"
 elif THIS_HOST[:6] == 'dltest':
-    DEF_SERVICE_ROOT = "http://dltest.datalab.noirlab.edu"
+    DEF_SERVICE_ROOT = "https://dltest.datalab.noirlab.edu"
 
 DEF_SERVICE_URL = DEF_SERVICE_ROOT + "/auth"
 SM_SERVICE_URL  = DEF_SERVICE_ROOT + "/storage"
 QM_SERVICE_URL  = DEF_SERVICE_ROOT + "/query"
+
+
+# Check for a file to override the default service URL.
+if os.path.exists('/tmp/AM_SVC_URL'):
+    with open('/tmp/AM_SVC_URL') as fd:
+        DEF_SERVICE_URL = fd.read().strip()
+if os.path.exists('/tmp/SM_SVC_URL'):
+    with open('/tmp/SM_SVC_URL') as fd:
+        SM_SERVICE_URL = fd.read().strip()
+if os.path.exists('/tmp/QM_SVC_URL'):
+    with open('/tmp/QM_SVC_URL') as fd:
+        QM_SERVICE_URL = fd.read().strip()
 
 
 # The requested authentication "profile".  A profile refers to the specific
@@ -251,8 +266,8 @@ def passwordReset(token, username, password):
 
 # Standard Service Methods
 def set_svc_url(svc_url):
-    return ac_client.set_svc_url(svc_url.strip('/'))
-
+    if svc_url is not None and svc_url != '':
+        return ac_client.set_svc_url(svc_url.strip('/'))
 
 def get_svc_url():
     return ac_client.get_svc_url()
@@ -398,7 +413,8 @@ class authClient(object):
             from dl import authClient
             authClient.set_svc_url("http://localhost:7001/")
         '''
-        self.svc_url = acToString(svc_url.strip('/'))
+        if svc_url is not None and svc_url != '':
+            self.svc_url = acToString(svc_url.strip('/'))
 
     def get_svc_url(self):
         '''Return the currently-used Authentication Service URL.
@@ -440,7 +456,8 @@ class authClient(object):
             from dl import authClient
             token = authClient.client.set_profile("dev")
         '''
-        self.svc_profile = acToString(profile)
+        if profile is not None and profile != '':
+            self.svc_profile = acToString(profile)
 
     def get_profile(self):
         '''Get the requested service profile.

@@ -1,20 +1,15 @@
 #!/usr/bin/env python
 #
 # QUERYCLIENT -- Client routines for the Data Lab Query Manager Service
-
-
-from __future__ import print_function
-
-__authors__ = 'Mike Fitzpatrick <mike.fitzpatrick@noirlab.edu>, Matthew Graham <mjg@caltech.edu.edu>, Data Lab <datalab@noirlab.edu>'
-__version__ = 'v2.18.12'
-
-
 '''
-    Client methods for the DataLab Query Manager Service.
+querymanager.queryClient
+========================
+
+Client methods for the DataLab Query Manager Service.
 
 
-Query Manager Client Interface
-------------------------------
+Query Manager Client Interface::
+
                isAlive  (svc_url=DEF_SERVICE_URL, timeout=2)
            set_svc_url  (svc_url)
            get_svc_url  ()
@@ -82,12 +77,20 @@ Query Manager Client Interface
                   drop  (table=None, token=None)	# DEPRECATED
 
 
-Import via
+Import via:
 
 .. code-block:: python
 
     from dl import queryClient
 '''
+from __future__ import print_function
+
+__authors__ = 'Mike Fitzpatrick <mike.fitzpatrick@noirlab.edu>, Matthew Graham <mjg@caltech.edu.edu>, Data Lab <datalab@noirlab.edu>'
+try:
+    from . import __version__
+except ImportError as e:
+    from __version__ import __version__
+
 
 import requests
 try:
@@ -114,10 +117,10 @@ from dl import storeClient
 from dl.helpers.utils import convert
 if os.path.isfile('./Util.py'):			# use local dev copy
     from Util import multimethod
-    from Util import def_token
+    from Util import def_token, is_auth_token, split_auth_token
 else:						# use distribution copy
     from dl.Util import multimethod
-    from dl.Util import def_token
+    from dl.Util import def_token, is_auth_token, split_auth_token
 
 is_py3 = sys.version_info.major == 3
 
@@ -142,9 +145,9 @@ THIS_IP, _ = sock.getsockname()
 
 
 if THIS_HOST[:5] == 'dldev':
-    DEF_SERVICE_ROOT = 'http://dldev.datalab.noirlab.edu'
+    DEF_SERVICE_ROOT = 'https://dldev.datalab.noirlab.edu'
 elif THIS_HOST[:6] == 'dltest':
-    DEF_SERVICE_ROOT = 'http://dltest.datalab.noirlab.edu'
+    DEF_SERVICE_ROOT = 'https://dltest.datalab.noirlab.edu'
 
 DEF_SERVICE_URL = DEF_SERVICE_ROOT + '/query'
 SM_SERVICE_URL  = DEF_SERVICE_ROOT + '/storage'
@@ -152,10 +155,21 @@ RM_SERVICE_URL  = DEF_SERVICE_ROOT + '/res'
 
 # The requested query 'profile'.  A profile refers to the specific
 # machines and services used by the QueryManager on the server.
-DEF_PROFILE 	= 'default'
+DEF_SERVICE_PROFILE 	= 'default'
 
 # Use a /tmp/QM_DEBUG file as a way to turn on debugging in the client code.
 DEBUG 		= os.path.isfile('/tmp/QM_DEBUG')
+
+# Check for a file to override the default service URL.
+if os.path.exists('/tmp/QM_SVC_URL'):
+    with open('/tmp/QM_SVC_URL') as fd:
+        DEF_SERVICE_URL = fd.read().strip()
+if os.path.exists('/tmp/SM_SVC_URL'):
+    with open('/tmp/SM_SVC_URL') as fd:
+        SM_SERVICE_URL = fd.read().strip()
+if os.path.exists('/tmp/RM_SVC_URL'):
+    with open('/tmp/RM_SVC_URL') as fd:
+        RM_SERVICE_URL = fd.read().strip()
 
 # Default sync query timeout default (300sec)
 TIMEOUT_REQUEST = 300
@@ -219,7 +233,7 @@ def get_profile():
 #
 @multimethod('qc',1,False)
 def list_profiles(optval, token=None, profile=None, format='text'):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return qc_client._list_profiles (token=def_token(optval),
                                          profile=profile, format=format)
@@ -232,13 +246,14 @@ def list_profiles(optval, token=None, profile=None, format='text'):
 def list_profiles(token=None, profile=None, format='text'):
     '''Retrieve the profiles supported by the query manager service.
 
-    Usage:
+    Usage::
+
         list_profiles (token=None, profile=None, format='text')
 
-    MultiMethod Usage:  
-    ------------------
-            queryClient.list_profiles (token)
-            queryClient.list_profiles ()
+    MultiMethod Usage::
+
+        queryClient.list_profiles (token)
+        queryClient.list_profiles ()
 
     Parameters
     ----------
@@ -291,7 +306,8 @@ def schema(value, format='text', profile=None):
 def schema(value='', format='text', profile=None):
     '''Return information about a data service schema.
 
-    Usage:
+    Usage::
+
         schema (value='', format='text', profile=None)
 
     Parameters
@@ -309,6 +325,7 @@ def schema(value='', format='text', profile=None):
 
     Returns
     -------
+    Anything?
 
     Example
     -------
@@ -347,7 +364,7 @@ def services(name=None, svc_type=None, mode='list', profile='default'):
 	'tap', 'sia', 'scs', or 'vos'.
 
     mode : str
-	Query mode:  
+	Query mode:
 
     profile : str
         The name of the service profile to use. The list of available
@@ -410,12 +427,13 @@ def query(token=None, adql=None, sql=None, fmt='csv', out=None, async_=False, dr
            profile='default', **kw):
     '''Send an SQL or ADQL query to the database or TAP service.
 
-    Usage:
+    Usage::
+
         query (token=None, adql=None, sql=None, fmt='csv', out=None,
                async_=False, drop=False, profile='default', **kw):
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         queryClient.query (token, query, <args>)
         queryClient.query (token | query, <args>)
 
@@ -539,8 +557,9 @@ def query(token=None, adql=None, sql=None, fmt='csv', out=None, async_=False, dr
           315.00408275885701,35.2665448169895797
           314.996334457679438,35.2673478725552698
     '''
-    return qc_client._query (token=def_token(token), adql=adql, sql=sql, 
-                             fmt=fmt, out=out, async_=async_, drop=drop, profile=profile,
+    return qc_client._query (token=def_token(token), adql=adql, sql=sql,
+                             fmt=fmt, out=out, async_=async_, drop=drop,
+                             profile=profile,
                              **kw)
 
 
@@ -554,7 +573,7 @@ def status(token, jobId):
 
 @multimethod('qc',1,False)
 def status(optval, jobId=None):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return qc_client._status (token=def_token(optval), jobId=jobId)
     else:
@@ -565,11 +584,12 @@ def status(optval, jobId=None):
 def status(token=None, jobId=None):
     '''Get the status of an asynchronous query.
 
-    Usage:
+    Usage::
+
         status (token=None, jobId=None)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         queryClient.status (jobId)
         queryClient.status (token, jobId)
         queryClient.status (token, jobId=<id>)
@@ -635,7 +655,7 @@ def jobs(token, jobId, format='text', status='all', option='list'):
 
 @multimethod('qc',1,False)
 def jobs(optval, jobId=None, format='text', status='all', option='list'):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return qc_client._jobs (token=def_token(optval), jobId=jobId,
                                 format=format, status=status, option=option)
@@ -648,11 +668,12 @@ def jobs(optval, jobId=None, format='text', status='all', option='list'):
 def jobs(token=None, jobId=None, format='text', status='all', option='list'):
     '''Get a list of the user's Async jobs.
 
-    Usage:
+    Usage::
+
         jobs (token=None, jobId=None, format='text', status='all')
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         queryClient.jobs (jobId)
         queryClient.jobs (token, jobId)
         queryClient.jobs (token, jobId=<id>)
@@ -710,8 +731,8 @@ def jobs(token=None, jobId=None, format='text', status='all', option='list'):
     .. code::
 
         JobID              Start              End                 Status
-        tfu8zpn2tkrlfyr9e  07-22-20T13:10:22  07-22-20T13:34:12   COMPLETED  
-        k8uznptrkkl29ryef  07-22-20T14:09:45                      EXECUTING  
+        tfu8zpn2tkrlfyr9e  07-22-20T13:10:22  07-22-20T13:34:12   COMPLETED
+        k8uznptrkkl29ryef  07-22-20T14:09:45                      EXECUTING
               :                   :                 :                :
 
     '''
@@ -728,7 +749,7 @@ def results(token, jobId, delete=True):
 
 @multimethod('qc',1,False)
 def results(optval, jobId=None, delete=True):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return qc_client._results (token=def_token(optval), jobId=jobId,
                                 delete=delete)
@@ -741,11 +762,12 @@ def results(optval, jobId=None, delete=True):
 def results(token=None, jobId=None, delete=True):
     '''Retrieve the results of an asynchronous query, once completed.
 
-    Usage:
+    Usage::
+
         results (token=None, jobId=None, delete=True)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         queryClient.results (jobId)
         queryClient.results (token, jobId)
         queryClient.results (token, jobId=<id>)
@@ -801,7 +823,7 @@ def error(token, jobId):
 
 @multimethod('qc',1,False)
 def error(optval, jobId=None):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return qc_client._error (token=def_token(optval), jobId=jobId)
     else:
@@ -812,11 +834,12 @@ def error(optval, jobId=None):
 def error(token=None, jobId=None):
     '''Retrieve the error of an asynchronous query, once completed.
 
-    Usage:
+    Usage::
+
         error (token=None, jobId=None)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         queryClient.error (jobId)
         queryClient.error (token, jobId)
         queryClient.error (token, jobId=<id>)
@@ -872,7 +895,7 @@ def abort(token, jobId):
 
 @multimethod('qc',1,False)
 def abort(optval, jobId=None):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return qc_client._abort (token=def_token(optval), jobId=jobId)
     else:
@@ -883,11 +906,12 @@ def abort(optval, jobId=None):
 def abort(token=None, jobId=None):
     '''Abort the specified asynchronous job.
 
-    Usage:
+    Usage::
+
         abort (token=None, jobId=None)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         queryClient.abort (token, jobId)
         queryClient.abort (jobId)
         queryClient.abort (token, jobId=<id>)
@@ -951,7 +975,7 @@ def wait(optval, jobId=None, wait=3, verbose=False):
     '''Usage:  queryClient.wait (jobID)
                queryClient.wait (token, jobId=<id>)
     '''
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return qc_client._wait (token=def_token(optval), jobId=jobId, wait=wait,
                                 verbose=verbose)
@@ -970,7 +994,7 @@ def wait(token=None, jobId=None, wait=3, verbose=False):
     ----------
     jobid : str
         The job ID string of a submitted query job.
-    
+
     wait : int | float
         Wait for `wait` seconds before checking status again. Default: 3sec
     '''
@@ -992,7 +1016,7 @@ def list(token, table):
 
 @multimethod('qc',1,False)
 def list(optval, table=None):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return qc_client.mydb_list (token=def_token(optval), table=table)
     else:
@@ -1003,11 +1027,12 @@ def list(optval, table=None):
 def list(table=None, token=None):
     '''List the tables or table schema in the user's MyDB.
 
-    Usage:
+    Usage::
+
         list (table=None, token=None)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         queryClient.list (token, table)
         queryClient.list (table)
         queryClient.list (token, table=<id>)
@@ -1047,7 +1072,7 @@ def drop(token, table):
 
 @multimethod('qc',1,False)
 def drop(optval, table=None):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return qc_client.mydb_drop (token=def_token(optval), table=table)
     else:
@@ -1058,11 +1083,12 @@ def drop(optval, table=None):
 def drop(table=None, token=None):
     '''Drop the specified table from the user's MyDB
 
-    Usage:
+    Usage::
+
         drop (table=None, token=None)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         queryClient.drop (token, table)
         queryClient.drop (table)
         queryClient.drop (token, table=<id>)
@@ -1099,7 +1125,7 @@ def drop(table=None, token=None):
 #
 @multimethod('qc',1,False)
 def mydb_list(optval, table=None, index=False, **kw):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return qc_client._mydb_list (token=def_token(optval), table=table,
                                      index=index, **kw)
@@ -1112,11 +1138,12 @@ def mydb_list(optval, table=None, index=False, **kw):
 def mydb_list(table=None, token=None, index=False, **kw):
     '''List the tables or table schema in the user's MyDB.
 
-    Usage:
+    Usage::
+
         mydb_list (table=None, token=None, **kw)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         queryClient.mydb_list (table)
         queryClient.mydb_list (token, table=<str>)
         queryClient.mydb_list (table=<str>)
@@ -1160,11 +1187,12 @@ def mydb_create(token, table, schema, **kw):
 def mydb_create(table, schema, token=None, **kw):
     '''Create a table in the user's MyDB
 
-    Usage:
+    Usage::
+
         mydb_create (table, schema, token=None, **kw)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         queryClient.mydb_create (token, table, <schema_dict>)
         queryClient.mydb_create (table, <schema_dict>)
 
@@ -1218,11 +1246,12 @@ def mydb_insert(token, table, data, **kw):
 def mydb_insert(table, data, token=None, **kw):
     '''Insert data into a table in the user's MyDB
 
-    Usage:
+    Usage::
+
         mydb_insert (table, data, token=None, **kw)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         queryClient.mydb_insert (token, table, <filename>)
         queryClient.mydb_insert (token, table, <data_object>)
         queryClient.mydb_insert (table, <filename>)
@@ -1279,11 +1308,12 @@ def mydb_import(token, table, data, **kw):
 def mydb_import(table, data, token=None, **kw):
     '''Import data into a table in the user's MyDB
 
-    Usage:
+    Usage::
+
         mydb_import (table, data, token=None, **kw)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         queryClient.mydb_import (token, table, data)
         queryClient.mydb_import (table, data)
 
@@ -1297,7 +1327,7 @@ def mydb_import(table, data, token=None, **kw):
 
     data: str or data object
         The data file or python object to be loaded.  The 'data' value
-        may be one of the following types:
+        may be one of the following types::
 
             filename	    A CSV file of data
             string		    A string containing CSV data
@@ -1352,11 +1382,12 @@ def mydb_truncate(token, table):
 def mydb_truncate(table, token=None):
     '''Truncate the specified table in the user's MyDB
 
-    Usage:
+    Usage::
+
         mydb_truncate (table, token=None)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         queryClient.mydb_truncate (token, table)
         queryClient.mydb_truncate (table)
         queryClient.mydb_truncate (token, table=<id>)
@@ -1391,19 +1422,27 @@ def mydb_index(token, table, column, q3c=None, cluster=False, async_=False):
                                  async_=async_)
 
 @multimethod('qc',2,False)
-def mydb_index(table, column, token=None, q3c=None, cluster=False,
+def mydb_index(opt1, opt2, token=None, q3c=None, cluster=False,
                async_=False):
-    return qc_client._mydb_index(token=def_token(token), table=table,
-                                 column=column, q3c=q3c, cluster=cluster,
-                                 async_=async_)
+    if q3c is not None and len(opt1.split('.')) >= 4:
+        # opt1 looks like a token, and q3c is set so opt2 must be a table.
+        return qc_client._mydb_index(token=def_token(opt1), table=opt2,
+                                     column='', q3c=q3c, cluster=cluster,
+                                     async_=async_)
+    else:
+        # opt1 looks like a table name
+        return qc_client._mydb_index(token=def_token(token), table=opt1,
+                                     column=opt2, q3c=q3c, cluster=cluster,
+                                     async_=async_)
+
 
 @multimethod('qc',1,False)
 def mydb_index(table, column='', token=None, q3c=None, cluster=False,
                async_=False):
     '''Index the specified column in a table in the user's MyDB
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         queryClient.mydb_index (table, colunm)
         queryClient.mydb_index (token, table, column)
         queryClient.mydb_index (table, column, token=None)
@@ -1440,10 +1479,10 @@ def mydb_index(table, column='', token=None, q3c=None, cluster=False,
     .. code-block:: python
 
 	# Index the table's "id" column
-        queryClient.index('foo1', 'id') 	
+        queryClient.index('foo1', 'id')
 
 	# Index and cluster the table by position
-        queryClient.index('foo1', q3c='ra,dec', cluster=True) 	
+        queryClient.index('foo1', q3c='ra,dec', cluster=True)
     '''
     return qc_client._mydb_index(token=def_token(token), table=table,
                                  column=column, q3c=q3c, cluster=cluster,
@@ -1460,11 +1499,12 @@ def mydb_drop(token, table):
 def mydb_drop(table, token=None):
     '''Drop the specified table from the user's MyDB
 
-    Usage:
+    Usage::
+
         mydb_drop (table, token=None)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         queryClient.mydb_drop (token, table)
         queryClient.mydb_drop (table)
         queryClient.mydb_drop (token, table=<id>)
@@ -1509,11 +1549,12 @@ def mydb_rename(token, source, target):
 def mydb_rename(source, target, token=None):
     '''Rename a table in the user's MyDB to a new name
 
-    Usage:
+    Usage::
+
         mydb_rename (source, target, token=None)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         queryClient.mydb_rename (token, source, target)
         queryClient.mydb_rename (source, target)
 
@@ -1553,11 +1594,12 @@ def mydb_copy(token, source, target):
 def mydb_copy(source, target, token=None):
     '''Copy a table in the user's MyDB to a new name
 
-    Usage:
+    Usage::
+
         mydb_copy (source, target, token=None)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         queryClient.mydb_copy (token, source, target)
         queryClient.mydb_copy (source, target)
 
@@ -1596,7 +1638,7 @@ class queryClient (object):
          QUERYCLIENT -- Client-side methods to access the Data Lab
                         Query Manager Service.
     '''
-    def __init__(self, profile=DEF_PROFILE, svc_url=DEF_SERVICE_URL):
+    def __init__(self, profile=DEF_SERVICE_PROFILE, svc_url=DEF_SERVICE_URL):
         '''Initialize the query client. '''
 
         self.svc_url = svc_url.strip('/')       # QueryMgr service URL
@@ -1675,7 +1717,8 @@ class queryClient (object):
 
             queryClient.set_svc_url ("http://localhost:7002")
         '''
-        self.svc_url = qcToString(svc_url.strip('/'))
+        if svc_url is not None:
+            self.svc_url = qcToString(svc_url.strip('/'))
 
     def get_svc_url(self):
         '''Get the currently-used Query Manager serice URL.
@@ -1793,7 +1836,7 @@ class queryClient (object):
     def list_profiles(self, optval, token=None, profile=None, format='text'):
         '''Usage:  queryClient.client.list_profiles (token, ...)
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._list_profiles (token=def_token(optval),
                                         profile=profile, format=format)
@@ -1966,6 +2009,7 @@ class queryClient (object):
                    'X-DL-OriginIP': self.hostip,
                    'X-DL-OriginHost': self.hostname,
                    'X-DL-AuthToken': def_token(token)}  # application/x-sql
+                   #'X-DL-AuthToken': str(token)}         # application/x-sql
 
         if fmt in ['pandas','array','structarray','table','csv-noheader']:
             qfmt = 'csv'
@@ -2110,7 +2154,7 @@ class queryClient (object):
         '''Usage:  queryClient.status (jobID)
                    queryClient.status (token, jobId=<id>)
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._status (token=def_token(optval), jobId=jobId)
         else:
@@ -2153,7 +2197,7 @@ class queryClient (object):
         '''Usage:  queryClient.jobs (jobID)
                    queryClient.jobs (token, jobId=<id>)
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._jobs (token=def_token(optval), jobId=jobId,
                                format=format, status=status, option=option)
@@ -2200,7 +2244,7 @@ class queryClient (object):
         '''Usage:  queryClient.results (jobID)
                    queryClient.results (token, jobId=<id>)
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._results (token=def_token(optval), jobId=jobId,
                                   delete=delete)
@@ -2244,7 +2288,7 @@ class queryClient (object):
         '''Usage:  queryClient.error (jobID)
                      queryClient.error (token, jobId=<id>)
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._error (token=def_token(optval), jobId=jobId)
         else:
@@ -2285,7 +2329,7 @@ class queryClient (object):
         '''Usage:  queryClient.abort (jobID)
                    queryClient.abort (token, jobId=<id>)
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._abort (token=def_token(optval), jobId=jobId)
         else:
@@ -2327,7 +2371,7 @@ class queryClient (object):
         '''Usage:  queryClient.wait (jobID)
                    queryClient.wait (token, jobId=<id>)
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._wait (token=def_token(optval), jobId=jobId, wait=wait,
                                verbose=verbose)
@@ -2347,16 +2391,16 @@ class queryClient (object):
         '''Implementation of the wait() method.
 
            Loop until an async job has completed.
-    
+
         Parameters
         ----------
         jobid : str
             The job ID string of a submitted query job.
-        
+
         wait : int | float
             Wait for `wait` seconds before checking status again. Default: 3sec
         '''
-    
+
         while True:
             status = qc_client._status(token=token, jobId=jobId)
             if verbose:
@@ -2389,7 +2433,7 @@ class queryClient (object):
         '''Usage:  queryClient.list (table)
                      queryClient.list (token, table=<id>)
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self.mydb_list (token=def_token(optval), table=table)
         else:
@@ -2416,7 +2460,7 @@ class queryClient (object):
         '''Usage:  queryClient.drop (table)
                      queryClient.drop (token, table=<id>)
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self.mydb_drop (token=def_token(optval), table=table)
         else:
@@ -2442,7 +2486,7 @@ class queryClient (object):
         '''Usage:  queryClient.mydb_list (table)
                      queryClient.mydb_list (token, table=<str>)
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._mydb_list (token=def_token(optval), table=table,
                                     index=index, **kw)
@@ -2571,6 +2615,7 @@ class queryClient (object):
         # Set up the request headers and initialize.
         params = {}
         headers = self.getHeaders (token)
+        params['table'] = table
         params['profile'] = self.svc_profile
         dburl = '%s/ingest' % (self.svc_url)
 
@@ -2621,7 +2666,7 @@ class queryClient (object):
         if verbose or self.debug:
             print (str(r.text))
 
-        if r.content[:5].lower() == 'error':
+        if r.text[:5].lower() == 'error':
             raise queryClientError (qcToString(r.content))
         else:
             return 'OK'
@@ -2652,6 +2697,8 @@ class queryClient (object):
         verbose = (kw['verbose'] if 'verbose' in kw else False)
         append = (kw['append'] if 'append' in kw else False)
         delimiter = (kw['delimiter'] if 'delimiter' in kw else ',')
+        schema_def = (kw['schema_def'] if 'schema_def' in kw else '')
+        parse_rows = (kw['parse_rows'] if 'parse_rows' in kw else None)
 
         # Set up the request headers and initialize.
         headers = self.getHeaders (token)
@@ -2664,7 +2711,11 @@ class queryClient (object):
                    'delimiter' : str(delimiter),
                    'append' : str(append),
                    'profile' : self.svc_profile,
-                   'csv_header' : str(csv_header) }
+                   'csv_header' : str(csv_header),
+                   'schema_def' : str(schema_def)}
+
+        if parse_rows:
+            params['parse_rows'] = str(parse_rows)
 
         if isinstance (data, str):
             if data.find('[') > 0:
@@ -2690,12 +2741,15 @@ class queryClient (object):
 
             else:
                 # Upload the CSV string to the staging area.
-                with open (tmp_file, 'w') as f:
-                    f.write(data)
-                f.close()
-                tmp_name = os.path.basename (tmp_file)
-                storeClient.chunked_upload(token, tmp_file, tmp_name)
-                params['filename'] = tmp_name
+                try:
+                    with open (tmp_file, 'w') as f:
+                        f.write(data)
+                    f.close()
+                    tmp_name = os.path.basename (tmp_file)
+                    storeClient.chunked_upload(token, tmp_file, tmp_name)
+                    params['filename'] = tmp_name
+                except Exception as e:
+                    print('upload ERR: ' + str(e))
 
         elif isinstance (data, pandas.core.frame.DataFrame):
             # Convert a DataFrame to a CSV string object.
@@ -2710,6 +2764,7 @@ class queryClient (object):
 
         else:
             # Reserved for future format support.
+            print('Error: mydb_import(): Unknown data type: ' + str(type(data)))
             pass
 
         # Execute the service call.
@@ -2771,13 +2826,21 @@ class queryClient (object):
                                 async_=async_)
 
     @multimethod('_qc',2,True)
-    def mydb_index(self, table, column, token=None, q3c=None, cluster=False,
+    def mydb_index(self, opt1, opt2, token=None, q3c=None, cluster=False,
                     async_=False):
         '''Usage:  queryClient.mydb_index (table, colunm)
         '''
-        return self._mydb_index(token=def_token(token), table=table,
-                                column=column, q3c=q3c, cluster=cluster,
-                                async_=async_)
+        if q3c is not None and len(opt1.split('.')) >= 4:
+            # opt1 looks like a token and q3c is set, opt2 must be a table
+            return self._mydb_index(token=def_token(opt1), table=opt2,
+                                    column='', q3c=q3c, cluster=cluster,
+                                    async_=async_)
+        else:
+            # opt1 looks like a table
+            return self._mydb_index(token=def_token(token), table=opt1,
+                                    column=opt2, q3c=q3c, cluster=cluster,
+                                    async_=async_)
+
 
     def _mydb_index(self, token=None, table=None, column='', q3c=None,
                     cluster=False, async_=False):
@@ -2962,7 +3025,7 @@ class queryClient (object):
         '''
 
         headers = self.getHeaders (token)
-        user, uid, gid, hash = token.strip().split('.', 3)
+        user, uid, gid, hash = split_auth_token(token.strip())
 
         shortname = '%s_%s' % (uid, input[input.rfind('/') + 1:])
         if input[:input.find(':')] not in ['vos', 'mydb']:
@@ -2995,7 +3058,7 @@ class queryClient (object):
         '''
 
         headers = self.getHeaders (token)
-        user, uid, gid, hash = token.strip().split('.', 3)
+        user, uid, gid, hash = split_auth_token(token.strip())
 
     #    shortname = '%s_%s' % (uid, input[input.rfind('/') + 1:])
     #    if input[:input.find(':')] not in ['vos', 'mydb']:
@@ -3029,7 +3092,7 @@ class queryClient (object):
         '''Get default tracking headers,
         '''
         tok = def_token(token)
-        user, uid, gid, hash = tok.strip().split('.', 3)
+        user, uid, gid, hash = split_auth_token(tok.strip())
         hdrs = {#'Content-Type': 'text/ascii',
                 'X-DL-ClientVersion': __version__,
                 'X-DL-OriginIP': self.hostip,
@@ -3189,13 +3252,13 @@ class queryClient (object):
 #  Query Client Handles
 # ###################################
 
-def getClient(profile=DEF_PROFILE, svc_url=DEF_SERVICE_URL):
+def getClient(profile=DEF_SERVICE_PROFILE, svc_url=DEF_SERVICE_URL):
     '''Create a new queryClient object and set a default profile.
     '''
     return queryClient(profile=profile, svc_url=svc_url)
 
 # The default client handle for the module.
-qc_client = getClient(profile=DEF_PROFILE, svc_url=DEF_SERVICE_URL)
+qc_client = getClient(profile=DEF_SERVICE_PROFILE, svc_url=DEF_SERVICE_URL)
 
 
 
@@ -3237,6 +3300,5 @@ def removeComment(s):
     list = s.split('\n')
     new_list = []
     for table in list:
-        new_list.append(table.split(',created:')[0])
+        new_list.append(table.split(',')[0])
     return '\n'.join(new_list)
-

@@ -1,2 +1,2 @@
-from dl.__version__ import version
+from dl.__version__ import __version__
 

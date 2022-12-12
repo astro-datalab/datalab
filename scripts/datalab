@@ -159,7 +159,7 @@ if __name__ == "__main__":
         print (' ')
 
     elif sys.argv[1] in ['--version', '-version', '-v']:
-        print ("Task Version:  " + dlver.version)
+        print ("Task Version:  " + dlver.__version__)
 
     # Parse arguments
     elif sys.argv[1] in tasks:

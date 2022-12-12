@@ -5,7 +5,10 @@
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <mike.fitzpatrick@noirlab.edu>, Matthew Graham <mjg@caltech.edu>, Data Lab <datalab@noirlab.edu>'
-__version__ = 'v2.18.8'
+try:
+    from storagemanager.__version__ import __version__
+except ImportError as e:
+    from dl.__version__ import __version__
 
 
 '''
@@ -16,7 +19,7 @@ Storage Manager Client Interface
                 isAlive  (svc_url=DEF_SERVICE_URL)
             set_svc_url  (svc_url=DEF_SERVICE_URL)
             get_svc_url  ()
-            set_profile  (profile=DEF_PROFILE)
+            set_profile  (profile=DEF_SERVICE_PROFILE)
             get_profile  ()
                services  (name=None, svc_type='vos', format=None,
                           profile='default')
@@ -91,14 +94,13 @@ import glob
 import socket
 import json
 import time
-import re
 
 if os.path.isfile('./Util.py'):                # use local dev copy
     from Util import multimethod
-    from Util import def_token
+    from Util import def_token, split_auth_token, is_auth_token
 else:                                           # use distribution copy
     from dl.Util import multimethod
-    from dl.Util import def_token
+    from dl.Util import def_token, split_auth_token, is_auth_token
 
 # Turn off some annoying astropy warnings
 #import warnings
@@ -130,26 +132,24 @@ elif THIS_HOST[:6] == 'dltest':
 
 DEF_SERVICE_URL = DEF_SERVICE_ROOT + '/storage'
 QM_SERVICE_URL = DEF_SERVICE_ROOT + '/query'
-AM_SERVICE_URL = DEF_SERVICE_ROOT + '/auth'
 
 # The requested query 'profile'.  A profile refers to the specific
 # machines and services used by the Storage Manager on the server.
-DEF_PROFILE     = 'default'
+DEF_SERVICE_PROFILE     = 'default'
 
 # Use a /tmp/SM_DEBUG file as a way to turn on debugging in the client code.
 DEBUG           = os.path.isfile('/tmp/SM_DEBUG')
 
-        
-URI_RESERVED = ":;?/@&=+$,"          # RFC2396 reserved URI chars
+# Check for a file to override the default service URL.
+if os.path.exists('/tmp/SM_SVC_URL'):
+    with open('/tmp/SM_SVC_URL') as fd:
+        DEF_SERVICE_URL = fd.read().strip()
+if os.path.exists('/tmp/QM_SVC_URL'):
+    with open('/tmp/QM_SVC_URL') as fd:
+        QM_SERVICE_URL = fd.read().strip()
 
-# DLC-1818. There are file names we served, that contain + signs
-# in their names. They need to be escaped for it to work on a URL.
-# For now we are only escaping the +/plus sign to minimize introducing
-# unwanted behaviours.
-# A deeper look at what characters are allowed system wide should be done at
-# some point.
-PLUS_REGEX = r'\+'
-PLUS_URL_ESC_CODE = "%2B"
+
+URI_RESERVED = ":;?/@&=+$,"          # RFC2396 reserved URI chars
 
 
 # ####################################################################
@@ -189,7 +189,7 @@ def get_svc_url():
 # --------------------------------------------------------------------
 # SET_PROFILE -- Set the profile to be used
 #
-def set_profile(profile=DEF_PROFILE):
+def set_profile(profile=DEF_SERVICE_PROFILE):
     return sc_client.set_profile(profile=profile)
 
 # --------------------------------------------------------------------
@@ -223,11 +223,12 @@ def list_profiles(optval, profile=None, format='text', token=None):
 def list_profiles(token=None, profile=None, format='text'):
     '''Retrieve the profiles supported by the storage manager service
 
-    Usage:
+    Usage::
+
         list_profiles(token=None, profile=None, format='text')
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         storeClient.list_profiles(token)	# list default profile
         storeClient.list_profiles(profile)	# list named profile
         storeClient.list_profiles()		# list default profile
@@ -280,11 +281,12 @@ def access(path, mode, token=None, verbose=True):
 def access(path, mode=None, token=None, verbose=True):
     '''Determine whether the file can be accessed with the given node.
 
-    Usage:
+    Usage::
+
         access(path, mode=None, token=None, verbose=True)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         storeClient.access(token, path, mode)
         storeClient.access(path, mode)
         storeClient.access(path)
@@ -335,11 +337,11 @@ def stat(token, path, verbose=True):
 def stat(path, token=None, verbose=True):
     '''Get file status information, similar to stat().
 
-    Usage:
+    Usage::
         stat(path, token=None, verbose=True)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         storeClient.stat(token, path)
         storeClient.stat(path)
 
@@ -384,66 +386,6 @@ def stat(path, token=None, verbose=True):
     return sc_client._stat(path=path, token=def_token(token), verbose=verbose)
 
 
-# --------------------------------------------------------------------
-# IS_AUTH_TOKEN -- returns True if the the string pass is a token
-#                  False otherwise
-#
-def is_auth_token(token):
-    """Check if passed in string is an auth token
-    Usage:
-        is_auth_token(token)
-
-    Parameters
-    ----------
-    token : str
-        A string auth token
-        E.g.
-        "testuser.3666.3666.$1$PKCFmMzy$OPpZg/ThBmZe/V8LVPvpi/%"
-
-    Returns
-    -------
-    return: boolean
-         True if string is a auth token
-    """
-
-    """
-    E.g. token "testuser.3666.3666.$1$PKCFmMzy$OPpZg/ThBmZe/V8LVPvpi/%"
-    Regex deconstruction and explanation:
-    -------------------------------------
-    1.   ([^\/\s]+)     any string with no "/" or spaces
-    2.   \.             separated by a .
-    3.   \d+            followed by any number of digits
-    4.   \.             separated by a .
-    5.   \d+            followed by any number of digits
-    6.   \.             separated by a .
-    7.a) (\$1\$\S{22,}) A string that starts with $1$ (that's how a md5 hash
-                        starts) and that is followed by any non space 
-                        characters of 22 chars or longer
-    7.b) |              or
-    7.c) (\S+_access)   A string that ends in _access. This is a special
-                        case for special tokens such as:
-                          anonymous.0.0.anon_access
-                          dldemo.99999.99999.demo_access
-    """
-
-    return re.match(r'([^\/\s]+)\.\d+\.\d+\.((\$1\$\S{22,})|(\S+_access))', token)
-
-
-# User validation.  Determing whether the user represented by the token
-# is a valid Data Lab user.
-def validToken(token):
-    if token == "" or token is None:
-        return False
-    else:
-        # Check with the Auth service whether the token is valid.
-        try:
-            r = requests.get("%s/isValidToken?token=%s" % (AM_SERVICE_URL, token))
-        except:
-            return False
-
-        return (False if r.status_code != 200 or r.text != 'OK' else True)
-
-
 
 # --------------------------------------------------------------------
 # GET -- Retrieve a file (or files) from the Store Manager service
@@ -455,7 +397,7 @@ def get(token, fr, to, mode='text', verbose=True, debug=False, timeout=30):
                         timeout=timeout)
 
 @multimethod('sc',2,False)
-def get(opt1, opt2, fr='', to='', token=None, mode='text', verbose=True, 
+def get(opt1, opt2, fr='', to='', token=None, mode='text', verbose=True,
         debug=False, timeout=30):
     if opt1 is not None and is_auth_token(opt1):
         # opt1 looks like a token
@@ -469,7 +411,7 @@ def get(opt1, opt2, fr='', to='', token=None, mode='text', verbose=True,
                             timeout=timeout)
 
 @multimethod('sc',1,False)
-def get(optval, fr='', to='', token=None, mode='text', verbose=True, 
+def get(optval, fr='', to='', token=None, mode='text', verbose=True,
         debug=False, timeout=30):
     if optval is not None and is_auth_token(optval):
         # optval looks like a token
@@ -487,12 +429,12 @@ def get(token=None, fr='', to='', mode='text', verbose=True, debug=False,
         timeout=30):
     '''Retrieve a file from the store manager service
 
-    Usage:
+    Usage::
         get(token=None, fr='', to='', mode='text', verbose=True, debug=False,
             timeout=30)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         storeClient.get(token, fr, to)
         storeClient.get(fr, to)
         storeClient.get(fr)
@@ -584,11 +526,12 @@ def put(optval, fr='', to='vos://', token=None, verbose=True, debug=False):
 def put(fr='', to='vos://', token=None, verbose=True, debug=False):
     '''Upload a file to the store manager service
 
-    Usage:
+    Usage::
+
         put(fr='', to='vos://', token=None, verbose=True, debug=False)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         storeClient.put(token, fr, to)
         storeClient.put(fr, to)
         storeClient.put(fr)
@@ -639,11 +582,12 @@ def cp(token, fr='', to='', verbose=False):
 def cp(token=None, fr='', to='', verbose=False):
     '''Copy a file/directory within the store manager service
 
-    Usage:
+    Usage::
+
         cp(token=None, fr='', to='', verbose=False)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         storeClient.cp(token, fr, to)
         storeClient.cp(fr, to)
         storeClient.cp(fr)
@@ -693,11 +637,12 @@ def ln(fr, target, token=None, verbose=False):
 def ln(token, fr='', target='', verbose=False):
     '''Create a link to a file/directory in the store manager service
 
-    Usage:
+    Usage::
+
         ln(token, fr='', target='', verbose=False)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         storeClient.ln(token, fr, target)
         storeClient.ln(fr, target)
         storeClient.ln(fr, target)
@@ -752,11 +697,12 @@ def ls(optval, name='vos://', token=None, format='csv', verbose=False):
 def ls(name='vos://', token=None, format='csv', verbose=False):
     '''Get a file/directory listing from the store manager service
 
-    Usage:
+    Usage::
+
         ls(name='vos://', token=None, format='csv', verbose=False)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         storeClient.ls(token, name)
         storeClient.ls(name)
         storeClient.ls()
@@ -803,11 +749,12 @@ def mkdir(token, name):
 def mkdir(optval, name='', token=None):
     '''Make a directory in the storage manager service
 
-    Usage:
+    Usage::
+
         mkdir(optval, name='', token=None)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         storeClient.mkdir(token, name)
         storeClient.mkdir(name)
 
@@ -856,11 +803,12 @@ def mv(token, fr='', to='', verbose=False):
 def mv(token=None, fr='', to='', verbose=False):
     '''Move/rename a file/directory within the store manager service
 
-    Usage:
+    Usage::
+
         mv(token=None, fr='', to='', verbose=False)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         storeClient.mv(token, fr, to)
         storeClient.mv(fr, to)
         storeClient.mv(token)
@@ -917,11 +865,12 @@ def rm(optval, name='', token=None, verbose=False):
 def rm(name='', token=None, verbose=False):
     '''Delete a file from the store manager service
 
-    Usage:
+    Usage::
+
         rm(name='', token=None, verbose=False)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         storeClient.rm(token, name)
         storeClient.rm(name)
 
@@ -969,11 +918,12 @@ def rmdir(optval, name='', token=None, verbose=False):
 def rmdir(name='', token=None, verbose=False):
     '''Delete a directory from the store manager service
 
-    Usage:
+    Usage::
+
         rmdir(name='', token=None, verbose=False)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         storeClient.rmdir(token, name)
         storeClient.rmdir(name)
 
@@ -1012,11 +962,12 @@ def saveAs(token, data, name):
 def saveAs(data, name, token=None):
     '''Save the string representation of a data object as a file.
 
-    Usage:
+    Usage::
+
         saveAs(data, name, token=None)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         storeClient.saveAs(token, data, name)
         storeClient.saveAs(data, name)
 
@@ -1064,11 +1015,12 @@ def tag(name, tag, token=None):
 def tag(token, name='', tag=''):
     '''Annotate a file/directory in the store manager service
 
-    Usage:
+    Usage::
+
         tag(token, name='', tag='')
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         storeClient.tag(token, name, tag)
         storeClient.tag(name, tag)
         storeClient.tag(token, name='foo', tag='bar')
@@ -1111,11 +1063,12 @@ def load(token, name, endpoint, is_vospace=False):
 def load(name, endpoint, token=None, is_vospace=False):
     '''Load a file from a remote endpoint to the Store Manager service
 
-    Usage:
+    Usage::
+
         load(name, endpoint, token=None, is_vospace=False)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         storeClient.load(token, name, endpoint)
         storeClient.load(name, endpoint)
 
@@ -1156,11 +1109,12 @@ def pull(token, name, endpoint, is_vospace=False):
 def pull(name, endpoint, token=None, is_vospace=False):
     '''Load a file from a remote endpoint to the Store Manager service
 
-    Usage:
+    Usage::
+
         pull(name, endpoint, token=None, is_vospace=False)
 
-    MultiMethod Usage:
-    ------------------
+    MultiMethod Usage::
+
         storeClient.pull(token, name, endpoint)
         storeClient.pull(name, endpoint)
 
@@ -1201,7 +1155,7 @@ class storeClient(object):
          STORECLIENT -- Client-side methods to access the Data Lab
                         Storage Manager Service.
     '''
-    def __init__(self, profile=DEF_PROFILE, svc_url=DEF_SERVICE_URL):
+    def __init__(self, profile=DEF_SERVICE_PROFILE, svc_url=DEF_SERVICE_URL):
         '''Initialize the store client object.
         '''
         self.svc_url = svc_url.strip('/')       # StoreMgr service URL
@@ -1275,7 +1229,8 @@ class storeClient(object):
 
             storeClient.set_scv_url("http://demo.datalab.noirlab.edu:7003")
         '''
-        self.svc_url = scToString(svc_url.strip('/'))
+        if svc_url is not None and svc_url != '':
+            self.svc_url = scToString(svc_url.strip('/'))
 
     def get_svc_url(self):
         '''Return the currently-used Storage Manager service URL.
@@ -1316,8 +1271,8 @@ class storeClient(object):
 
             storeClient.set_profile('test')
         '''
-
-        self.svc_profile = scToString(profile)
+        if profile is not None and profile != '':
+            self.svc_profile = scToString(profile)
 
     def get_profile(self):
         '''Get the profile
@@ -1543,7 +1498,7 @@ class storeClient(object):
             return "%.1f%s" % (num, 'Y')
 
         tok = def_token(token)
-        user, uid, gid, hash = tok.strip().split('.', 3)
+        user, uid, gid, hash = split_auth_token(tok.strip())
         hdrs = {'Content-Type': 'text/ascii',
                 'X-DL-ClientVersion': __version__,
                 'X-DL-OriginIP': self.hostip,
@@ -1593,7 +1548,7 @@ class storeClient(object):
                     dlname = ((to + "/" + fn) if hasmeta(fr) else to)
 
                 # Get a single file.
-                res = requests.get(self.svc_url + "/get?name=%s" % re.sub(PLUS_REGEX, PLUS_URL_ESC_CODE, f),
+                res = requests.get(self.svc_url + "/get?name=%s" % f,
                                    headers=hdrs)
 
                 if res.status_code != 200:
@@ -1606,7 +1561,7 @@ class storeClient(object):
                         except Exception as e:
                             if "No connection adapters" in str(e) and i%5 == 0:
                                 print('GET error %d: retrying' % i)
-                            if "Internal Server Error" in str(e) and i%5 == 0: 
+                            if "Internal Server Error" in str(e) and i%5 == 0:
                                 print('GET internal error %d: retrying' % i)
                             time.sleep(1)
                             if i == (timeout-1):
@@ -1668,7 +1623,7 @@ class storeClient(object):
 
         else:
             # Get a single file, return the raw contents to the caller.
-            url = requests.get(self.svc_url + "/get?name=%s" % re.sub(PLUS_REGEX, PLUS_URL_ESC_CODE, nm),
+            url = requests.get(self.svc_url + "/get?name=%s" % nm,
                                headers=hdrs)
             r = requests.get(url.text, stream=False, headers=hdrs)
             if mode == 'text':
@@ -1729,7 +1684,7 @@ class storeClient(object):
         '''Implementation of the put() method.
         '''
         tok = def_token(token)
-        user, uid, gid, hash = tok.strip().split('.', 3)
+        user, uid, gid, hash = split_auth_token(tok.strip())
         hdrs = {'Content-Type': 'text/ascii',
                 'X-DL-ClientVersion': __version__,
                 'X-DL-OriginIP': self.hostip,
@@ -1768,7 +1723,7 @@ class storeClient(object):
             if debug:
                 print("put: f=%s" % (f))
             fr_dir, fr_name = os.path.split(f)
- 
+
             if any(i in fr_name for i in URI_RESERVED):
                 resp.append('Error: URI reserved char in source filename: '+f)
                 continue
@@ -2014,21 +1969,22 @@ class storeClient(object):
         if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._ls(name=name, format=format,
-                             token=def_token(optval), verbose=verbose)
+                            token=def_token(optval), verbose=verbose)
         else:
             return self._ls(name=optval, format=format, token=def_token(None),
-                             verbose=verbose)
+                            verbose=verbose)
 
     @multimethod('_sc',0,True)
     def ls(self, name='vos://', token=None, format='csv', verbose=False):
         ''' Usage:  storeClient.ls()
         '''
         return self._ls(name=name, format=format, token=def_token(token),
-                         verbose=verbose)
+                        verbose=verbose)
 
     def _ls(self, token=None, name='vos://', format='csv', verbose=False):
         '''Implementation of the ls() method.
         '''
+        name = '' if name is None else name
         try:
             uri = (name if name.count('://') > 0 else 'vos://' + name)
             r = self.getFromURL(self.svc_url,
@@ -2351,7 +2307,7 @@ class storeClient(object):
         '''
         try:
             tok = def_token(token)
-            user, uid, gid, hash = tok.strip().split('.', 3)
+            user, uid, gid, hash = split_auth_token(tok.strip())
 
             hdrs = {'Content-Type': 'text/ascii',
                     'X-DL-ClientVersion': __version__,
@@ -2360,8 +2316,7 @@ class storeClient(object):
                     'X-DL-User': user,
                     'X-DL-AuthToken': tok}  		# application/x-sql
 
-            resp = requests.get("%s%s" % (svc_url, re.sub(PLUS_REGEX, PLUS_URL_ESC_CODE, path)),
-                                headers=hdrs)
+            resp = requests.get("%s%s" % (svc_url, path), headers=hdrs)
 
         except Exception as e:
             raise storeClientError(str(e))
@@ -2459,7 +2414,7 @@ def expandFileList(svc_url, token, pattern, format, full=False):
     try:
         r = requests.get(url, headers={'X-DL-AuthToken': def_token(token)})
     except Exception as e:
-        raise 
+        raise
 
     # Filter the directory contents list using the filename pattern.
     list = []
@@ -2514,13 +2469,13 @@ def chunked_upload(token, local_file, remote_file):
 #  Store Client Handles
 # ###################################
 
-def getClient(profile=DEF_PROFILE, svc_url=DEF_SERVICE_URL):
+def getClient(profile=DEF_SERVICE_PROFILE, svc_url=DEF_SERVICE_URL):
     ''' Create a new storeClient object and set a default profile.
     '''
     return storeClient(profile=profile, svc_url=svc_url)
 
 # The default client handle for the module.
-sc_client = getClient(profile=DEF_PROFILE, svc_url=DEF_SERVICE_URL)
+sc_client = getClient(profile=DEF_SERVICE_PROFILE, svc_url=DEF_SERVICE_URL)
 
 
 # ##########################################

@@ -3,10 +3,14 @@
 # RESCLIENT -- Client methods for the Data Lab Resource Management Service
 #
 
-'''Client methods for the Data Lab Resource Management Service.
+'''
+    Client methods for the Data Lab Resource Management Service.
 
     Resource Manager
     ----------------
+
+    ::
+
             createUser  (username, password, email, name, institute)
                getUser  (token, username, keyword)
                setUser  (token, username, keyword, value)
@@ -39,17 +43,20 @@
          list_profiles  (token, profile=None, format='text')
 
 
-Import via
+    Import via
 
-.. code-block:: python
+    .. code-block:: python
 
-    from dl import resClient
+        from dl import resClient
 '''
 
 from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <mike.fitzpatrick@noirlab.edu>, Data Lab <datalab@noirlab.edu>'
-__version__ = 'v2.18.7'
+try:
+    from resmanager.__version__ import __version__
+except ImportError as e:
+    from dl.__version__ import __version__
 
 
 import requests
@@ -66,6 +73,11 @@ DEF_SERVICE_URL = "https://datalab.noirlab.edu/res"
 # machines and services used by the ResManager on the server.
 
 DEF_SERVICE_PROFILE = "default"
+
+# Check for a file to override the default service URL.
+if os.path.exists('/tmp/RM_SVC_URL'):
+    with open('/tmp/RM_SVC_URL') as fd:
+        DEF_SERVICE_URL = fd.read().strip()
 
 
 # API debug flag.
@@ -92,7 +104,7 @@ keys = {'user':None,
 
 def createUser(username, password, email, name, institute, profile='default'):
     try:
-        resp = client.createUser(username, password, email, name, institute,
+        resp = rc_client.createUser(username, password, email, name, institute,
                                  profile=profile)
     except dlResError as e:
         resp = str(e)
@@ -100,86 +112,96 @@ def createUser(username, password, email, name, institute, profile='default'):
     return resp
 
 def deleteUser(token, username, profile='default'):
-    return client.deleteUser(token, username, profile=profile)
+    return rc_client.deleteUser(token, username, profile=profile)
 
 def getUser(token, username, keyword, profile='default'):
-    return client.getUser(token, username, keyword, profile=profile)
+    return rc_client.getUser(token, username, keyword, profile=profile)
 
 def setUser(token, username, keyword, value, profile='default'):
-    return client.setUser(token, username, keyword, value, profile=profile)
+    return rc_client.setUser(token, username, keyword, value, profile=profile)
 
 def passwordReset(token, user, password, profile='default'):
-    return client.passwordReset(token, user, password, profile=profile)
+    return rc_client.passwordReset(token, user, password, profile=profile)
 
 def sendPasswordLink(token, user, profile='default'):
-    return client.sendPasswordLink(token, user, profile=profile)
+    return rc_client.sendPasswordLink(token, user, profile=profile)
 
 def listFields(profile='default'):
-    return client.listFields(profile=profile)
+    return rc_client.listFields(profile=profile)
 
 
 # Group functions
 def createGroup(token, group, profile='default'):
-    return client.createGroup(token, group, profile=profile)
+    return rc_client.createGroup(token, group, profile=profile)
 
 def getGroup(token, group, keyword, profile='default'):
-    return client.getGroup(token, group, keyword, profile=profile)
+    return rc_client.getGroup(token, group, keyword, profile=profile)
 
 def setGroup(token, group, keyword, value, profile='default'):
-    return client.setGroup(token, group, keyword, value, profile=profile)
+    return rc_client.setGroup(token, group, keyword, value, profile=profile)
 
 def deleteGroup(token, group, profile='default'):
-    return client.deleeteGroup(token, group, profile=profile)
+    return rc_client.deleeteGroup(token, group, profile=profile)
 
 
 # Resource functions
 def createResource(token, resource, profile='default'):
-    return client.createResource(token, resource, profile=profile)
+    return rc_client.createResource(token, resource, profile=profile)
 
 def getResource(token, resource, keyword, profile='default'):
-    return client.getResource(token, resource, keyword, profile=profile)
+    return rc_client.getResource(token, resource, keyword, profile=profile)
 
 def setResource(token, resource, keyword, value, profile='default'):
-    return client.setResource(token, resource, keyword, value, profile=profile)
+    return rc_client.setResource(token, resource, keyword, value, profile=profile)
 
 def deleteResource(token, resource, profile='default'):
-    return client.deleteResource(token, resource, profile=profile)
+    return rc_client.deleteResource(token, resource, profile=profile)
 
 
 # Job functions
 def createJob(token, jobid, job_type, query=None, task=None, profile='default'):
-    return client.createJob(token, jobid, job_type, query=query, task=task,
+    return rc_client.createJob(token, jobid, job_type, query=query, task=task,
                             profile=profile)
 
 def getJob(token, jobid, keyword, profile='default'):
-    return client.getJob(token, jobid, keyword, profile=profile)
+    return rc_client.getJob(token, jobid, keyword, profile=profile)
 
 def setJob(token, jobid, keyword, value, profile='default'):
-    return client.setJob(token, jobid, keyword, value, profile=profile)
+    return rc_client.setJob(token, jobid, keyword, value, profile=profile)
 
 def deleteJob(token, jobid, profile='default'):
-    return client.deleteJob(token, jobid, profile=profile)
+    return rc_client.deleteJob(token, jobid, profile=profile)
 
 def findJobs(token, jobid, format='text', status='all', option='list'):
-    return client.findJobs(token, jobid, format=format, status=status,
+    return rc_client.findJobs(token, jobid, format=format, status=status,
                            option=option)
 
 
 # Service methods
 def set_svc_url(svc_url):
-    return client.set_svc_url(svc_url.strip('/'))
+    if svc_url is not None and svc_url != '':
+        return rc_client.set_svc_url(svc_url.strip('/'))
 
 def get_svc_url():
-    return client.get_svc_url()
+    return rc_client.get_svc_url()
 
 def set_profile(profile):
-    return client.set_profile(profile)
+    return rc_client.set_profile(profile)
 
 def get_profile():
-    return client.get_profile()
+    return rc_client.get_profile()
 
 def list_profiles(token, profile=None, format='text'):
-    return client.list_profiles(token, profile, format)
+    return rc_client.list_profiles(token, profile, format)
+
+def isAlive(svc_url=DEF_SERVICE_URL):
+    try:
+        response = rc_client.isAlive(svc_url.strip('/'))
+    except Exception as e:
+        response = str(e)
+        return False
+    return response
+
 
 
 
@@ -238,7 +260,8 @@ class resClient(object):
             from dl import resClient
             resClient.client.set_svc_url("http://localhost:7001/")
         '''
-        self.svc_url = svc_url.strip('/')
+        if svc_url is not None and svc_url != '':
+            self.svc_url = svc_url.strip('/')
 
 
     def get_svc_url(self):
@@ -322,7 +345,7 @@ class resClient(object):
         '''
         pass
 
-    def isAlive(self, svc_url):
+    def isAlive(self, svc_url=DEF_SERVICE_URL):
         '''Check whether the ResManager service at the given URL is
             alive and responding.  This is a simple call to the root
             service URL or ping() method.
@@ -637,7 +660,7 @@ class resClient(object):
 
 
     def userRecord(self, token, user, value, format, profile='default'):
-        '''Get a value from the User record.  
+        '''Get a value from the User record.
 
         Parameters
         ----------
@@ -648,7 +671,7 @@ class resClient(object):
             or be a root token to access other records
         value : str
             Value to retrieve.  The special 'all' value will return all
-            fields accessible to the token.  
+            fields accessible to the token.
         format : str
             'text' for a single value, or 'json' for a complete record
 
@@ -1084,7 +1107,7 @@ class resClient(object):
 
         Returns
         -------
-            A JSON string of Job records matching the user or jobid. 
+            A JSON string of Job records matching the user or jobid.
         '''
         url = self.svc_url + "/findJobs"
 
@@ -1242,33 +1265,33 @@ class resClient(object):
 def getClient():
     return resClient()
 
-client = getClient()
+rc_client = getClient()
 
 
 # ##########################################
 #  Patch the docstrings for module functions
 # ##########################################
 
-createUser.__doc__ = client.createUser.__doc__
-deleteUser.__doc__ = client.deleteUser.__doc__
-getUser.__doc__ = client.getUser.__doc__
-setUser.__doc__ = client.setUser.__doc__
-passwordReset.__doc__ = client.passwordReset.__doc__
-sendPasswordLink.__doc__ = client.sendPasswordLink.__doc__
-listFields.__doc__ = client.listFields.__doc__
+createUser.__doc__ = rc_client.createUser.__doc__
+deleteUser.__doc__ = rc_client.deleteUser.__doc__
+getUser.__doc__ = rc_client.getUser.__doc__
+setUser.__doc__ = rc_client.setUser.__doc__
+passwordReset.__doc__ = rc_client.passwordReset.__doc__
+sendPasswordLink.__doc__ = rc_client.sendPasswordLink.__doc__
+listFields.__doc__ = rc_client.listFields.__doc__
 
-createGroup.__doc__ = client.createGroup.__doc__
-getGroup.__doc__ = client.getGroup.__doc__
-setGroup.__doc__ = client.setGroup.__doc__
-deleteGroup.__doc__ = client.deleteGroup.__doc__
+createGroup.__doc__ = rc_client.createGroup.__doc__
+getGroup.__doc__ = rc_client.getGroup.__doc__
+setGroup.__doc__ = rc_client.setGroup.__doc__
+deleteGroup.__doc__ = rc_client.deleteGroup.__doc__
 
-createResource.__doc__ = client.createResource.__doc__
-getResource.__doc__ = client.getResource.__doc__
-setResource.__doc__ = client.setResource.__doc__
-deleteResource.__doc__ = client.deleteResource.__doc__
+createResource.__doc__ = rc_client.createResource.__doc__
+getResource.__doc__ = rc_client.getResource.__doc__
+setResource.__doc__ = rc_client.setResource.__doc__
+deleteResource.__doc__ = rc_client.deleteResource.__doc__
 
-set_svc_url.__doc__ = client.set_svc_url.__doc__
-get_svc_url.__doc__ = client.get_svc_url.__doc__
-set_profile.__doc__ = client.set_profile.__doc__
-get_profile.__doc__ = client.get_profile.__doc__
-list_profiles.__doc__ = client.list_profiles.__doc__
+set_svc_url.__doc__ = rc_client.set_svc_url.__doc__
+get_svc_url.__doc__ = rc_client.get_svc_url.__doc__
+set_profile.__doc__ = rc_client.set_profile.__doc__
+get_profile.__doc__ = rc_client.get_profile.__doc__
+list_profiles.__doc__ = rc_client.list_profiles.__doc__

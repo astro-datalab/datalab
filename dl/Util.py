@@ -318,10 +318,10 @@ def is_auth_token(token):
 
 
 # --------------------------------------------------------------------
-# VALIDATETABLENAME -- Validate a DB table name contains only allowed chars.
+# VALIDTABLENAME -- Validate a DB table name contains only allowed chars.
 #
 
-def validateTableName(tbl):
+def validTableName(tbl):
     '''Return True if named table contains only valid lower-case chars or
        underscores.  A '.' in the string assumes the presence of a schema
        in the name, the schema and table name will be validated separately
@@ -350,6 +350,8 @@ def validateTableName(tbl):
             return bool(validCharsOnly(nm) and \
                         not (hasCaps(nm) or beginsWithNumber(nm)))
 
+    if tbl in [None,'']:
+        return False
     if '.' in tbl:
         if len(tbl.split('.')) != 2:                    # e.g. 'mydb.foo.bar'
             return False

@@ -363,6 +363,29 @@ def validTableName(tbl):
         return validName(tbl)
 
 
+# --------------------------------------------------------------------
+# SVCOVERRIDE -- Check for a service URL override.
+#
+
+def svcOverride(what, default):
+    '''Check for an override of a (usually, service) URL as deined by either
+       and environment variable, or a /tmp file given by the 'what' string.
+       If neither is found, returns the default value.
+    '''
+    if what is None:
+        return default
+
+    env_val = os.getenv (what)
+    if env_val not in [None, '']:
+        return env_val
+    else:
+        tmp_path = '/tmp/%s' % what
+        if os.path.exists(tmp_path):
+            with open(tmp_path) as fd:
+                return fd.read().strip()
+        else:
+            return default
+
 
 # --------------------------------------------------------------------
 # ENCODE_MULTIPART -- Encode multipart form data to upload files via POST.

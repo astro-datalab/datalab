@@ -316,7 +316,57 @@ def is_auth_token(token):
     return True if parse_auth_token(token) else False
 
 
-"""Encode multipart form data to upload files via POST."""
+
+# --------------------------------------------------------------------
+# VALIDTABLENAME -- Validate a DB table name contains only allowed chars.
+#
+
+def validTableName(tbl):
+    '''Return True if named table contains only valid lower-case chars or
+       underscores.  A '.' in the string assumes the presence of a schema
+       in the name, the schema and table name will be validated separately
+       however both must be valid.
+    '''
+
+    def hasCaps(nm):
+        '''Return True if nm contains capital letters.'''
+        return bool(re.search(r'[A-Z]',nm))
+
+    def beginsWithNumber(nm):
+        '''Return True if nm begins with a number.'''
+        return bool(re.search(r'[0-9]',nm[0]))
+
+    def validCharsOnly(nm):
+        '''Return True if all chars in nm are allowed values.'''
+        for e in list(nm):
+            if not re.search(r'[a-z0-9_]',e):
+                return False
+        return True
+
+    def validName(nm):
+        if not validCharsOnly(nm):
+            return False
+        else:
+            return bool(validCharsOnly(nm) and \
+                        not (hasCaps(nm) or beginsWithNumber(nm)))
+
+    if tbl in [None,'']:
+        return False
+    if '.' in tbl:
+        if len(tbl.split('.')) != 2:                    # e.g. 'mydb.foo.bar'
+            return False
+        _schema, _tbl = tbl.split('.')                  # assumes schema name
+        if _schema in [None,''] or _tbl in [None,'']:   # e.g. ".foo" or "foo."
+            return False
+        return (validName(_schema) and validName(_tbl))
+    else:
+        return validName(tbl)
+
+
+
+# --------------------------------------------------------------------
+# ENCODE_MULTIPART -- Encode multipart form data to upload files via POST.
+#
 
 _BOUNDARY_CHARS = string.digits + string.ascii_letters
 

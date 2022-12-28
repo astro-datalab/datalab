@@ -7,9 +7,9 @@ from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <mike.fitzpatrick@noirlab.edu>, Data Lab <datalab@noirlab.edu>'
 try:
-    import authmanager.__version__
+    from authmanager.__version__ import __version__
 except ImportError as e:
-    from __version__ import __version__
+    from dl.__version__ import __version__
 
 
 '''
@@ -363,7 +363,7 @@ class authClient(object):
         with open('%s/dl.conf' % self.home, 'w') as configfile:
             self.config.write(configfile)
 
-    def whoAmI():
+    def whoAmI(self):
         '''Return the currently logged-in user identity.
 
         Parameters
@@ -375,12 +375,10 @@ class authClient(object):
         name : str
             Currently logged-in user name, or 'anonymous' if not logged-in
 
-        Example
-        -------
-        .. code-block:: python
-
-            from dl import authClient
-            name = authClient.whoAmI()
+        Examples
+        --------
+        >>> from dl import authClient
+        >>> name = authClient.whoAmI()
         '''
         user = 'anonymous'
         try:
@@ -406,12 +404,10 @@ class authClient(object):
         -------
         Nothing
 
-        Example
-        -------
-        .. code-block:: python
-
-            from dl import authClient
-            authClient.set_svc_url("http://localhost:7001/")
+        Examples
+        --------
+        >>> from dl import authClient
+        >>> authClient.set_svc_url("http://localhost:7001/")
         '''
         if svc_url is not None and svc_url != '':
             self.svc_url = acToString(svc_url.strip('/'))
@@ -428,12 +424,10 @@ class authClient(object):
         service_url : str
             The currently-used Authentication Service URL.
 
-        Example
+        Examples
         -------
-        .. code-block:: python
-
-            from dl import authClient
-            service_url = authClient.get_svc_url()
+        >>> from dl import authClient
+        >>> service_url = authClient.get_svc_url()
         '''
         return acToString(self.svc_url)
 
@@ -449,12 +443,10 @@ class authClient(object):
         -------
         Nothing
 
-        Example
-        -------
-        .. code-block:: python
-
-            from dl import authClient
-            token = authClient.client.set_profile("dev")
+        Examples
+        --------
+        >>> from dl import authClient
+        >>> token = authClient.client.set_profile("dev")
         '''
         if profile is not None and profile != '':
             self.svc_profile = acToString(profile)
@@ -471,12 +463,10 @@ class authClient(object):
         profile : str
             The currently requested service profile.
 
-        Example
+        Examples
         -------
-        .. code-block:: python
-
-            from dl import authClient
-            profile = authClient.client.get_profile()
+        >>> from dl import authClient
+        >>> profile = authClient.client.get_profile()
         '''
         return acToString(self.svc_profile)
 
@@ -492,12 +482,10 @@ class authClient(object):
         -------
         profiles : JSON string
 
-        Example
+        Examples
         -------
-        .. code-block:: python
-
-            from dl import authClient
-            profiles = authClient.client.list_profiles(token, profile, format)
+        >>> from dl import authClient
+        >>> profiles = authClient.client.list_profiles(token, profile, format)
         '''
         pass
 
@@ -516,13 +504,11 @@ class authClient(object):
         result : bool
             True if service responds properly, False otherwise
 
-        Example
-        -------
-        .. code-block:: python
-
-            from dl import authClient
-            if authClient.isAlive():
-                print("Auth Manager is alive")
+        Examples
+        --------
+        >>> from dl import authClient
+        >>> if authClient.isAlive():
+        ...     print("Auth Manager is alive")
         '''
         url = svc_url
         try:
@@ -571,12 +557,10 @@ class authClient(object):
             One-time security token for valid user(identified via
             'username' and 'password').
 
-        Example
-        -------
-        .. code-block:: python
-
-            from dl import authClient
-            token = authClient.login('dldemo', 'dldemo')   # get security token
+        Examples
+        --------
+        >>> from dl import authClient
+        >>> token = authClient.login('dldemo', 'dldemo')   # get security token
         '''
 
         # Check the $HOME/.datalab directory for a valid token.  If that dir
@@ -685,12 +669,10 @@ class authClient(object):
         -------
         'OK' string on success, or exception message
 
-        Example
-        -------
-        .. code-block:: python
-
-            from dl import authClient
-            status = authClient.logout(token)
+        Examples
+        --------
+        >>> from dl import authClient
+        >>> status = authClient.logout(token)
         '''
         url = self.svc_url + "/logout?"
         args = urlencode({"token": token,
@@ -756,12 +738,10 @@ class authClient(object):
         -------
         'OK' string on success, or exception message
 
-        Example
-        -------
-        .. code-block:: python
-
-            from dl import authClient
-            status = authClient.logout(token)
+        Examples
+        --------
+        >>> from dl import authClient
+        >>> status = authClient.logout(token)
         '''
         url = self.svc_url + "/passwordReset?"
         args = urlencode({"token": token,
@@ -832,12 +812,10 @@ class authClient(object):
         status : bool
             True if user owns or has access, False otherwise
 
-        Example
-        -------
-        .. code-block:: python
-
-            from dl import authClient
-            status = authClient.hasAccess(token,'vos://test.dat')
+        Examples
+        --------
+        >>> from dl import authClient
+        >>> status = authClient.hasAccess(token,'vos://test.dat')
         '''
         # Either the user is not logged in or the token is invalid, so
         # make a service call to get a new token.
@@ -865,11 +843,10 @@ class authClient(object):
         status : bool
             True if token is valid, False otherwise
 
-        Example
-        -------
-        .. code-block:: python
-            if authClient.isValidToken(token):
-                print("Valid token")
+        Examples
+        --------
+        >>> if authClient.isValidToken(token):
+        ...     print("Valid token")
         '''
         url = self.svc_url + "/isValidToken?"
         args = urlencode({"token": token,
@@ -901,11 +878,10 @@ class authClient(object):
         status : bool
             True if password is valid for the user, False otherwise
 
-        Example
-        -------
-        .. code-block:: python
-            if authClient.isValidPassword('monty','python'):
-                print("Valid password")
+        Examples
+        --------
+        >>> if authClient.isValidPassword('monty','python'):
+        ...     print("Valid password")
         '''
         url = self.svc_url + "/isValidPassword?"
         args = urlencode({"user": user,
@@ -936,11 +912,10 @@ class authClient(object):
         status : bool
             True if 'user' is a valid user name, False otherwise
 
-        Example
-        -------
-        .. code-block:: python
-            if authClient.isValidUser('monty'):
-                print("Valid user")
+        Examples
+        --------
+        >>> if authClient.isValidUser('monty'):
+        ...     print("Valid user")
         '''
         url = self.svc_url + "/isValidUser?"
         args = urlencode({"user": user,
@@ -970,11 +945,10 @@ class authClient(object):
         status : bool
             True if user is currently logged-in, False otherwise
 
-        Example
-        -------
-        .. code-block:: python
-            if not authClient.isUserLoggedIn(token):
-                token = authClient.login('monty')
+        Examples
+        --------
+        >>> if not authClient.isUserLoggedIn(token):
+        ...     token = authClient.login('monty')
         '''
         url = self.svc_url + "/isUserLoggedIn?"
         args = urlencode({"user": user,
@@ -1004,11 +978,10 @@ class authClient(object):
         status : bool
             True if token is marked as logged-in, False otherwise
 
-        Example
-        -------
-        .. code-block:: python
-            if not authClient.isTokenLoggedIn(token):
-                token = authClient.login('monty')
+        Examples
+        --------
+        >>> if not authClient.isTokenLoggedIn(token):
+        ...     token = authClient.login('monty')
         '''
         url = self.svc_url + "/isTokenLoggedIn?"
         args = urlencode({"token": token,
@@ -1099,10 +1072,10 @@ def getClient():
     client : authClient
         An authClient object
 
-    Example
-    -------
-    .. code-block:: python
-        new_client = authClient.getClient()
+    Examples
+    --------
+    >>> from dl import authClient
+    >>> new_client = authClient.getClient()
     '''
     return authClient()
 
@@ -1153,4 +1126,3 @@ def acToString(s):
             strval = s
 
     return strval
-

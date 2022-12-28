@@ -6,9 +6,9 @@ from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <mike.fitzpatrick@noirlab.edu>, Matthew Graham <mjg@caltech.edu>, Data Lab <datalab@noirlab.edu>'
 try:
-    from . import __version__
+    from storagemanager.__version__ import __version__
 except ImportError as e:
-    from __version__ import __version__
+    from dl.__version__ import __version__
 
 
 '''

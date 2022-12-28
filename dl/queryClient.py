@@ -31,24 +31,27 @@ Query Manager Client Interface::
                          async_=False, profile='default', **kw)
                  query  (token=None, adql=None, sql=None, fmt='csv', out=None,
                          async_=False, profile='default', **kw)
-                status  (token, jobId)
-                status  (optval, jobId=None)
-                status  (token=None, jobId=None)
+                status  (token, jobId, profile='default')
+                status  (optval, jobId=None, profile='default')
+                status  (token=None, jobId=None, profile='default')
                   jobs  (token, jobId, status='all', option='list')
                   jobs  (optval, jobId=None, status='all', option='list')
                   jobs  (token=None, jobId=None, status='all', option='list')
-               results  (token, jobId, delete=True)
-               results  (optval, jobId=None, delete=True)
-               results  (token=None, jobId=None, delete=True)
-                 error  (token, jobId)
-                 error  (optval, jobId=None)
-                 error  (token=None, jobId=None)
-                 abort  (token, jobId)
-                 abort  (optval, jobId=None)
-                 abort  (token=None, jobId=None)
-                  wait  (token, jobId, wait=3, verbose=False)
-                  wait  (optval, jobId=None, wait=3, verbose=False)
-                  wait  (token=None, jobId=None, wait=3, verbose=False)
+               results  (token, jobId, delete=True, profile='default')
+               results  (optval, jobId=None, delete=True, profile='default')
+               results  (token=None, jobId=None, delete=True, profile='default')
+                 error  (token, jobId, profile='default')
+                 error  (optval, jobId=None, profile='default')
+                 error  (token=None, jobId=None, profile='default')
+                 abort  (token, jobId, profile='default')
+                 abort  (optval, jobId=None, profile='default')
+                 abort  (token=None, jobId=None, profile='default')
+                  wait  (token, jobId, wait=3, verbose=False, 
+                         profile='default')
+                  wait  (optval, jobId=None, wait=3, verbose=False, 
+                         profile='default')
+                  wait  (token=None, jobId=None, wait=3, verbose=False, 
+                         profile='default')
 
              mydb_list  (optval, table=None, **kw)
              mydb_list  (table=None, token=None, **kw)
@@ -87,9 +90,9 @@ from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <mike.fitzpatrick@noirlab.edu>, Matthew Graham <mjg@caltech.edu.edu>, Data Lab <datalab@noirlab.edu>'
 try:
-    from . import __version__
+    from querymanager.__version__ import __version__
 except ImportError as e:
-    from __version__ import __version__
+    from dl.__version__ import __version__
 
 
 import requests
@@ -118,9 +121,11 @@ from dl.helpers.utils import convert
 if os.path.isfile('./Util.py'):			# use local dev copy
     from Util import multimethod
     from Util import def_token, is_auth_token, split_auth_token
+    from Util import validTableName
 else:						# use distribution copy
     from dl.Util import multimethod
     from dl.Util import def_token, is_auth_token, split_auth_token
+    from dl.Util import validTableName
 
 is_py3 = sys.version_info.major == 3
 
@@ -494,8 +499,8 @@ def query(token=None, adql=None, sql=None, fmt='csv', out=None, async_=False, dr
         prior to 3.7 can continue to use the ``async`` keyword.
 
     drop : bool
-        If ``True``, then if the query is saving to mydb where the same table name
-        already exists, it will overwrite the old mydb table.
+        If ``True``, then if the query is saving to mydb where the same table
+        name already exists, it will overwrite the old mydb table.
 
     profile : str or None
         The Query Manager profile to use for this call.  If ``None`` then
@@ -568,20 +573,23 @@ def query(token=None, adql=None, sql=None, fmt='csv', out=None, async_=False, dr
 # STATUS -- Get the status of an Asynchronous query
 #
 @multimethod('qc',2,False)
-def status(token, jobId):
-    return qc_client._status (token=def_token(token), jobId=jobId)
+def status(token, jobId, profile='default'):
+    return qc_client._status (token=def_token(token), jobId=jobId,
+                              profile=profile)
 
 @multimethod('qc',1,False)
-def status(optval, jobId=None):
+def status(optval, jobId=None, profile='default'):
     if optval is not None and is_auth_token(optval):
         # optval looks like a token
-        return qc_client._status (token=def_token(optval), jobId=jobId)
+        return qc_client._status (token=def_token(optval), jobId=jobId,
+                                  profile=profile)
     else:
         # optval is probably a jobId
-        return qc_client._status (token=def_token(None), jobId=optval)
+        return qc_client._status (token=def_token(None), jobId=optval,
+                                  profile=profile)
 
 @multimethod('qc',0,False)
-def status(token=None, jobId=None):
+def status(token=None, jobId=None, profile='default'):
     '''Get the status of an asynchronous query.
 
     Usage::
@@ -642,7 +650,8 @@ def status(token=None, jobId=None):
         time index = 18    status = COMPLETED
 
     '''
-    return qc_client._status (token=def_token(token), jobId=jobId)
+    return qc_client._status (token=def_token(token), jobId=jobId,
+                              profile=profile)
 
 
 # --------------------------------------------------------------------
@@ -744,22 +753,23 @@ def jobs(token=None, jobId=None, format='text', status='all', option='list'):
 # RESULTS -- Get the results of an Asynchronous query
 #
 @multimethod('qc',2,False)
-def results(token, jobId, delete=True):
-    return qc_client._results (token=def_token(token), jobId=jobId, delete=True)
+def results(token, jobId, delete=True, profile='default'):
+    return qc_client._results (token=def_token(token), jobId=jobId, 
+                               delete=True, profile=profile)
 
 @multimethod('qc',1,False)
-def results(optval, jobId=None, delete=True):
+def results(optval, jobId=None, delete=True, profile='default'):
     if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return qc_client._results (token=def_token(optval), jobId=jobId,
-                                delete=delete)
+                                   delete=delete, profile=profile)
     else:
         # optval is probably a jobId
         return qc_client._results (token=def_token(None), jobId=optval,
-                                delete=delete)
+                                   delete=delete, profile=profile)
 
 @multimethod('qc',0,False)
-def results(token=None, jobId=None, delete=True):
+def results(token=None, jobId=None, delete=True, profile='default'):
     '''Retrieve the results of an asynchronous query, once completed.
 
     Usage::
@@ -811,27 +821,31 @@ def results(token=None, jobId=None, delete=True):
         301.371102372343785,44.4953207577355698
         301.385106974224186,44.4963443903961604
     '''
-    return qc_client._results (token=def_token(token), jobId=jobId, delete=True)
+    return qc_client._results (token=def_token(token), jobId=jobId, 
+                               delete=True, profile=profile)
 
 
 # --------------------------------------------------------------------
 # ERROR -- Get the error message of a failed Asynchronous query
 #
 @multimethod('qc',2,False)
-def error(token, jobId):
-    return qc_client._error (token=def_token(token), jobId=jobId)
+def error(token, jobId, profile='default'):
+    return qc_client._error (token=def_token(token), jobId=jobId,
+                             profile=profile)
 
 @multimethod('qc',1,False)
-def error(optval, jobId=None):
+def error(optval, jobId=None, profile='default'):
     if optval is not None and is_auth_token(optval):
         # optval looks like a token
-        return qc_client._error (token=def_token(optval), jobId=jobId)
+        return qc_client._error (token=def_token(optval), jobId=jobId,
+                                 profile=profile)
     else:
         # optval is probably a jobId
-        return qc_client._error (token=def_token(None), jobId=optval)
+        return qc_client._error (token=def_token(None), jobId=optval,
+                                 profile=profile)
 
 @multimethod('qc',0,False)
-def error(token=None, jobId=None):
+def error(token=None, jobId=None, profile='default'):
     '''Retrieve the error of an asynchronous query, once completed.
 
     Usage::
@@ -883,27 +897,31 @@ def error(token=None, jobId=None):
         301.371102372343785,44.4953207577355698
         301.385106974224186,44.4963443903961604
     '''
-    return qc_client._error (token=def_token(token), jobId=jobId)
+    return qc_client._error (token=def_token(token), jobId=jobId,
+                             profile=profile)
 
 
 # --------------------------------------------------------------------
 # ABORT -- Abort the specified Asynchronous job.
 #
 @multimethod('qc',2,False)
-def abort(token, jobId):
-    return qc_client._abort (token=def_token(token), jobId=jobId)
+def abort(token, jobId, profile='default'):
+    return qc_client._abort (token=def_token(token), jobId=jobId,
+                             profile=profile)
 
 @multimethod('qc',1,False)
-def abort(optval, jobId=None):
+def abort(optval, jobId=None, profile='default'):
     if optval is not None and is_auth_token(optval):
         # optval looks like a token
-        return qc_client._abort (token=def_token(optval), jobId=jobId)
+        return qc_client._abort (token=def_token(optval), jobId=jobId,
+                                 profile=profile)
     else:
         # optval is probably a jobId
-        return qc_client._abort (token=def_token(None), jobId=optval)
+        return qc_client._abort (token=def_token(None), jobId=optval,
+                                 profile=profile)
 
 @multimethod('qc',0,False)
-def abort(token=None, jobId=None):
+def abort(token=None, jobId=None, profile='default'):
     '''Abort the specified asynchronous job.
 
     Usage::
@@ -954,7 +972,8 @@ def abort(token=None, jobId=None):
         301.371102372343785,44.4953207577355698
         301.385106974224186,44.4963443903961604
     '''
-    return qc_client._abort (token=def_token(token), jobId=jobId)
+    return qc_client._abort (token=def_token(token), jobId=jobId,
+                             profile=profile)
 
 
     # --------------------------
@@ -964,28 +983,28 @@ def abort(token=None, jobId=None):
 # WAIT -- Wait for completion of asynchronous job.
 #
 @multimethod('qc',2,False)
-def wait(token, jobId, wait=3, verbose=False):
+def wait(token, jobId, wait=3, verbose=False, profile='default'):
     '''Usage:  queryClient.wait (token, jobID)
     '''
     return qc_client._wait (token=def_token(token), jobId=jobId, wait=wait,
-                            verbose=verbose)
+                            verbose=verbose, profile=profile)
 
 @multimethod('qc',1,False)
-def wait(optval, jobId=None, wait=3, verbose=False):
+def wait(optval, jobId=None, wait=3, verbose=False, profile='default'):
     '''Usage:  queryClient.wait (jobID)
                queryClient.wait (token, jobId=<id>)
     '''
     if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return qc_client._wait (token=def_token(optval), jobId=jobId, wait=wait,
-                                verbose=verbose)
+                                verbose=verbose, profile=profile)
     else:
         # optval is probably a jobId
         return qc_client._wait (token=def_token(None), jobId=optval, wait=wait,
-                                verbose=verbose)
+                                verbose=verbose, profile=profile)
 
 @multimethod('qc',0,False)
-def wait(token=None, jobId=None, wait=3, verbose=False):
+def wait(token=None, jobId=None, wait=3, verbose=False, profile='default'):
     '''Usage:  queryClient.wait (jobID=<str>)
     '''
     '''Loop until an async job has completed.
@@ -999,7 +1018,7 @@ def wait(token=None, jobId=None, wait=3, verbose=False):
         Wait for `wait` seconds before checking status again. Default: 3sec
     '''
     return qc_client._wait (token=def_token(token), jobId=jobId, wait=wait,
-                            verbose=verbose)
+                            verbose=verbose, profile=profile)
 
 
 
@@ -1344,10 +1363,10 @@ def mydb_import(table, data, token=None, **kw):
         type.  If not set, the schema is determined automatically from
         the data.
 
-    drop: bool   	[Optional]
-        Drop any existing table of the same name before creating new one.
+    append: bool   	[Optional]
+        append any existing table of the same name.
 
-    verbose: bool   [Optional]
+    verbose: bool       [Optional]
         Be verbose about operations.
 
     Returns
@@ -1398,7 +1417,7 @@ def mydb_truncate(table, token=None):
         Authentication token (see function :func:`authClient.login()`)
 
     table: str
-        The specific table to drop
+        The specific table to truncate.
 
     Returns
     -------
@@ -1975,6 +1994,8 @@ class queryClient (object):
         # Process optional keyword arguments.
         if 'async' in kw:
             async_ = kw['async']
+        if 'format' in kw:              # alias for 'fmt'
+            fmt = kw['format']
 
         if 'timeout' in kw: 		# set requested timeout on the query
             timeout = int(kw['timeout'])
@@ -2072,25 +2093,33 @@ class queryClient (object):
         r = requests.get (dburl, headers=headers, timeout=timeout)
         if r.status_code != 200:
             raise queryClientError (r.text)
-        resp = qcToString(r.content)
+
+        # N.B. Previously we converted the response to string from, presumably, byte string,
+        # here, but sometimes the response content is a file in byte format that can't be necessarily
+        # converted to string. So now the conversion happens downstream on an as-needed basis.
+
+        resp = r.content
 
         if async_ and wait:
             # Sync query timeouts are handled on the server.  If waiting
             # for an async query, loop until job is completed or the timeout
             # expires.
+            resp = qcToString(resp)
             jobId = resp
-            stat = self._status (token=token, jobId=jobId)
+            stat = self._status (token=token, jobId=jobId, profile=profile)
             tval = 0
             while (stat not in ['COMPLETED','ERROR']):
                 if verbose: print (stat)
                 time.sleep (poll_time)
                 try:
-                    stat = self._status (token=token, jobId=jobId)
+                    stat = self._status (token=token, jobId=jobId,
+                                         profile=profile)
                 except Exception as e:
                     raise queryClientError (str(e))
                 else:
                     if tval > self.timeout_request:
-                        stat = self._abort (token=token, jobId=jobId)
+                        stat = self._abort (token=token, jobId=jobId,
+                                            profile=profile)
                         break
                     if verbose:
                         tim = tval + poll_time
@@ -2109,12 +2138,12 @@ class queryClient (object):
 		# Retrieve Async error.
                 if verbose:
                     print ('Retrieving error')
-                resp = self._error (token=token, jobId=jobId)
+                resp = self._error (token=token, jobId=jobId, profile=profile)
             elif stat == 'COMPLETED':
 		# Retrieve Async results.  A save to vos/mydb is handled below.
                 if verbose:
                     print ('Retrieving results')
-                resp = self._results (token=token, jobId=jobId)
+                resp = self._results (token=token, jobId=jobId, profile=profile)
 
         if (out is not None and out != '') and not async_:
             # If we're saving to a local file (e.g. in a notebook directory),
@@ -2122,12 +2151,16 @@ class queryClient (object):
             # on the server side.
             if out[:7] == 'file://':
                 out = out[7:]
-            if ':' not in out or out[:out.index(':')] not in ['vos', 'mydb']:
+
+            elif ':' not in out or out[:out.index(':')] not in ['vos', 'mydb']:
                 with open(out, 'wb') as file:
-                    file.write(resp.encode("utf-8"))
+                    # N.B. The file gets written in bytes so no need to convert
+                    # just save what the server sent as is.
+                    file.write(resp)
             return 'OK'
         else:
             # Otherwise, simply return the result of the query.
+            resp = qcToString(r.content)
             if 'noheader' in fmt:
                 strval = qcToString(resp).strip()
                 strval = strval[strval.find('\n')+1:]
@@ -2144,37 +2177,43 @@ class queryClient (object):
     # --------------------------
 
     @multimethod('_qc',2,True)
-    def status(self, token, jobId):
+    def status(self, token, jobId, profile='default'):
         '''Usage:  queryClient.status (token, jobID)
         '''
-        return self._status (token=def_token(token), jobId=jobId)
+        return self._status (token=def_token(token), jobId=jobId,
+                             profile=profile)
 
     @multimethod('_qc',1,True)
-    def status(self, optval, jobId=None):
+    def status(self, optval, jobId=None, profile='default'):
         '''Usage:  queryClient.status (jobID)
                    queryClient.status (token, jobId=<id>)
         '''
         if optval is not None and is_auth_token(optval):
             # optval looks like a token
-            return self._status (token=def_token(optval), jobId=jobId)
+            return self._status (token=def_token(optval), jobId=jobId,
+                                 profile=profile)
         else:
             # optval is probably a jobId
-            return self._status (token=def_token(None), jobId=optval)
+            return self._status (token=def_token(None), jobId=optval,
+                                 profile=profile)
 
     @multimethod('_qc',0,True)
-    def status(self, token=None, jobId=None):
+    def status(self, token=None, jobId=None, profile='default'):
         '''Usage:  queryClient.status (jobID=<str>)
         '''
-        return self._status (token=def_token(token), jobId=jobId)
+        return self._status (token=def_token(token), jobId=jobId,
+                             profile=profile)
 
-    def _status(self, token=None, jobId=None):
+    def _status(self, token=None, jobId=None, profile='default'):
         '''Implementation of the status() method.
         '''
         headers = self.getHeaders (token)
 
         dburl = '%s/status?jobid=%s' % (self.svc_url, jobId)
-        if self.svc_profile != "default":
-            dburl += "&profile=%s" % self.svc_profile
+        if profile != 'default':
+            dburl += '&profile=%s' % profile
+        elif self.svc_profile != 'default':
+            dburl += '&profile=%s' % self.svc_profile
 
         r = requests.get (dburl, headers=headers)
         return qcToString(r.content)
@@ -2233,40 +2272,42 @@ class queryClient (object):
     # --------------------------
 
     @multimethod('_qc',2,True)
-    def results(self, token, jobId, delete=True):
+    def results(self, token, jobId, delete=True, profile='default'):
         '''Usage:  queryClient.results (token, jobID)
         '''
         return self._results (token=def_token(token), jobId=jobId,
-                              delete=delete)
+                              delete=delete, profile=profile)
 
     @multimethod('_qc',1,True)
-    def results(self, optval, jobId=None, delete=True):
+    def results(self, optval, jobId=None, delete=True, profile='default'):
         '''Usage:  queryClient.results (jobID)
                    queryClient.results (token, jobId=<id>)
         '''
         if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._results (token=def_token(optval), jobId=jobId,
-                                  delete=delete)
+                                  delete=delete, profile=profile)
         else:
             # optval is probably a jobId
             return self._results (token=def_token(None), jobId=optval,
-                                  delete=delete)
+                                  delete=delete, profile=profile)
 
     @multimethod('_qc',0,True)
-    def results(self, token=None, jobId=None, delete=True):
+    def results(self, token=None, jobId=None, delete=True, profile='default'):
         '''Usage:  queryClient.results (jobID=<str>)
         '''
         return self._results (token=def_token(token), jobId=jobId,
-                              delete=delete)
+                              delete=delete, profile=profile)
 
-    def _results(self, token=None, jobId=None, delete=True):
+    def _results(self, token=None, jobId=None, delete=True, profile='default'):
         '''Implementation of the results() method.
         '''
         headers = self.getHeaders (token)
 
         dburl = '%s/results?jobid=%s&delete=%s' % (self.svc_url, jobId, delete)
-        if self.svc_profile != "default":
+        if profile != "default":
+            dburl += "&profile=%s" % profile
+        elif self.svc_profile != "default":
             dburl += "&profile=%s" % self.svc_profile
 
         r = requests.get (dburl, headers=headers)
@@ -2278,36 +2319,42 @@ class queryClient (object):
     # --------------------------
 
     @multimethod('_qc',2,True)
-    def error(self, token, jobId):
+    def error(self, token, jobId, profile='default'):
         '''Usage:  queryClient.error (token, jobID)
         '''
-        return self._error (token=def_token(token), jobId=jobId)
+        return self._error (token=def_token(token), jobId=jobId,
+                            profile=profile)
 
     @multimethod('_qc',1,True)
-    def error(self, optval, jobId=None):
+    def error(self, optval, jobId=None, profile='default'):
         '''Usage:  queryClient.error (jobID)
                      queryClient.error (token, jobId=<id>)
         '''
         if optval is not None and is_auth_token(optval):
             # optval looks like a token
-            return self._error (token=def_token(optval), jobId=jobId)
+            return self._error (token=def_token(optval), jobId=jobId,
+                                profile=profile)
         else:
             # optval is probably a jobId
-            return self._error (token=def_token(None), jobId=optval)
+            return self._error (token=def_token(None), jobId=optval,
+                                profile=profile)
 
     @multimethod('_qc',0,True)
-    def error(self, token=None, jobId=None):
+    def error(self, token=None, jobId=None, profile='default'):
         '''Usage:  queryClient.error (jobID=<str>)
         '''
-        return self._error (token=def_token(token), jobId=jobId)
+        return self._error (token=def_token(token), jobId=jobId,
+                            profile=profile)
 
-    def _error(self, token=None, jobId=None):
+    def _error(self, token=None, jobId=None, profile='default'):
         '''Implementation of the error() method.
         '''
         headers = self.getHeaders (token)
 
         dburl = '%s/error?jobid=%s' % (self.svc_url, jobId)
-        if self.svc_profile != "default":
+        if profile != "default":
+            dburl += "&profile=%s" % profile
+        elif self.svc_profile != "default":
             dburl += "&profile=%s" % self.svc_profile
 
         r = requests.get (dburl, headers=headers)
@@ -2319,36 +2366,42 @@ class queryClient (object):
     # --------------------------
 
     @multimethod('_qc',2,True)
-    def abort(self, token, jobId):
+    def abort(self, token, jobId, profile='default'):
         '''Usage:  queryClient.abort (token, jobID)
         '''
-        return self._abort (token=def_token(token), jobId=jobId)
+        return self._abort (token=def_token(token), jobId=jobId,
+                            profile=profile)
 
     @multimethod('_qc',1,True)
-    def abort(self, optval, jobId=None):
+    def abort(self, optval, jobId=None, profile='default'):
         '''Usage:  queryClient.abort (jobID)
                    queryClient.abort (token, jobId=<id>)
         '''
         if optval is not None and is_auth_token(optval):
             # optval looks like a token
-            return self._abort (token=def_token(optval), jobId=jobId)
+            return self._abort (token=def_token(optval), jobId=jobId,
+                            profile=profile)
         else:
             # optval is probably a jobId
-            return self._abort (token=def_token(None), jobId=optval)
+            return self._abort (token=def_token(None), jobId=optval,
+                            profile=profile)
 
     @multimethod('_qc',0,True)
-    def abort(self, token=None, jobId=None):
+    def abort(self, token=None, jobId=None, profile='default'):
         '''Usage:  queryClient.abort (jobID=<str>)
         '''
-        return self._abort (token=def_token(token), jobId=jobId)
+        return self._abort (token=def_token(token), jobId=jobId,
+                            profile=profile)
 
-    def _abort(self, token=None, jobId=None):
+    def _abort(self, token=None, jobId=None, profile='default'):
         '''Implementation of the abort() method.
         '''
         headers = self.getHeaders (token)
 
         dburl = '%s/abort?jobid=%s' % (self.svc_url, jobId)
-        if self.svc_profile != "default":
+        if profile != "default":
+            dburl += "&profile=%s" % profile
+        elif self.svc_profile != "default":
             dburl += "&profile=%s" % self.svc_profile
 
         r = requests.get (dburl, headers=headers)
@@ -2360,34 +2413,34 @@ class queryClient (object):
     # --------------------------
 
     @multimethod('_qc',2,True)
-    def wait(self, token, jobId, wait=3, verbose=False):
+    def wait(self, token, jobId, wait=3, verbose=False, profile='default'):
         '''Usage:  queryClient.wait (token, jobID)
         '''
         return self._wait (token=def_token(token), jobId=jobId, wait=wait,
-                           verbose=verbose)
+                           verbose=verbose, profile=profile)
 
     @multimethod('_qc',1,True)
-    def wait(self, optval, jobId=None, wait=3, verbose=False):
+    def wait(self, optval, jobId=None, wait=3, verbose=False, profile='default'):
         '''Usage:  queryClient.wait (jobID)
                    queryClient.wait (token, jobId=<id>)
         '''
         if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._wait (token=def_token(optval), jobId=jobId, wait=wait,
-                               verbose=verbose)
+                               verbose=verbose, profile=profile)
         else:
             # optval is probably a jobId
             return self._wait (token=def_token(None), jobId=optval, wait=wait,
-                               verbose=verbose)
+                               verbose=verbose, profile=profile)
 
     @multimethod('_qc',0,True)
-    def wait(self, token=None, jobId=None, wait=3, verbose=False):
+    def wait(self, token=None, jobId=None, wait=3, verbose=False, profile='default'):
         '''Usage:  queryClient.wait (jobID=<str>)
         '''
         return self._wait (token=def_token(token), jobId=jobId, wait=wait,
-                           verbose=verbose)
+                           verbose=verbose, profile=profile)
 
-    def _wait(self, token=None, jobId=None, wait=3, verbose=False):
+    def _wait(self, token=None, jobId=None, wait=3, verbose=False, profile='default'):
         '''Implementation of the wait() method.
 
            Loop until an async job has completed.
@@ -2402,7 +2455,7 @@ class queryClient (object):
         '''
 
         while True:
-            status = qc_client._status(token=token, jobId=jobId)
+            status = qc_client._status(token=token,jobId=jobId,profile=profile)
             if verbose:
                 print(status)
             if status in ('QUEUED','EXECUTING'):
@@ -2431,7 +2484,7 @@ class queryClient (object):
     @multimethod('_qc',1,True)
     def list(self, optval, table=None):
         '''Usage:  queryClient.list (table)
-                     queryClient.list (token, table=<id>)
+                   queryClient.list (token, table=<id>)
         '''
         if optval is not None and is_auth_token(optval):
             # optval looks like a token
@@ -2458,14 +2511,14 @@ class queryClient (object):
     @multimethod('_qc',1,True)
     def drop(self, optval, table=None):
         '''Usage:  queryClient.drop (table)
-                     queryClient.drop (token, table=<id>)
+                   queryClient.drop (token, table=<id>)
         '''
         if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self.mydb_drop (token=def_token(optval), table=table)
         else:
             # optval is probably a table
-            return self._drop (token=def_token(None), table=optval)
+            return self.mydb_drop (token=def_token(None), table=optval)
 
     @multimethod('_qc',0,True)
     def drop(self, token=None, table=None):
@@ -2484,7 +2537,7 @@ class queryClient (object):
     @multimethod('_qc',1,True)
     def mydb_list(self, optval, table=None, index=False, **kw):
         '''Usage:  queryClient.mydb_list (table)
-                     queryClient.mydb_list (token, table=<str>)
+                   queryClient.mydb_list (token, table=<str>)
         '''
         if optval is not None and is_auth_token(optval):
             # optval looks like a token
@@ -2511,6 +2564,8 @@ class queryClient (object):
             verbose = kw['verbose']
         if table is None:
             table = ''
+        if table != '' and not validTableName(table):
+            raise queryClientError('Invalid table name: "%s"' % table)
         dburl = '%s/list?table=%s&index=%s' % (self.svc_url, table, str(index))
         if self.svc_profile != "default":
             dburl += "&profile=%s" % self.svc_profile
@@ -2559,6 +2614,9 @@ class queryClient (object):
         params['verbose'] = str(verbose)
         params['drop'] = str(drop)
         params['profile'] = self.svc_profile
+
+        if not validTableName(table):
+            raise queryClientError('Invalid table name: "%s"' % table)
 
         # Schema can be a dictionary, a CSV string, or the name of a file.
         if isinstance (schema,str):
@@ -2610,14 +2668,20 @@ class queryClient (object):
         '''
         # Get optional parameters.
         csv_header = (kw['csv_header'] if 'csv_header' in kw else True)
-        verbose = (kw['drop'] if 'drop' in kw else False)
+        verbose = (kw['verbose'] if 'verbose' in kw else False)
+        drop = (kw['drop'] if 'drop' in kw else False)
 
         # Set up the request headers and initialize.
         params = {}
         headers = self.getHeaders (token)
         params['table'] = table
         params['profile'] = self.svc_profile
+        params['verbose'] = verbose
+        params['drop'] = drop
         dburl = '%s/ingest' % (self.svc_url)
+
+        if not validTableName(table):
+            raise queryClientError('Invalid table name: "%s"' % table)
 
         # Data can be the name of a CSV file or a python tablular object that
         # can be converted.
@@ -2703,6 +2767,9 @@ class queryClient (object):
         # Set up the request headers and initialize.
         headers = self.getHeaders (token)
         dburl = '%s/import' % (self.svc_url)
+
+        if not validTableName(table):
+            raise queryClientError('Invalid table name: "%s"' % table)
 
         # Data can be the name of a CSV file or a python tablular object that
         # can be converted.
@@ -2801,6 +2868,9 @@ class queryClient (object):
         '''
         headers = self.getHeaders (token)
 
+        if not validTableName(table):
+            raise queryClientError('Invalid table name: "%s"' % table)
+
         dburl = '%s/truncate?table=%s' % (self.svc_url, table)
         if self.svc_profile != "default":
             dburl += "&profile=%s" % self.svc_profile
@@ -2847,6 +2917,9 @@ class queryClient (object):
         '''Implementation of the mydb_index() method.
         '''
         headers = self.getHeaders (token)
+
+        if not validTableName(table):
+            raise queryClientError('Invalid table name: "%s"' % table)
 
         if async_:
             def async_call (url, params, headers):
@@ -2901,6 +2974,9 @@ class queryClient (object):
         '''
         headers = self.getHeaders (token)
 
+        if not validTableName(table):
+            raise queryClientError('Invalid table name: "%s"' % table)
+
         dburl = '%s/delete?table=%s' % (self.svc_url, table)
         if self.svc_profile != "default":
             dburl += "&profile=%s" % self.svc_profile
@@ -2952,6 +3028,11 @@ class queryClient (object):
         '''
         headers = self.getHeaders (token)
 
+        if not validTableName(source):
+            raise queryClientError('Invalid table name: "%s"' % source)
+        if not validTableName(target):
+            raise queryClientError('Invalid table name: "%s"' % target)
+
         dburl = '%s/rename?source=%s&target=%s' % (self.svc_url, source, target)
         if self.svc_profile != "default":
             dburl += "&profile=%s" % self.svc_profile
@@ -2983,6 +3064,11 @@ class queryClient (object):
         '''Implementation of the mydb_copy() method.
         '''
         headers = self.getHeaders (token)
+
+        if not validTableName(source):
+            raise queryClientError('Invalid table name: "%s"' % source)
+        if not validTableName(target):
+            raise queryClientError('Invalid table name: "%s"' % target)
 
         dburl = '%s/copy?source=%s&target=%s' % (self.svc_url, source, target)
         if self.svc_profile != "default":

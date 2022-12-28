@@ -54,9 +54,9 @@ from __future__ import print_function
 
 __authors__ = 'Mike Fitzpatrick <mike.fitzpatrick@noirlab.edu>, Data Lab <datalab@noirlab.edu>'
 try:
-    import resmanager.__version__
+    from resmanager.__version__ import __version__
 except ImportError as e:
-    from __version__ import __version__
+    from dl.__version__ import __version__
 
 
 import requests
@@ -129,6 +129,8 @@ def sendPasswordLink(token, user, profile='default'):
 def listFields(profile='default'):
     return rc_client.listFields(profile=profile)
 
+def userRecord(token, user, value, fmt, profile='default'):
+    return rc_client.userRecord(token, user, value, fmt, profile=profile)
 
 # Group functions
 def createGroup(token, group, profile='default'):
@@ -425,7 +427,7 @@ class resClient(object):
 
         return response
 
-    def getUser(self, username, keyword, profile='default'):
+    def getUser(self, token, username, keyword, profile='default'):
         '''Read info about a user in the system.
 
         Parameters
@@ -449,7 +451,7 @@ class resClient(object):
         return self.clientRead(token, "user", username, keyword,
                                profile=profile)
 
-    def setUser(self, username, keyword, value, profile='default'):
+    def setUser(self, token, username, keyword, value, profile='default'):
         '''Update info about a user in the system.
 
         Parameters
@@ -659,7 +661,7 @@ class resClient(object):
             raise Exception(str(e))
 
 
-    def userRecord(self, token, user, value, format, profile='default'):
+    def userRecord(self, token, user, value, fmt, profile='default'):
         '''Get a value from the User record.
 
         Parameters
@@ -680,7 +682,7 @@ class resClient(object):
         User record
         '''
         url = self.svc_url + \
-                ("/userRecord?user=%s&value=%s&fmt=%s&profile=%s" % (user,value,format,profile))
+                ("/userRecord?user=%s&value=%s&fmt=%s&profile=%s" % (user,value,fmt,profile))
 
         try:
             resp = self.svcGet(token, url)

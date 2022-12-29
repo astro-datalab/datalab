@@ -1,7 +1,7 @@
 from distutils.core import setup
 import sys
 import os
-from dl.__version__ import version as dl_version
+from dl.__version__ import __version__ as dl_version
 #from vos.__version__ import vos_version
 
 #if sys.version_info[0] > 2:

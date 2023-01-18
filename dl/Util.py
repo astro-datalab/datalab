@@ -214,7 +214,7 @@ def def_token(tok):
             else:
                 return readTokenFile(tok_file)
     else:
-        # Check for a plane user name or valid token.  If we're given a
+        # Check for a plain user name or valid token.  If we're given a
         # token just return it.  If it may be a user name, look for a token
         # id file and return that, otherwise we're just anonymous.
         if is_auth_token(tok):                # is it a token?

@@ -177,7 +177,7 @@ if os.path.exists('/tmp/RM_SVC_URL'):
         RM_SERVICE_URL = fd.read().strip()
 
 # Default sync query timeout default (300sec)
-TIMEOUT_REQUEST = 300
+DEF_TIMEOUT_REQUEST = 300
 
 
 
@@ -1667,7 +1667,7 @@ class queryClient (object):
         self.rm_svc_url = RM_SERVICE_URL        # ResMgr service URL
         self.hostip = THIS_IP
         self.hostname = THIS_HOST
-        self.timeout_request = TIMEOUT_REQUEST
+        self.timeout_request = DEF_TIMEOUT_REQUEST
         self.async_wait = False
 
         # Get the $HOME/.datalab directory.
@@ -1997,11 +1997,9 @@ class queryClient (object):
         if 'format' in kw:              # alias for 'fmt'
             fmt = kw['format']
 
-        if 'timeout' in kw: 		# set requested timeout on the query
+        timeout = self.timeout_request 	# set requested timeout on the query
+        if 'timeout' in kw:
             timeout = int(kw['timeout'])
-        else:
-            timeout = self.timeout_request
-        self.set_timeout_request (timeout)
 
         wait = self.async_wait 		# see if we wait for an Async result
         if async_ and 'wait' in kw:
@@ -2013,7 +2011,6 @@ class queryClient (object):
             if stream:
                 timeout = 0
                 async_ = False
-                self.set_timeout_request(0)
 
         poll_time = 1 			# set polling interval
         if async_ and 'poll' in kw:
@@ -2094,9 +2091,10 @@ class queryClient (object):
         if r.status_code != 200:
             raise queryClientError (r.text)
 
-        # N.B. Previously we converted the response to string from, presumably, byte string,
-        # here, but sometimes the response content is a file in byte format that can't be necessarily
-        # converted to string. So now the conversion happens downstream on an as-needed basis.
+        # N.B. Previously we converted the response to string from, presumably,
+        # byte string, here, but sometimes the response content is a file
+        # in byte format that can't be necessarily converted to string. So
+        # now the conversion happens downstream on an as-needed basis.
 
         resp = r.content
 
@@ -2117,7 +2115,7 @@ class queryClient (object):
                 except Exception as e:
                     raise queryClientError (str(e))
                 else:
-                    if tval > self.timeout_request:
+                    if tval > timeout:
                         stat = self._abort (token=token, jobId=jobId,
                                             profile=profile)
                         break
@@ -2128,9 +2126,9 @@ class queryClient (object):
                                (stat, tim, rem))
                 tval = tval + poll_time
 
-            if tval > self.timeout_request:
+            if tval > timeout:
                 if verbose:
-                    print ('Timeout (%d sec) exceeded' % self.timeout_request)
+                    print ('Timeout (%d sec) exceeded' % timeout)
                 raise queryClientError ('Query timeout exceeded')
             elif stat not in ['COMPLETED','ERROR']:
                 resp = stat

@@ -97,10 +97,10 @@ import time
 
 if os.path.isfile('./Util.py'):                # use local dev copy
     from Util import multimethod
-    from Util import def_token
+    from Util import def_token, split_auth_token, is_auth_token
 else:                                           # use distribution copy
     from dl.Util import multimethod
-    from dl.Util import def_token
+    from dl.Util import def_token, split_auth_token, is_auth_token
 
 # Turn off some annoying astropy warnings
 #import warnings
@@ -210,7 +210,7 @@ def services(name=None, svc_type='vos', format=None, profile='default'):
 #
 @multimethod('sc',1,False)
 def list_profiles(optval, profile=None, format='text', token=None):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return sc_client._list_profiles(token=def_token(optval),
                                          profile=profile, format=format)
@@ -399,7 +399,7 @@ def get(token, fr, to, mode='text', verbose=True, debug=False, timeout=30):
 @multimethod('sc',2,False)
 def get(opt1, opt2, fr='', to='', token=None, mode='text', verbose=True,
         debug=False, timeout=30):
-    if opt1 is not None and len(opt1.split('.')) >= 4:
+    if opt1 is not None and is_auth_token(opt1):
         # opt1 looks like a token
         return sc_client._get(fr=opt2, to=to, token=def_token(opt1),
                             mode=mode, verbose=verbose, debug=debug,
@@ -413,7 +413,7 @@ def get(opt1, opt2, fr='', to='', token=None, mode='text', verbose=True,
 @multimethod('sc',1,False)
 def get(optval, fr='', to='', token=None, mode='text', verbose=True,
         debug=False, timeout=30):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return sc_client._get(fr=fr, to=to, token=def_token(optval),
                             mode=mode, verbose=verbose, debug=debug,
@@ -513,7 +513,7 @@ def put(fr, to, token=None, verbose=True, debug=False):
 
 @multimethod('sc',1,False)
 def put(optval, fr='', to='vos://', token=None, verbose=True, debug=False):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return sc_client._put(fr=fr, to=to, token=def_token(optval),
                             verbose=verbose, debug=debug)
@@ -685,7 +685,8 @@ def ls(token, name, format='csv', verbose=False):
 
 @multimethod('sc',1,False)
 def ls(optval, name='vos://', token=None, format='csv', verbose=False):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
+        # optval looks like a token
         return sc_client._ls(name=name, format=format,
                           token=def_token(optval), verbose=verbose)
     else:
@@ -777,7 +778,7 @@ def mkdir(optval, name='', token=None):
         # Create a directory in vospace
         storeClient.mkdir('foo')
     '''
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         return sc_client._mkdir(name=name, token=def_token(optval))
     else:
         return sc_client._mkdir(name=optval, token=def_token(token))
@@ -851,7 +852,7 @@ def rm(token, name, verbose=False):
 
 @multimethod('sc',1,False)
 def rm(optval, name='', token=None, verbose=False):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return sc_client._rm(name=name, token=def_token(optval),
                              verbose=verbose)
@@ -906,7 +907,7 @@ def rmdir(token, name, verbose=False):
 
 @multimethod('sc',1,False)
 def rmdir(optval, name='', token=None, verbose=False):
-    if optval is not None and len(optval.split('.')) >= 4:
+    if optval is not None and is_auth_token(optval):
         return sc_client._rmdir(name=name, token=def_token(optval),
                             verbose=verbose)
     else:
@@ -1443,7 +1444,7 @@ class storeClient(object):
              mode='text', debug=False, timeout=30):
         ''' Usage:  storeClient.get(fr, to)
         '''
-        if opt1 is not None and len(opt1.split('.')) >= 4:
+        if opt1 is not None and is_auth_token(opt1):
             # opt1 looks like a token
             return self._get(fr=opt2, to=to, token=def_token(opt1),
                               mode=mode, verbose=verbose, debug=debug,
@@ -1459,7 +1460,7 @@ class storeClient(object):
              verbose=True, debug=False, timeout=30):
         ''' Usage:  storeClient.get(fr)
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._get(fr=fr, to=to, token=def_token(optval),
                               mode=mode, verbose=verbose, debug=debug,
@@ -1497,7 +1498,7 @@ class storeClient(object):
             return "%.1f%s" % (num, 'Y')
 
         tok = def_token(token)
-        user, uid, gid, hash = tok.strip().split('.', 3)
+        user, uid, gid, hash = split_auth_token(tok.strip())
         hdrs = {'Content-Type': 'text/ascii',
                 'X-DL-ClientVersion': __version__,
                 'X-DL-OriginIP': self.hostip,
@@ -1663,7 +1664,7 @@ class storeClient(object):
              debug=False):
         ''' Usage:  storeClient.put(fr)
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._put(fr=fr, to=to, token=def_token(optval),
                               verbose=verbose, debug=False)
@@ -1683,7 +1684,7 @@ class storeClient(object):
         '''Implementation of the put() method.
         '''
         tok = def_token(token)
-        user, uid, gid, hash = tok.strip().split('.', 3)
+        user, uid, gid, hash = split_auth_token(tok.strip())
         hdrs = {'Content-Type': 'text/ascii',
                 'X-DL-ClientVersion': __version__,
                 'X-DL-OriginIP': self.hostip,
@@ -1965,7 +1966,7 @@ class storeClient(object):
         ''' Usage:  storeClient.ls(name)
              Usage:  storeClient.ls(token, name='foo')
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._ls(name=name, format=format,
                             token=def_token(optval), verbose=verbose)
@@ -2007,7 +2008,7 @@ class storeClient(object):
     def mkdir(self, optval, name='', token=None):
         ''' Usage:  storeClient.mkdir(name)
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             return self._mkdir(name=name, token=def_token(optval))
         else:
             return self._mkdir(name=optval, token=def_token(token))
@@ -2124,7 +2125,7 @@ class storeClient(object):
     def rm(self, optval, name='', token=None, verbose=False):
         ''' Usage:  storeClient.rm(name)
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._rm(name=name,token=def_token(optval),verbose=verbose)
         else:
@@ -2188,7 +2189,7 @@ class storeClient(object):
     def rmdir(self, optval, name='', token=None, verbose=False):
         ''' Usage:  storeClient.rmdir(name)
         '''
-        if optval is not None and len(optval.split('.')) >= 4:
+        if optval is not None and is_auth_token(optval):
             return self._rmdir(name=name, token=def_token(optval),
                                 verbose=verbose)
         else:
@@ -2306,7 +2307,7 @@ class storeClient(object):
         '''
         try:
             tok = def_token(token)
-            user, uid, gid, hash = tok.strip().split('.', 3)
+            user, uid, gid, hash = split_auth_token(tok.strip())
 
             hdrs = {'Content-Type': 'text/ascii',
                     'X-DL-ClientVersion': __version__,

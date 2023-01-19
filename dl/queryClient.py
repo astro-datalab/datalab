@@ -2158,7 +2158,6 @@ class queryClient (object):
             return 'OK'
         else:
             # Otherwise, simply return the result of the query.
-            resp = qcToString(r.content)
             if 'noheader' in fmt:
                 strval = qcToString(resp).strip()
                 strval = strval[strval.find('\n')+1:]

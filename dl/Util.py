@@ -352,6 +352,8 @@ def validTableName(tbl):
 
     if tbl in [None,'']:
         return False
+    if tbl.startswith('mydb://'):
+        tbl = tbl[7:]
     if '.' in tbl:
         if len(tbl.split('.')) != 2:                    # e.g. 'mydb.foo.bar'
             return False

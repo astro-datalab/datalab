@@ -1628,6 +1628,8 @@ class storeClient(object):
             r = requests.get(url.text, stream=False, headers=hdrs)
             if mode == 'text':
                 return scToString(r.content)
+            elif mode == 'binary':
+                return r.content
             elif mode == 'fileobj':
                 from astropy.utils.data import get_readable_fileobj
                 from io import BytesIO

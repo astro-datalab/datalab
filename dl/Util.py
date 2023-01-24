@@ -350,8 +350,8 @@ def validTableName(tbl):
             return bool(validCharsOnly(nm) and \
                         not (hasCaps(nm) or beginsWithNumber(nm)))
 
-    if tbl in [None,'']:
-        return False
+    if tbl in [None,'','mydb://']:
+        return True
     if tbl.startswith('mydb://'):
         tbl = tbl[7:]
     if '.' in tbl:

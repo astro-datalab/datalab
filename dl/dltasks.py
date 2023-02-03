@@ -613,7 +613,7 @@ class Login(Task):
             return False
         else:
             self.login_error = None
-            return True3
+            return True
 
 
 class Logout(Task):

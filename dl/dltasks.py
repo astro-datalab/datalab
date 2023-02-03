@@ -648,7 +648,7 @@ class Logout(Task):
             self.dl.save("login", "status", "loggedout")
             self.dl.save("login", "user", "")
             self.dl.save("login", "authtoken", "")
-            self.dl.save(self.user.value, "authtoken", '')
+            self.dl.save(user, "authtoken", '')
 
             print ("'%s' is now logged out of the Data Lab" % user)
 

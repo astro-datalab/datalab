@@ -521,8 +521,8 @@ class Login(Task):
         # configuration contains the currently active user and token,
         # however previous logins will have preserved tokens from other
         # accounts we may be able to use.
-        if self.status == "loggedin":
-            _user = self.dl.get("login", "user")
+        _user = self.dl.get("login", "user")
+        if self.status == "loggedin" and authClient.isUserLoggedIn(_user):
             if self.user.value == _user:
                 # See whether current token is still valid for this user.
                 _token = self.dl.get("login", "authtoken")
@@ -583,11 +583,22 @@ class Login(Task):
         '''
         try:
             self.token = self.dl.get(self.user.value,'authtoken')
-            if authClient.isValidToken (self.token):
-                # FIXME --  What we really want here is a login-by-token call
-                # to the AuthMgr so the login is recorded on the server.
-                self.login_error = None
-                return True
+            if authClient.isUserLoggedIn(self.user.value):
+                if authClient.isValidToken (self.token):
+                    # FIXME --  What we really want here is a login-by-token
+                    # call to the AuthMgr so the login is noted on the server.
+                    self.login_error = None
+                    return True
+                else:
+                    self.dl.save("login", "authtoken", "")
+                    self.dl.save(self.user.value, "authtoken", '')
+            else:
+                # User may have logged out in the notebook, update the
+                # dl.conf file.
+                self.dl.save("login", "status", "loggedout")
+                self.dl.save("login", "user", "")
+                self.dl.save("login", "authtoken", "")
+                self.dl.save(self.user.value, "authtoken", '')
         except Exception as e:
             pass
 
@@ -597,13 +608,12 @@ class Login(Task):
             self.dl.save("login", "status", "loggedout")
             self.dl.save("login", "user", '')
             self.dl.save("login", "authtoken", '')
-            self.dl.save(self.user.value, "authtoken", self.token)
+            self.dl.save(self.user.value, "authtoken", '')
             self.login_error = self.token
-            print ('login error: tok = ' + self.token)
             return False
         else:
             self.login_error = None
-            return True
+            return True3
 
 
 class Logout(Task):
@@ -638,6 +648,7 @@ class Logout(Task):
             self.dl.save("login", "status", "loggedout")
             self.dl.save("login", "user", "")
             self.dl.save("login", "authtoken", "")
+            self.dl.save(self.user.value, "authtoken", '')
 
             print ("'%s' is now logged out of the Data Lab" % user)
 

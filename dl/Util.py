@@ -26,6 +26,7 @@ import random
 import string
 import re
 from functools import partial
+from urllib.parse import urlencode          # Python 3
 
 try:
     import ConfigParser                         # Python 2
@@ -185,6 +186,29 @@ def def_token(tok):
         may also simply be a username, in which case the same check for
         a token ID file is done.
     '''
+
+    def isUserLoggedIn (user):
+        '''Utility to check with AuthMgr whether user is logged-in.
+        '''
+        DEF_AUTH_SVC = 'https://datalab.noirlab.edu/auth'
+        svc_url = svcOverride('AM_SVC_URL', DEF_AUTH_SVC)
+        url = svc_url + "/isUserLoggedIn?"
+        args = urlencode({"user": user, "profile": self.svc_profile})
+        url = url + args
+        print("isUserLoggedIn: url = '%s'" % url)
+
+        try:
+            r = requests.get(url)
+            response = acToString(r.content)
+            if r.status_code != 200:
+                raise Exception(r.content)
+            val = 'true' in str(r.text.lower())
+        except Exception:
+            val = False
+        else:
+            return val
+
+
     home = '%s/.datalab' % os.path.expanduser('~')
     if tok is None or tok == '':
 

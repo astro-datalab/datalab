@@ -663,11 +663,12 @@ class Status(Task):
 
     def run(self):
         status = self.dl.get("login", "status")
-        if status == "loggedout":
+        if status == "loggedout" or not authClient.isUserLoggedIn(getUserName(self)):
             print ("No user is currently logged into the Data Lab")
         else:
             print ("User %s is logged into the Data Lab" % \
                     self.dl.get("login", "user"))
+
         if self.dl.get("vospace", "mount") != "":
             if status != "loggedout":
                 print ("The user's Virtual Storage is mounted at %s" % \
@@ -686,7 +687,10 @@ class WhoAmI(Task):
         self.addStdOptions()
 
     def run(self):
-        print (getUserName(self))
+        if authClient.isUserLoggedIn(getUserName(self)):
+            print (getUserName(self))
+        else:
+            print ('anonymous')
 
 
 

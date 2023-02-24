@@ -1912,7 +1912,7 @@ class queryClient (object):
         url = '%s/schema?value=%s&format=%s&profile=%s' % \
                 (self.svc_url, (value), str(format), str(profile))
         try:
-            r = requests.get (url, timeout=2)
+            r = requests.get (url, timeout=120)
             resp = r.text
             return resp
         except Exception:

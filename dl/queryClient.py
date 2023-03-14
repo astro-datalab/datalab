@@ -753,23 +753,23 @@ def jobs(token=None, jobId=None, format='text', status='all', option='list'):
 # RESULTS -- Get the results of an Asynchronous query
 #
 @multimethod('qc',2,False)
-def results(token, jobId, delete=True, profile='default'):
+def results(token, jobId, fname=None, delete=True, profile='default'):
     return qc_client._results (token=def_token(token), jobId=jobId, 
-                               delete=True, profile=profile)
+                               fname=fname, delete=True, profile=profile)
 
 @multimethod('qc',1,False)
-def results(optval, jobId=None, delete=True, profile='default'):
+def results(optval, jobId=None, fname=None, delete=True, profile='default'):
     if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return qc_client._results (token=def_token(optval), jobId=jobId,
-                                   delete=delete, profile=profile)
+                                   fname=fname, delete=delete, profile=profile)
     else:
         # optval is probably a jobId
         return qc_client._results (token=def_token(None), jobId=optval,
-                                   delete=delete, profile=profile)
+                                   fname=fname, delete=delete, profile=profile)
 
 @multimethod('qc',0,False)
-def results(token=None, jobId=None, delete=True, profile='default'):
+def results(token=None, jobId=None, fname=None, delete=True, profile='default'):
     '''Retrieve the results of an asynchronous query, once completed.
 
     Usage::
@@ -822,7 +822,7 @@ def results(token=None, jobId=None, delete=True, profile='default'):
         301.385106974224186,44.4963443903961604
     '''
     return qc_client._results (token=def_token(token), jobId=jobId, 
-                               delete=True, profile=profile)
+                               fname=fname, delete=True, profile=profile)
 
 
 # --------------------------------------------------------------------
@@ -2269,34 +2269,34 @@ class queryClient (object):
     # --------------------------
 
     @multimethod('_qc',2,True)
-    def results(self, token, jobId, delete=True, profile='default'):
+    def results(self, token, jobId, fname=None, delete=True, profile='default'):
         '''Usage:  queryClient.results (token, jobID)
         '''
         return self._results (token=def_token(token), jobId=jobId,
-                              delete=delete, profile=profile)
+                              fname=fname, delete=delete, profile=profile)
 
     @multimethod('_qc',1,True)
-    def results(self, optval, jobId=None, delete=True, profile='default'):
+    def results(self, optval, jobId=None, fname=None, delete=True, profile='default'):
         '''Usage:  queryClient.results (jobID)
                    queryClient.results (token, jobId=<id>)
         '''
         if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._results (token=def_token(optval), jobId=jobId,
-                                  delete=delete, profile=profile)
+                                  fname=fname, delete=delete, profile=profile)
         else:
             # optval is probably a jobId
             return self._results (token=def_token(None), jobId=optval,
-                                  delete=delete, profile=profile)
+                                  fname=fname, delete=delete, profile=profile)
 
     @multimethod('_qc',0,True)
-    def results(self, token=None, jobId=None, delete=True, profile='default'):
+    def results(self, token=None, jobId=None, fname=None, delete=True, profile='default'):
         '''Usage:  queryClient.results (jobID=<str>)
         '''
         return self._results (token=def_token(token), jobId=jobId,
-                              delete=delete, profile=profile)
+                              fname=fname, delete=delete, profile=profile)
 
-    def _results(self, token=None, jobId=None, delete=True, profile='default'):
+    def _results(self, token=None, jobId=None, fname=None, delete=True, profile='default'):
         '''Implementation of the results() method.
         '''
         headers = self.getHeaders (token)
@@ -2307,8 +2307,9 @@ class queryClient (object):
         elif self.svc_profile != "default":
             dburl += "&profile=%s" % self.svc_profile
 
-        r = requests.get (dburl, headers=headers)
-        return qcToString(r.content)
+        #r = requests.get (dburl, headers=headers)
+        r = self.getStreamURL(dburl, headers=headers, fname=fname)
+        return qcToString(r)
 
 
     # --------------------------
@@ -3203,7 +3204,7 @@ class queryClient (object):
         '''
         r = requests.get(url, headers=headers, stream=True)
         if r.status_code != 200:
-            return r.status_code, r.content
+            return r.status_code, r.text
         else:
             try:
                 # Download the request in chunks to avoid timeouts.
@@ -3215,11 +3216,11 @@ class queryClient (object):
                                 fd.write(chunk)
                     return 'OK'
                 else:
-                    resp = ''
+                    resp = b''
                     for chunk in r.iter_content(chunk_size=chunk_size):
                         if chunk:
                             resp = resp + chunk
-                    return resp
+                    return resp.decode('utf-8')
             except IOError as e:
                 print ('IOError in getStreamURL: %s' %  qcToString(str(e)))
                 raise queryClientError(str(e))

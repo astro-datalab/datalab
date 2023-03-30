@@ -1994,7 +1994,11 @@ class storeClient(object):
                                    (uri, format, verbose), def_token(token))
         except:
             raise Exception(scToString(r.content))
-        return(scToString(r.content))
+        else:
+            if r.status_code != 200:
+                return('Error %d: "%s" %s' % (r.status_code,uri,r.reason))
+            else:
+                return(scToString(r.content))
 
 
     # --------------------------------------------------------------------

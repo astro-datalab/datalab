@@ -8,7 +8,7 @@ httplib2==0.19.0
 pandas==1.0.1
 astropy==4.2
 chardet==3.0.4
-requests==2.22.0
+requests==2.31.0
 feedparser==6.0.2
 Pillow==9.3.0
 pycurl==7.43.0.6

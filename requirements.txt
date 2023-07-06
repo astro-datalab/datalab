@@ -1,4 +1,4 @@
-scipy==1.4.1
+scipy==1.10.0
 specutils==1.1.1
 pyvo==1.1
 pycurl_requests==0.1.2

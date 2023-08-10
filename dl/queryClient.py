@@ -121,9 +121,11 @@ from dl.helpers.utils import convert
 if os.path.isfile('./Util.py'):			# use local dev copy
     from Util import multimethod
     from Util import def_token, is_auth_token, split_auth_token
+    from Util import validTableName
 else:						# use distribution copy
     from dl.Util import multimethod
     from dl.Util import def_token, is_auth_token, split_auth_token
+    from dl.Util import validTableName
 
 is_py3 = sys.version_info.major == 3
 
@@ -175,7 +177,7 @@ if os.path.exists('/tmp/RM_SVC_URL'):
         RM_SERVICE_URL = fd.read().strip()
 
 # Default sync query timeout default (300sec)
-TIMEOUT_REQUEST = 300
+DEF_TIMEOUT_REQUEST = 300
 
 
 
@@ -497,8 +499,8 @@ def query(token=None, adql=None, sql=None, fmt='csv', out=None, async_=False, dr
         prior to 3.7 can continue to use the ``async`` keyword.
 
     drop : bool
-        If ``True``, then if the query is saving to mydb where the same table name
-        already exists, it will overwrite the old mydb table.
+        If ``True``, then if the query is saving to mydb where the same table
+        name already exists, it will overwrite the old mydb table.
 
     profile : str or None
         The Query Manager profile to use for this call.  If ``None`` then
@@ -751,23 +753,23 @@ def jobs(token=None, jobId=None, format='text', status='all', option='list'):
 # RESULTS -- Get the results of an Asynchronous query
 #
 @multimethod('qc',2,False)
-def results(token, jobId, delete=True, profile='default'):
+def results(token, jobId, fname=None, delete=True, profile='default'):
     return qc_client._results (token=def_token(token), jobId=jobId, 
-                               delete=True, profile=profile)
+                               fname=fname, delete=True, profile=profile)
 
 @multimethod('qc',1,False)
-def results(optval, jobId=None, delete=True, profile='default'):
+def results(optval, jobId=None, fname=None, delete=True, profile='default'):
     if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return qc_client._results (token=def_token(optval), jobId=jobId,
-                                   delete=delete, profile=profile)
+                                   fname=fname, delete=delete, profile=profile)
     else:
         # optval is probably a jobId
         return qc_client._results (token=def_token(None), jobId=optval,
-                                   delete=delete, profile=profile)
+                                   fname=fname, delete=delete, profile=profile)
 
 @multimethod('qc',0,False)
-def results(token=None, jobId=None, delete=True, profile='default'):
+def results(token=None, jobId=None, fname=None, delete=True, profile='default'):
     '''Retrieve the results of an asynchronous query, once completed.
 
     Usage::
@@ -820,7 +822,7 @@ def results(token=None, jobId=None, delete=True, profile='default'):
         301.385106974224186,44.4963443903961604
     '''
     return qc_client._results (token=def_token(token), jobId=jobId, 
-                               delete=True, profile=profile)
+                               fname=fname, delete=True, profile=profile)
 
 
 # --------------------------------------------------------------------
@@ -1361,10 +1363,10 @@ def mydb_import(table, data, token=None, **kw):
         type.  If not set, the schema is determined automatically from
         the data.
 
-    drop: bool   	[Optional]
-        Drop any existing table of the same name before creating new one.
+    append: bool   	[Optional]
+        append any existing table of the same name.
 
-    verbose: bool   [Optional]
+    verbose: bool       [Optional]
         Be verbose about operations.
 
     Returns
@@ -1415,7 +1417,7 @@ def mydb_truncate(table, token=None):
         Authentication token (see function :func:`authClient.login()`)
 
     table: str
-        The specific table to drop
+        The specific table to truncate.
 
     Returns
     -------
@@ -1665,7 +1667,7 @@ class queryClient (object):
         self.rm_svc_url = RM_SERVICE_URL        # ResMgr service URL
         self.hostip = THIS_IP
         self.hostname = THIS_HOST
-        self.timeout_request = TIMEOUT_REQUEST
+        self.timeout_request = DEF_TIMEOUT_REQUEST
         self.async_wait = False
 
         # Get the $HOME/.datalab directory.
@@ -1910,7 +1912,7 @@ class queryClient (object):
         url = '%s/schema?value=%s&format=%s&profile=%s' % \
                 (self.svc_url, (value), str(format), str(profile))
         try:
-            r = requests.get (url, timeout=2)
+            r = requests.get (url, timeout=120)
             resp = r.text
             return resp
         except Exception:
@@ -1995,11 +1997,9 @@ class queryClient (object):
         if 'format' in kw:              # alias for 'fmt'
             fmt = kw['format']
 
-        if 'timeout' in kw: 		# set requested timeout on the query
+        timeout = self.timeout_request 	# set requested timeout on the query
+        if 'timeout' in kw:
             timeout = int(kw['timeout'])
-        else:
-            timeout = self.timeout_request
-        self.set_timeout_request (timeout)
 
         wait = self.async_wait 		# see if we wait for an Async result
         if async_ and 'wait' in kw:
@@ -2011,7 +2011,6 @@ class queryClient (object):
             if stream:
                 timeout = 0
                 async_ = False
-                self.set_timeout_request(0)
 
         poll_time = 1 			# set polling interval
         if async_ and 'poll' in kw:
@@ -2091,12 +2090,19 @@ class queryClient (object):
         r = requests.get (dburl, headers=headers, timeout=timeout)
         if r.status_code != 200:
             raise queryClientError (r.text)
-        resp = qcToString(r.content)
+
+        # N.B. Previously we converted the response to string from, presumably,
+        # byte string, here, but sometimes the response content is a file
+        # in byte format that can't be necessarily converted to string. So
+        # now the conversion happens downstream on an as-needed basis.
+
+        resp = r.content
 
         if async_ and wait:
             # Sync query timeouts are handled on the server.  If waiting
             # for an async query, loop until job is completed or the timeout
             # expires.
+            resp = qcToString(resp)
             jobId = resp
             stat = self._status (token=token, jobId=jobId, profile=profile)
             tval = 0
@@ -2109,7 +2115,7 @@ class queryClient (object):
                 except Exception as e:
                     raise queryClientError (str(e))
                 else:
-                    if tval > self.timeout_request:
+                    if tval > timeout:
                         stat = self._abort (token=token, jobId=jobId,
                                             profile=profile)
                         break
@@ -2120,9 +2126,9 @@ class queryClient (object):
                                (stat, tim, rem))
                 tval = tval + poll_time
 
-            if tval > self.timeout_request:
+            if tval > timeout:
                 if verbose:
-                    print ('Timeout (%d sec) exceeded' % self.timeout_request)
+                    print ('Timeout (%d sec) exceeded' % timeout)
                 raise queryClientError ('Query timeout exceeded')
             elif stat not in ['COMPLETED','ERROR']:
                 resp = stat
@@ -2143,9 +2149,12 @@ class queryClient (object):
             # on the server side.
             if out[:7] == 'file://':
                 out = out[7:]
-            if ':' not in out or out[:out.index(':')] not in ['vos', 'mydb']:
+
+            elif ':' not in out or out[:out.index(':')] not in ['vos', 'mydb']:
                 with open(out, 'wb') as file:
-                    file.write(resp.encode("utf-8"))
+                    # N.B. The file gets written in bytes so no need to convert
+                    # just save what the server sent as is.
+                    file.write(resp)
             return 'OK'
         else:
             # Otherwise, simply return the result of the query.
@@ -2260,34 +2269,34 @@ class queryClient (object):
     # --------------------------
 
     @multimethod('_qc',2,True)
-    def results(self, token, jobId, delete=True, profile='default'):
+    def results(self, token, jobId, fname=None, delete=True, profile='default'):
         '''Usage:  queryClient.results (token, jobID)
         '''
         return self._results (token=def_token(token), jobId=jobId,
-                              delete=delete, profile=profile)
+                              fname=fname, delete=delete, profile=profile)
 
     @multimethod('_qc',1,True)
-    def results(self, optval, jobId=None, delete=True, profile='default'):
+    def results(self, optval, jobId=None, fname=None, delete=True, profile='default'):
         '''Usage:  queryClient.results (jobID)
                    queryClient.results (token, jobId=<id>)
         '''
         if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._results (token=def_token(optval), jobId=jobId,
-                                  delete=delete, profile=profile)
+                                  fname=fname, delete=delete, profile=profile)
         else:
             # optval is probably a jobId
             return self._results (token=def_token(None), jobId=optval,
-                                  delete=delete, profile=profile)
+                                  fname=fname, delete=delete, profile=profile)
 
     @multimethod('_qc',0,True)
-    def results(self, token=None, jobId=None, delete=True, profile='default'):
+    def results(self, token=None, jobId=None, fname=None, delete=True, profile='default'):
         '''Usage:  queryClient.results (jobID=<str>)
         '''
         return self._results (token=def_token(token), jobId=jobId,
-                              delete=delete, profile=profile)
+                              fname=fname, delete=delete, profile=profile)
 
-    def _results(self, token=None, jobId=None, delete=True, profile='default'):
+    def _results(self, token=None, jobId=None, fname=None, delete=True, profile='default'):
         '''Implementation of the results() method.
         '''
         headers = self.getHeaders (token)
@@ -2298,8 +2307,9 @@ class queryClient (object):
         elif self.svc_profile != "default":
             dburl += "&profile=%s" % self.svc_profile
 
-        r = requests.get (dburl, headers=headers)
-        return qcToString(r.content)
+        #r = requests.get (dburl, headers=headers)
+        r = self.getStreamURL(dburl, headers=headers, fname=fname)
+        return qcToString(r[1].strip())
 
 
     # --------------------------
@@ -2472,7 +2482,7 @@ class queryClient (object):
     @multimethod('_qc',1,True)
     def list(self, optval, table=None):
         '''Usage:  queryClient.list (table)
-                     queryClient.list (token, table=<id>)
+                   queryClient.list (token, table=<id>)
         '''
         if optval is not None and is_auth_token(optval):
             # optval looks like a token
@@ -2499,14 +2509,14 @@ class queryClient (object):
     @multimethod('_qc',1,True)
     def drop(self, optval, table=None):
         '''Usage:  queryClient.drop (table)
-                     queryClient.drop (token, table=<id>)
+                   queryClient.drop (token, table=<id>)
         '''
         if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self.mydb_drop (token=def_token(optval), table=table)
         else:
             # optval is probably a table
-            return self._drop (token=def_token(None), table=optval)
+            return self.mydb_drop (token=def_token(None), table=optval)
 
     @multimethod('_qc',0,True)
     def drop(self, token=None, table=None):
@@ -2525,7 +2535,7 @@ class queryClient (object):
     @multimethod('_qc',1,True)
     def mydb_list(self, optval, table=None, index=False, **kw):
         '''Usage:  queryClient.mydb_list (table)
-                     queryClient.mydb_list (token, table=<str>)
+                   queryClient.mydb_list (token, table=<str>)
         '''
         if optval is not None and is_auth_token(optval):
             # optval looks like a token
@@ -2552,6 +2562,8 @@ class queryClient (object):
             verbose = kw['verbose']
         if table is None:
             table = ''
+        if table != '' and not validTableName(table):
+            raise queryClientError('Invalid table name: "%s"' % table)
         dburl = '%s/list?table=%s&index=%s' % (self.svc_url, table, str(index))
         if self.svc_profile != "default":
             dburl += "&profile=%s" % self.svc_profile
@@ -2600,6 +2612,9 @@ class queryClient (object):
         params['verbose'] = str(verbose)
         params['drop'] = str(drop)
         params['profile'] = self.svc_profile
+
+        if not validTableName(table):
+            raise queryClientError('Invalid table name: "%s"' % table)
 
         # Schema can be a dictionary, a CSV string, or the name of a file.
         if isinstance (schema,str):
@@ -2651,14 +2666,20 @@ class queryClient (object):
         '''
         # Get optional parameters.
         csv_header = (kw['csv_header'] if 'csv_header' in kw else True)
-        verbose = (kw['drop'] if 'drop' in kw else False)
+        verbose = (kw['verbose'] if 'verbose' in kw else False)
+        drop = (kw['drop'] if 'drop' in kw else False)
 
         # Set up the request headers and initialize.
         params = {}
         headers = self.getHeaders (token)
         params['table'] = table
         params['profile'] = self.svc_profile
+        params['verbose'] = verbose
+        params['drop'] = drop
         dburl = '%s/ingest' % (self.svc_url)
+
+        if not validTableName(table):
+            raise queryClientError('Invalid table name: "%s"' % table)
 
         # Data can be the name of a CSV file or a python tablular object that
         # can be converted.
@@ -2744,6 +2765,9 @@ class queryClient (object):
         # Set up the request headers and initialize.
         headers = self.getHeaders (token)
         dburl = '%s/import' % (self.svc_url)
+
+        if not validTableName(table):
+            raise queryClientError('Invalid table name: "%s"' % table)
 
         # Data can be the name of a CSV file or a python tablular object that
         # can be converted.
@@ -2842,6 +2866,9 @@ class queryClient (object):
         '''
         headers = self.getHeaders (token)
 
+        if not validTableName(table):
+            raise queryClientError('Invalid table name: "%s"' % table)
+
         dburl = '%s/truncate?table=%s' % (self.svc_url, table)
         if self.svc_profile != "default":
             dburl += "&profile=%s" % self.svc_profile
@@ -2888,6 +2915,9 @@ class queryClient (object):
         '''Implementation of the mydb_index() method.
         '''
         headers = self.getHeaders (token)
+
+        if not validTableName(table):
+            raise queryClientError('Invalid table name: "%s"' % table)
 
         if async_:
             def async_call (url, params, headers):
@@ -2942,6 +2972,9 @@ class queryClient (object):
         '''
         headers = self.getHeaders (token)
 
+        if not validTableName(table):
+            raise queryClientError('Invalid table name: "%s"' % table)
+
         dburl = '%s/delete?table=%s' % (self.svc_url, table)
         if self.svc_profile != "default":
             dburl += "&profile=%s" % self.svc_profile
@@ -2993,6 +3026,11 @@ class queryClient (object):
         '''
         headers = self.getHeaders (token)
 
+        if not validTableName(source):
+            raise queryClientError('Invalid table name: "%s"' % source)
+        if not validTableName(target):
+            raise queryClientError('Invalid table name: "%s"' % target)
+
         dburl = '%s/rename?source=%s&target=%s' % (self.svc_url, source, target)
         if self.svc_profile != "default":
             dburl += "&profile=%s" % self.svc_profile
@@ -3024,6 +3062,11 @@ class queryClient (object):
         '''Implementation of the mydb_copy() method.
         '''
         headers = self.getHeaders (token)
+
+        if not validTableName(source):
+            raise queryClientError('Invalid table name: "%s"' % source)
+        if not validTableName(target):
+            raise queryClientError('Invalid table name: "%s"' % target)
 
         dburl = '%s/copy?source=%s&target=%s' % (self.svc_url, source, target)
         if self.svc_profile != "default":
@@ -3161,7 +3204,7 @@ class queryClient (object):
         '''
         r = requests.get(url, headers=headers, stream=True)
         if r.status_code != 200:
-            return r.status_code, r.content
+            return r.status_code, r.text
         else:
             try:
                 # Download the request in chunks to avoid timeouts.
@@ -3173,11 +3216,11 @@ class queryClient (object):
                                 fd.write(chunk)
                     return 'OK'
                 else:
-                    resp = ''
+                    resp = b''
                     for chunk in r.iter_content(chunk_size=chunk_size):
                         if chunk:
                             resp = resp + chunk
-                    return resp
+                    return resp.decode('utf-8')
             except IOError as e:
                 print ('IOError in getStreamURL: %s' %  qcToString(str(e)))
                 raise queryClientError(str(e))

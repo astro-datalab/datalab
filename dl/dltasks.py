@@ -1471,7 +1471,7 @@ class List(Task):
             Option("name", "", "Location in Data Lab to list",
                 required=False, default="vos://", display="name"))
         self.addOption("format",
-            Option("format", "", "Format for listing (ascii|csv|raw)",
+            Option("format", "", "Format for listing (ascii|csv|raw|long)",
                 required=False, default="csv"))
         self.addStdOptions()
 

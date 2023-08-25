@@ -382,7 +382,7 @@ class Version(Task):
 
     def run(self):
         from dl import __version__ as dlver
-        print ("Task Version:  " + dlver.__version__)
+        print ("Task Version:  " + dlver)
 
 
 class Services(Task):

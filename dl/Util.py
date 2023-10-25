@@ -26,6 +26,7 @@ import random
 import string
 import re
 from functools import partial
+from urllib.parse import urlencode          # Python 3
 
 try:
     import ConfigParser                         # Python 2
@@ -185,6 +186,29 @@ def def_token(tok):
         may also simply be a username, in which case the same check for
         a token ID file is done.
     '''
+
+    def isUserLoggedIn (user):
+        '''Utility to check with AuthMgr whether user is logged-in.
+        '''
+        DEF_AUTH_SVC = 'https://datalab.noirlab.edu/auth'
+        svc_url = svcOverride('AM_SVC_URL', DEF_AUTH_SVC)
+        url = svc_url + "/isUserLoggedIn?"
+        args = urlencode({"user": user, "profile": self.svc_profile})
+        url = url + args
+        print("isUserLoggedIn: url = '%s'" % url)
+
+        try:
+            r = requests.get(url)
+            response = acToString(r.content)
+            if r.status_code != 200:
+                raise Exception(r.content)
+            val = 'true' in str(r.text.lower())
+        except Exception:
+            val = False
+        else:
+            return val
+
+
     home = '%s/.datalab' % os.path.expanduser('~')
     if tok is None or tok == '':
 
@@ -214,7 +238,7 @@ def def_token(tok):
             else:
                 return readTokenFile(tok_file)
     else:
-        # Check for a plane user name or valid token.  If we're given a
+        # Check for a plain user name or valid token.  If we're given a
         # token just return it.  If it may be a user name, look for a token
         # id file and return that, otherwise we're just anonymous.
         if is_auth_token(tok):                # is it a token?
@@ -350,8 +374,10 @@ def validTableName(tbl):
             return bool(validCharsOnly(nm) and \
                         not (hasCaps(nm) or beginsWithNumber(nm)))
 
-    if tbl in [None,'']:
-        return False
+    if tbl in [None,'','mydb://']:
+        return True
+    if tbl.startswith('mydb://'):
+        tbl = tbl[7:]
     if '.' in tbl:
         if len(tbl.split('.')) != 2:                    # e.g. 'mydb.foo.bar'
             return False
@@ -362,6 +388,29 @@ def validTableName(tbl):
     else:
         return validName(tbl)
 
+
+# --------------------------------------------------------------------
+# SVCOVERRIDE -- Check for a service URL override.
+#
+
+def svcOverride(what, default):
+    '''Check for an override of a (usually, service) URL as deined by either
+       and environment variable, or a /tmp file given by the 'what' string.
+       If neither is found, returns the default value.
+    '''
+    if what is None:
+        return default
+
+    env_val = os.getenv (what)
+    if env_val not in [None, '']:
+        return env_val
+    else:
+        tmp_path = '/tmp/%s' % what
+        if os.path.exists(tmp_path):
+            with open(tmp_path) as fd:
+                return fd.read().strip()
+        else:
+            return default
 
 
 # --------------------------------------------------------------------

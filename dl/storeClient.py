@@ -94,6 +94,7 @@ import glob
 import socket
 import json
 import time
+import re
 
 if os.path.isfile('./Util.py'):                # use local dev copy
     from Util import multimethod
@@ -150,6 +151,15 @@ if os.path.exists('/tmp/QM_SVC_URL'):
 
 
 URI_RESERVED = ":;?/@&=+$,"          # RFC2396 reserved URI chars
+
+# DLC-1818. There are file names we served, that contain + signs
+# in their names. They need to be escaped for it to work on a URL.
+# For now we are only escaping the +/plus sign to minimize introducing
+# unwanted behaviours.
+# A deeper look at what characters are allowed system wide should be done at
+# some point.
+PLUS_REGEX = r'\+'
+PLUS_URL_ESC_CODE = "%2B"
 
 
 # ####################################################################
@@ -1548,7 +1558,7 @@ class storeClient(object):
                     dlname = ((to + "/" + fn) if hasmeta(fr) else to)
 
                 # Get a single file.
-                res = requests.get(self.svc_url + "/get?name=%s" % f,
+                res = requests.get(self.svc_url + "/get?name=%s" % re.sub(PLUS_REGEX, PLUS_URL_ESC_CODE, f),
                                    headers=hdrs)
 
                 if res.status_code != 200:
@@ -1628,6 +1638,8 @@ class storeClient(object):
             r = requests.get(url.text, stream=False, headers=hdrs)
             if mode == 'text':
                 return scToString(r.content)
+            elif mode == 'binary':
+                return r.content
             elif mode == 'fileobj':
                 from astropy.utils.data import get_readable_fileobj
                 from io import BytesIO
@@ -1992,7 +2004,11 @@ class storeClient(object):
                                    (uri, format, verbose), def_token(token))
         except:
             raise Exception(scToString(r.content))
-        return(scToString(r.content))
+        else:
+            if r.status_code != 200:
+                return('Error %d: "%s" %s' % (r.status_code,uri,r.reason))
+            else:
+                return(scToString(r.content))
 
 
     # --------------------------------------------------------------------

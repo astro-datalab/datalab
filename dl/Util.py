@@ -316,6 +316,40 @@ def split_auth_token(token):
     return res.groups() if res else None
 
 
+def auth_token_to_dict(token):
+    """
+    Given an auth token splits it in its components
+    and returns a dictionary.
+    Parameters
+    ----------
+    token : str
+        A string auth token
+        E.g.
+        "testuser.3666.3666.$1$PKCFmMzy$OPpZg/ThBmZe/V8LVPvpi/"
+
+    Returns
+    -------
+    return:
+           { 'username': "username value",
+              'uid': "numeric user id",
+              'gid': "numeric group id",
+              'hash': hash
+            }
+    E.g.   { 'username': "testuser",
+              'uid': "3666",
+              'gid': "3666",
+              'hash': "$1$PKCFmMzy$OPpZg/ThBmZe/V8LVPvpi/"
+            }
+            or None if token not valid
+    """
+    res = split_auth_token(token)
+    if res is not None:
+        return {k: v for k, v in zip(['username', 'uid', 'gid', 'hash'], res)}
+    else:
+        return None
+
+
+
 # --------------------------------------------------------------------
 # IS_AUTH_TOKEN -- returns True if the the string pass is a token
 #                  False otherwise

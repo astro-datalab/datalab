@@ -60,3 +60,23 @@ def test_split_auth_token_parts(token, expected):
     res = util.split_auth_token(token)
     for a, b in zip(res, expected):
         assert a == b
+
+
+@pytest.mark.parametrize(
+    "token, expected",
+    [
+        (ANON_TOKEN, ["anonymous", "0", "0", "anon_access"]),
+        (DEMO_TOKEN, ["dldemo", "99999", "99999", "demo_access"]),
+        (TEST_TOKEN, ["dltest", "99998", "99998", "test_access"]),
+        (UNITTEST_OK_TOKEN, ["unittest", "666", "666", "$1$fdqasldur927JL97asldfj9279172B/"]),
+        (SOME_USER, ["some_user", "3199", "159", "$1$3xf8E6xf$RL9XLqIyFCRsTOISOBTuL."]),
+        (UNITTEST_KO_TOKEN, None)
+    ]
+)
+def test_auth_token_to_dict(token, expected):
+    if expected is not None:
+        expected_dict = {k: v for k, v in zip(['username', 'uid', 'gid', 'hash'], expected)}
+    else:
+        expected_dict = None
+    res = util.auth_token_to_dict(token)
+    assert res == expected_dict

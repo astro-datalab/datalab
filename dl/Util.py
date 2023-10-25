@@ -316,7 +316,7 @@ def split_auth_token(token):
     return res.groups() if res else None
 
 
-def auth_token2dict(token):
+def auth_token_to_dict(token):
     """
     Given an auth token splits it in its components
     and returns a dictionary.

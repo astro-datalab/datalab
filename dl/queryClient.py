@@ -2309,7 +2309,7 @@ class queryClient (object):
 
         #r = requests.get (dburl, headers=headers)
         r = self.getStreamURL(dburl, headers=headers, fname=fname)
-        return qcToString(r[1].strip())
+        return qcToString(r)
 
 
     # --------------------------

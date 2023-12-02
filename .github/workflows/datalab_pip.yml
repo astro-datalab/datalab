@@ -4,6 +4,8 @@ on:
   push:
     branches: 
       - master
+  release:
+    types: [ created ]
 
 jobs:
   build:
@@ -11,12 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.5, 3.6, 3.7, 3.8]
+        python-version: [3.9]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -27,6 +29,15 @@ jobs:
         pip install --upgrade twine
     - name: Build pip package
       run: |
-        rm -rf dist/ build/ datalab_client.egg-info/ noaodatalab.egg-info/
+        rm -rf dist/ build/ datalab_client.egg-info/ astro_datalab.egg-info/
         python setup.py sdist
         python setup.py bdist_wheel --universal
+    - name: Upload package to PyPI
+      # only execute this step if it is a release
+      if: github.event_name == 'release' && github.event.action == 'created'
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+      #run: twine upload dist/*
+      # test only
+      run: twine upload --repository-url https://test.pypi.org/legacy/ dist/*

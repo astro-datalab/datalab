@@ -5,7 +5,7 @@ on:
     branches: 
       - master
   release:
-    types: [ created ]
+    types: [ released ]
 
 jobs:
   build:
@@ -38,6 +38,11 @@ jobs:
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-      #run: twine upload dist/*
-      # test only
-      run: twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+        # for testing purposes set the PYPI_REPO_URL to https://test.pypi.org/legacy/
+        PYPI_REPO_URL: ''
+      run: |
+        if [ -z "${{ env.PYPI_REPO_URL }}" ]; then
+          twine upload --verbose dist/*
+        else
+          twine upload --verbose --repository-url "${{ env.PYPI_REPO_URL }}" dist/*
+        fi

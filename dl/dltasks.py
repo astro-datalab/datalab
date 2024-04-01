@@ -818,6 +818,9 @@ class Query2 (Task):
         self.addOption("timeout",
             Option("timeout", "", "Requested query timeout",
                 required=False, default="120"))
+        self.addOption("stream",
+                       Option("stream", "", "stream results, requires output filename to be set.",
+                              required=False, default=False))
         self.addStdOptions()
 
     def run(self):
@@ -855,7 +858,8 @@ class Query2 (Task):
         try:
             res = queryClient.query (token, adql=adql, sql=sql,
                         fmt=self.fmt.value, out=self.out.value,
-                        async_=getattr(self,"async").value, drop=self.drop.value, timeout=self.timeout.value)
+                        async_=getattr(self,"async").value, drop=self.drop.value, timeout=self.timeout.value,
+                        stream=self.stream.value)
 
             if getattr(self,"async").value:
                 print (res)                         # Return the JobID
@@ -895,11 +899,14 @@ class QueryResults(Task):
         Task.__init__(self, datalab, 'qresults', 'Get the async query results')
         self.addOption("jobId", Option("jobId", "",
                         "Query Job ID", required=True))
+        self.addOption("fname", Option("fname", "",
+                                       "File name to save the results", required=False, default=None))
         self.addStdOptions()
 
     def run(self):
         token = getUserToken(self)
-        print (queryClient.results (token, jobId=self.jobId.value))
+        print (queryClient.results (token, jobId=self.jobId.value,
+                                    fname=self.fname.value))
 
 
 class QueryStatus(Task):

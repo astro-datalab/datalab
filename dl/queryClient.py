@@ -94,7 +94,6 @@ try:
 except ImportError as e:
     from dl.__version__ import __version__
 
-
 import requests
 try:
     from urllib import quote_plus               # Python 2
@@ -113,6 +112,7 @@ import sys
 import collections
 import ast, csv
 import pandas
+import pycurl
 from tempfile import NamedTemporaryFile
 
 from dl import resClient
@@ -180,6 +180,79 @@ if os.path.exists('/tmp/RM_SVC_URL'):
 DEF_TIMEOUT_REQUEST = 300
 
 
+#####################################################################
+# START - supporting functions for pycurl download code
+def human_readable_size(size, decimal_places=2):
+    """
+    Converts a size in bytes to a human-readable format (e.g., KB, MB, GB).
+
+    :param size: Size in bytes.
+    :param decimal_places: Number of decimal places to format.
+    :return: Human-readable size string.
+    """
+    for unit in ['B', 'KB', 'MB', 'GB', 'TB', 'PB']:
+        if size < 1024.0:
+            break
+        size /= 1024.0
+    return f"{size:.{decimal_places}f} {unit}"
+
+
+def human_readable_time(seconds, decimal_places=2):
+    """
+    Converts time in seconds to a human-readable format (hours:minutes:seconds).
+
+    :param seconds: Time in seconds.
+    :param decimal_places: Number of decimal places for the seconds part.
+    :return: Human-readable time string.
+    """
+    hours, remainder = divmod(seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    if hours > 0:
+        return f"{int(hours)}h:{int(minutes)}m:{seconds:.{decimal_places}f}s"
+    elif minutes > 0:
+        return f"{int(minutes)}m:{seconds:.{decimal_places}f}s"
+    else:
+        return f"{seconds:.{decimal_places}f}s"
+
+
+def progress_report(download_t, download_d, upload_t, upload_d):
+    """
+    Callback function to report the progress of a download or upload operation.
+
+    This function is designed to be used with pycurl to periodically report the
+    progress of file transfer operations. It prints updates to the console at
+    intervals specified by the `progress.report_interval`.
+
+    Parameters:
+    - download_t (int): Total size of the download in bytes.
+    - download_d (int): Number of bytes downloaded so far.
+    - upload_t (int): Total size of the upload in bytes (not used in this context).
+    - upload_d (int): Number of bytes uploaded so far (not used in this context).
+    """
+    now = time.time()  # Current time for calculating the interval and rate.
+    # Check if it's time to report progress (based on the specified interval).
+    if now - progress_report.last_report_time >= progress_report.report_interval:
+        elapsed_time = now - progress_report.start_time  # Total time elapsed since the start of the download.
+        # Calculate the download rate in kilobytes per second.
+        rate = download_d / elapsed_time / 1024
+        # Print the progress update, showing the amount downloaded, time elapsed, and current download rate.
+        print(
+            f"\rDownloaded {human_readable_size(download_d)} in"
+            f" {human_readable_time(elapsed_time)} at {rate:.2f} KB/s",
+            end="")
+        progress_report.last_report_time = now  # Update the last report time to the current time.
+
+
+def setup_progress():
+    """
+    Setup the progress reporting.
+    """
+    progress_report.start_time = time.time()
+    progress_report.last_report_time = progress_report.start_time
+    progress_report.report_interval = 5  # seconds between reports
+
+# END - Supporting functions for pycurl download code
+#####################################################################
 
 # ####################################################################
 #  Query Client error class
@@ -192,6 +265,12 @@ class queryClientError(Exception):
     def __str__(self):
         return self.message
 
+
+class DLHTTPException(Exception):
+    def __init__(self, status_code, message):
+        self.status_code = status_code
+        self.error_message = message
+        super().__init__(f"DL HTTP Error {status_code}: {message}")
 
 # ####################################################################
 #  Module Functions
@@ -366,10 +445,10 @@ def services(name=None, svc_type=None, mode='list', profile='default'):
 
     svc_type : str
         Limit results to specified service type.  Supported options are
-	'tap', 'sia', 'scs', or 'vos'.
+    'tap', 'sia', 'scs', or 'vos'.
 
     mode : str
-	Query mode:
+    Query mode:
 
     profile : str
         The name of the service profile to use. The list of available
@@ -378,9 +457,9 @@ def services(name=None, svc_type=None, mode='list', profile='default'):
 
     Returns
     -------
-	If mode is 'list' then a human-readable list of matching services is
-	returned.  If mode is 'resolve' then a JSON string of matching services
-	is returned un the form "{<svc_name> : <svc_url>, ....}"
+    If mode is 'list' then a human-readable list of matching services is
+    returned.  If mode is 'resolve' then a JSON string of matching services
+    is returned un the form "{<svc_name> : <svc_url>, ....}"
 
     Example
     -------
@@ -717,7 +796,7 @@ def jobs(token=None, jobId=None, format='text', status='all', option='list'):
                 ABORTED         Job was aborted by the user
 
     option : str
-	If 'list' then the matching records are returned, if 'delete' then
+    If 'list' then the matching records are returned, if 'delete' then
         the records are removed from the database (e.g. to clear up long
         job lists of completed jobs).
 
@@ -753,23 +832,23 @@ def jobs(token=None, jobId=None, format='text', status='all', option='list'):
 # RESULTS -- Get the results of an Asynchronous query
 #
 @multimethod('qc',2,False)
-def results(token, jobId, fname=None, delete=True, profile='default'):
+def results(token, jobId, fname=None, delete=True, profile='default', progress=False):
     return qc_client._results (token=def_token(token), jobId=jobId, 
-                               fname=fname, delete=True, profile=profile)
+                               fname=fname, delete=True, profile=profile, progress=progress)
 
 @multimethod('qc',1,False)
-def results(optval, jobId=None, fname=None, delete=True, profile='default'):
+def results(optval, jobId=None, fname=None, delete=True, profile='default', progress=False):
     if optval is not None and is_auth_token(optval):
         # optval looks like a token
         return qc_client._results (token=def_token(optval), jobId=jobId,
-                                   fname=fname, delete=delete, profile=profile)
+                                   fname=fname, delete=delete, profile=profile, progress=progress)
     else:
         # optval is probably a jobId
         return qc_client._results (token=def_token(None), jobId=optval,
-                                   fname=fname, delete=delete, profile=profile)
+                                   fname=fname, delete=delete, profile=profile, progress=progress)
 
 @multimethod('qc',0,False)
-def results(token=None, jobId=None, fname=None, delete=True, profile='default'):
+def results(token=None, jobId=None, fname=None, delete=True, profile='default', progress=False):
     '''Retrieve the results of an asynchronous query, once completed.
 
     Usage::
@@ -791,6 +870,9 @@ def results(token=None, jobId=None, fname=None, delete=True, profile='default'):
     jobId : str
         The jobId returned when issuing an asynchronous query via
         :func:`queryClient.query()` with ``async=True``.
+
+    progress: Bool
+        Set to False by default. If progress set to True it will report the download progress.
 
     Returns
     -------
@@ -822,7 +904,7 @@ def results(token=None, jobId=None, fname=None, delete=True, profile='default'):
         301.385106974224186,44.4963443903961604
     '''
     return qc_client._results (token=def_token(token), jobId=jobId, 
-                               fname=fname, delete=True, profile=profile)
+                               fname=fname, delete=True, profile=profile, progress=progress)
 
 
 # --------------------------------------------------------------------
@@ -1487,20 +1569,20 @@ def mydb_index(table, column='', token=None, q3c=None, cluster=False,
         for efficiency.  Only used when 'q3c' columns are specified.
 
     async_: bool
-	If enabled, index commands will be submitted asynchronously.
+    If enabled, index commands will be submitted asynchronously.
 
     Returns
     -------
-	command status
+    command status
 
     Example
     -------
     .. code-block:: python
 
-	# Index the table's "id" column
+    # Index the table's "id" column
         queryClient.index('foo1', 'id')
 
-	# Index and cluster the table by position
+    # Index and cluster the table by position
         queryClient.index('foo1', q3c='ra,dec', cluster=True)
     '''
     return qc_client._mydb_index(token=def_token(token), table=table,
@@ -1996,14 +2078,23 @@ class queryClient (object):
             async_ = kw['async']
         if 'format' in kw:              # alias for 'fmt'
             fmt = kw['format']
+        if 'progress' in kw:
+            progress = kw['progress']
+        else:
+            progress = False
 
         timeout = self.timeout_request 	# set requested timeout on the query
         if 'timeout' in kw:
             timeout = int(kw['timeout'])
 
-        wait = self.async_wait 		# see if we wait for an Async result
+        # Determine whether to wait based on 'wait' in kw or the class attribute self.async_wait
+        # but don't modify self.async_wait based on the 'wait' argument passed in.
         if async_ and 'wait' in kw:
-            self.async_wait = wait = kw['wait']
+            # use 'wait' in passed in kw if it's boolean otherwise use async_wait
+            wait = bool(kw['wait']) if isinstance(kw['wait'], bool) else self.async_wait
+        else:
+            # Otherwise, use the value of self.async_wait.
+            wait = self.async_wait
 
         stream = False 		        # set a streaming request and adjust
         if 'stream' in kw:
@@ -2051,6 +2142,7 @@ class queryClient (object):
         else:
             dburl += "&profile=%s" % self.svc_profile
 
+
         # Make the service call.  In a streaming request we force a Sync
         # operation and by setting the timeout to zero let it run as long as
         # needed.  Once a JM is implemented an ASync save will be possible.
@@ -2063,26 +2155,48 @@ class queryClient (object):
                 # on the server side.
                 if out[:7] == 'file://':
                     out = out[7:]
+
+                # Because the VOSpace/MyDB are handled on the server side. Set
+                # the local file to None.
+                # Note: The "out" file information is already a parameter in the URL
+                #       going to the server.
                 if ':' in out and out[:out.index(':')] in ['vos', 'mydb']:
                     out = None
+
                 try:
-                    resp = self.getStreamURL(dburl, headers=headers,
-                                                    fname=out)
+                    resp = self.getStreamURL(dburl, headers=headers, fname=out, progress=progress)
+                except DLHTTPException as e:
+                    return e.error_message.strip()
                 except Exception as e:
                     print ('Error in getStreamURL: %s' %  qcToString(str(e)))
                     return qcToString(str(e))
 
+                # TODO: understand code
+                #  At this point, two things could have happened.
+                #  1.- out is a localfile and the results got saved locally
+                #  2.- out is a vos container or a mydb table and the results
+                #      have been saved server-side
+                #  The response in "resp" should only be the status of the requests.
+                #  If that's correct under what condition the below makes sense?
                 if 'noheader' in fmt:
                     strval = qcToString(resp).strip()
                     strval = strval[strval.find('\n')+1:]
                 else:
                     strval = qcToString(resp)
-                if (out is not None and out != ''):
+
+                # TODO: understand code
+                #  Here two things are possible:
+                #  1.- out was set to a local file and strval is the status of the response
+                #  2.- out was set to vos or mydb and handled serverside. Therefore
+                #      strval should contain no data but just the status, it could be
+                #      the status is returned in a format that is not a string.
+                #      However the result comes empty.
+                if out is not None and out != '':
                     return strval
                 else:
                     # Otherwise, simply return the result of the query.
                     if fmt in ['pandas','array','structarray','table']:
-                        return convert (strval,fmt)
+                        return convert(strval,fmt)
                     else:
                         return strval
 
@@ -2133,12 +2247,12 @@ class queryClient (object):
             elif stat not in ['COMPLETED','ERROR']:
                 resp = stat
             elif stat == 'ERROR':
-		# Retrieve Async error.
+                # Retrieve Async error.
                 if verbose:
                     print ('Retrieving error')
                 resp = self._error (token=token, jobId=jobId, profile=profile)
             elif stat == 'COMPLETED':
-		# Retrieve Async results.  A save to vos/mydb is handled below.
+                # Retrieve Async results.  A save to vos/mydb is handled below.
                 if verbose:
                     print ('Retrieving results')
                 resp = self._results (token=token, jobId=jobId, profile=profile)
@@ -2163,7 +2277,10 @@ class queryClient (object):
                 strval = strval[strval.find('\n')+1:]
             else:
                 strval = qcToString(resp)
-            if fmt in ['pandas','array','structarray','table']:
+
+            if async_ and not wait:
+                return strval  # this case should only be a job ID
+            elif fmt in ['pandas','array','structarray','table']:
                 return convert (strval, fmt)
             else:
                 return strval
@@ -2269,34 +2386,34 @@ class queryClient (object):
     # --------------------------
 
     @multimethod('_qc',2,True)
-    def results(self, token, jobId, fname=None, delete=True, profile='default'):
+    def results(self, token, jobId, fname=None, delete=True, profile='default', progress=False):
         '''Usage:  queryClient.results (token, jobID)
         '''
         return self._results (token=def_token(token), jobId=jobId,
-                              fname=fname, delete=delete, profile=profile)
+                              fname=fname, delete=delete, profile=profile, progress=progress)
 
     @multimethod('_qc',1,True)
-    def results(self, optval, jobId=None, fname=None, delete=True, profile='default'):
+    def results(self, optval, jobId=None, fname=None, delete=True, profile='default', progress=False):
         '''Usage:  queryClient.results (jobID)
                    queryClient.results (token, jobId=<id>)
         '''
         if optval is not None and is_auth_token(optval):
             # optval looks like a token
             return self._results (token=def_token(optval), jobId=jobId,
-                                  fname=fname, delete=delete, profile=profile)
+                                  fname=fname, delete=delete, profile=profile, progress=progress)
         else:
             # optval is probably a jobId
             return self._results (token=def_token(None), jobId=optval,
-                                  fname=fname, delete=delete, profile=profile)
+                                  fname=fname, delete=delete, profile=profile, progress=progress)
 
     @multimethod('_qc',0,True)
-    def results(self, token=None, jobId=None, fname=None, delete=True, profile='default'):
+    def results(self, token=None, jobId=None, fname=None, delete=True, profile='default', progress=False):
         '''Usage:  queryClient.results (jobID=<str>)
         '''
         return self._results (token=def_token(token), jobId=jobId,
-                              fname=fname, delete=delete, profile=profile)
+                              fname=fname, delete=delete, profile=profile, progress=progress)
 
-    def _results(self, token=None, jobId=None, fname=None, delete=True, profile='default'):
+    def _results(self, token=None, jobId=None, fname=None, delete=True, profile='default', progress=False):
         '''Implementation of the results() method.
         '''
         headers = self.getHeaders (token)
@@ -2307,9 +2424,11 @@ class queryClient (object):
         elif self.svc_profile != "default":
             dburl += "&profile=%s" % self.svc_profile
 
-        #r = requests.get (dburl, headers=headers)
-        r = self.getStreamURL(dburl, headers=headers, fname=fname)
-        return qcToString(r)
+        try:
+            r = self.getStreamURL(dburl, headers=headers, fname=fname, progress=progress)
+            return qcToString(r)
+        except DLHTTPException as e:
+            return e.error_message
 
 
     # --------------------------
@@ -3197,14 +3316,62 @@ class queryClient (object):
             raise queryClientError(str(e))
         return resp
 
+    def pycurl_download(self, url, headers, fname=None, progress=False):
+        setup_progress()
 
-    def getStreamURL (self, url, headers, fname=None, chunk_size=1048576):
+        buffer = BytesIO() if fname is None else None
+
+        c = pycurl.Curl()
+        c.setopt(c.URL, url)
+        try:
+            if progress:
+                c.setopt(c.NOPROGRESS, not progress)
+                c.setopt(c.XFERINFOFUNCTION, progress_report)
+            # Set custom headers if provided
+            if headers:
+                # Convert headers dict to a list of 'Key: Value' strings
+                headers_list = [f"{key}: {value}" for key, value in headers.items()]
+                c.setopt(c.HTTPHEADER, headers_list)
+
+            if fname is None:
+                c.setopt(c.WRITEDATA, buffer)
+            else:
+                with open(fname, 'wb') as f:
+                    c.setopt(c.WRITEDATA, f)
+                    c.perform()  # Perform the file download within the context manager when destination is specified
+
+            if fname is None:
+                c.perform()  # Perform the download when writing to buffer/STDOUT
+
+            total_downloaded = c.getinfo(pycurl.SIZE_DOWNLOAD)
+            c.close()
+
+            elapsed_time = time.time() - progress_report.start_time
+
+            if not progress:
+                print(f"\nTotal time: {human_readable_time(elapsed_time)} for {human_readable_size(total_downloaded)}")
+
+        except pycurl.error as e:
+            print(f"Error in pycurl_download occurred: {str(e)}")
+            raise queryClientError(str(e))
+        except Exception as e:
+            print(f"Error in pycurl_download occurred: {str(e)}")
+            raise queryClientError(str(e))
+        finally:
+            c.close()
+
+        if buffer:
+            return buffer.getvalue()  # Return the contents of the buffer
+        else:
+            return "OK"
+
+    def request_download(self, url, headers, fname=None, chunk_size=1048576):
         ''' Get the specified URL in a streaming fashion.  This allows for
             large downloads without hitting timeout limits.
         '''
         r = requests.get(url, headers=headers, stream=True)
         if r.status_code != 200:
-            return r.status_code, r.text
+            raise DLHTTPException(r.status_code, r.text)
         else:
             try:
                 # Download the request in chunks to avoid timeouts.
@@ -3228,6 +3395,14 @@ class queryClient (object):
                 print ('Error in getStreamURL: %s' %  qcToString(str(e)))
                 raise queryClientError(str(e))
 
+    def getStreamURL(self, url, headers, fname=None, chunk_size=1048576, progress=False):
+        try:
+            import pycurl
+            # If pycurl is imported successfully, use the pycurl download method
+            return self.pycurl_download(url, headers, fname=fname, progress=False)
+        except ImportError:
+            # If pycurl is not installed, fallback to the Flask request download method
+            return self.request_download(url, headers, fname=fname, chunk_size=chunk_size)
 
     def chunked_upload(self, token, local_file, remote_file):
         '''A streaming file uploader.

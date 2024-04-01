@@ -1,6 +1,7 @@
 from distutils.core import setup
 import sys
 import os
+import glob
 from dl.__version__ import __version__ as dl_version
 #from vos.__version__ import vos_version
 
@@ -22,6 +23,33 @@ try:
 except:
     from distutils.core import setup
     has_setuptools = False
+
+
+def read_requirements():
+    # Determine the filename based on the Python version
+    python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+    requirements_filename = f"requirements_{python_version}.txt"
+
+    # Read the requirements from the file
+    try:
+        with open(requirements_filename) as f:
+            requirements = f.read().splitlines()
+    except FileNotFoundError:
+        # Find all available requirements files
+        available_files = glob.glob('requirements_*.txt')
+
+        # Extract available Python versions from filenames
+        available_versions = [filename.split('_')[1].split('.txt')[0] for filename in available_files]
+
+        # Sort versions for better readability
+        available_versions.sort()
+
+        # Raise an exception with information about supported Python versions
+        raise RuntimeError(f"Requirements file {requirements_filename} not found. "
+                           f"Supported Python versions are: {', '.join(available_versions)}.")
+
+
+    return requirements
 
 import unittest
 def my_test_suite():
@@ -53,10 +81,5 @@ setup(name="astro-datalab",
           'Programming Language :: Python',
           'Topic :: Scientific/Engineering :: Astronomy',
         ], 
-      install_requires=['requests>=2.7', 'httplib2', 'numpy>=1.13',
-                        'astropy', 'pyvo', 'matplotlib','pandas',
-                        'pycurl_requests','specutils'],
-      requires=['requests (>=2.7)', 'httplib2', 'numpy (>=1.13)', 
-                'astropy', 'pyvo', 'matplotlib','pandas',
-                'pycurl_requests','specutils']
+      install_requires=read_requirements()
       )

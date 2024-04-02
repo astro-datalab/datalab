@@ -21,7 +21,3 @@ WORKDIR /app
 # Install your Python package
 RUN python setup.py install
 
-# Assuming docker_test.sh is executable and located in the root of your project
-#CMD ["./tests/docker_test.sh"]
-#CMD ["./tests/hello.sh"]
-

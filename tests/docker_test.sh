@@ -45,16 +45,16 @@ JOBID=$(datalab query --sql="$SQL" --async=True)
 echo "Job ID for submitted async SQL: $JOBID"
 
 STATUS=$(datalab qstatus --jobId="$JOBID")
-while [[ "$STATUS" != "COMPLETED" ]]
+while [[ "$STATUS" != "COMPLETED" && "$STATUS" != "ERROR" && "$STATUS" != "ABORTED" ]]
 do
-  sleep 5 # Avoids querying the status too frequently
-  STATUS=$(datalab qstatus --jobId="$JOBID")
-  echo "Current status of async query: $STATUS"
+    echo "Current status of async query: $STATUS"
+    sleep 5 # Avoid querying too frequently
+    STATUS=$(datalab qstatus --jobId="$JOBID")
 done
-
+echo "Final status reached: $STATUS"
 
 csv_file=${JOBID}.csv
-echo "saving results to filename:${csv_file}"
+echo "Saving results to filename:${csv_file}"
 datalab qresults --jobId="$JOBID" --fname=${csv_file}
 
 
@@ -66,4 +66,5 @@ if [ "$line_count" -eq "$expected_lines" ]; then
   echo "The ${csv_file} has the correct number of lines: $expected_lines."
 else
   echo "Error: The ${csv_file} does not have the expected number of lines. Expected $expected_lines, found $line_count."
+  exit 1
 fi

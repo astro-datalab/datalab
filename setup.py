@@ -24,32 +24,8 @@ except:
     from distutils.core import setup
     has_setuptools = False
 
-
-def read_requirements():
-    # Determine the filename based on the Python version
-    python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
-    requirements_filename = f"requirements_{python_version}.txt"
-
-    # Read the requirements from the file
-    try:
-        with open(requirements_filename) as f:
-            requirements = f.read().splitlines()
-    except FileNotFoundError:
-        # Find all available requirements files
-        available_files = glob.glob('requirements_*.txt')
-
-        # Extract available Python versions from filenames
-        available_versions = [filename.split('_')[1].split('.txt')[0] for filename in available_files]
-
-        # Sort versions for better readability
-        available_versions.sort()
-
-        # Raise an exception with information about supported Python versions
-        raise RuntimeError(f"Requirements file {requirements_filename} not found. "
-                           f"Supported Python versions are: {', '.join(available_versions)}.")
-
-
-    return requirements
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
 
 import unittest
 def my_test_suite():
@@ -81,5 +57,5 @@ setup(name="astro-datalab",
           'Programming Language :: Python',
           'Topic :: Scientific/Engineering :: Astronomy',
         ], 
-      install_requires=read_requirements()
+      install_requires=requirements,
       )

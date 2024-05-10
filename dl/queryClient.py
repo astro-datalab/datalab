@@ -113,6 +113,7 @@ import collections
 import ast, csv
 import pandas
 import pycurl
+import certifi
 from tempfile import NamedTemporaryFile
 
 from dl import resClient
@@ -3300,6 +3301,8 @@ class queryClient (object):
 
         c = pycurl.Curl()
         c.setopt(c.URL, url)
+        # Specify the CA certificates file from certifi
+        c.setopt(c.CAINFO, certifi.where())
         try:
             if progress:
                 c.setopt(c.NOPROGRESS, not progress)

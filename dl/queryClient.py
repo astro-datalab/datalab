@@ -1105,7 +1105,7 @@ def list(optval, table=None):
         return qc_client.mydb_list (token=def_token(None), table=optval)
 
 @multimethod('qc',0,False)
-def list(table=None, token=None):
+def list(table=None, token=None, **kw):
     '''List the tables or table schema in the user's MyDB.
 
     Usage::
@@ -1141,7 +1141,7 @@ def list(table=None, token=None):
         # List the tables
         queryClient.list()
     '''
-    return qc_client.mydb_list (token=def_token(token), table=table)
+    return qc_client.mydb_list (token=def_token(token), table=table, **kw)
 
 
 # --------------------------------------------------------------------
@@ -2655,19 +2655,37 @@ class queryClient (object):
         '''Implementation of the mydb_list() method.
         '''
         headers = self.getHeaders (token)
-        verbose = False
-        if 'verbose' in kw:
-            verbose = kw['verbose']
+
+        verbose = kw.get('verbose', False)
+        format = kw.get('format')
+
+        # Handle the filter
+        filters = kw.get('filter', [])
+        filter_query = '&'.join(f"filter={name}" for name in filters)
+
+        extra_url = ""
+        if 'page_size' in kw:
+            extra_url += f"&pageSize={kw['page_size']}"
+        if 'page' in kw:
+            extra_url += f"&page={kw['page']}"
+
+        if 'start_index' in kw:
+            extra_url += f"&startIndex={kw['start_index']}"
+
         if table is None:
             table = ''
         if table != '' and not validTableName(table):
             raise queryClientError('Invalid table name: "%s"' % table)
-        dburl = '%s/list?table=%s&index=%s' % (self.svc_url, table, str(index))
+
+        # build REST url
+        dburl = f"{self.svc_url}/list?table={table}&index={str(index)}&format={format}{extra_url}"
+        if filters:
+            dburl += f"&{filter_query}"  # Append filter query string
         if self.svc_profile != "default":
-            dburl += "&profile=%s" % self.svc_profile
+            dburl += f"&profile={self.svc_profile}"
 
         r = requests.get (dburl, headers=headers)
-        if verbose is True:
+        if verbose is True or format == 'json':
             return qcToString(r.content)
         else:
             return removeComment(qcToString(r.content))

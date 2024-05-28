@@ -174,9 +174,9 @@ def setJob(token, jobid, keyword, value, profile='default'):
 def deleteJob(token, jobid, profile='default'):
     return rc_client.deleteJob(token, jobid, profile=profile)
 
-def findJobs(token, jobid, format='text', status='all', option='list'):
+def findJobs(token, jobid, format='text', status='all', option='list', **kw):
     return rc_client.findJobs(token, jobid, format=format, status=status,
-                           option=option)
+                           option=option, **kw)
 
 
 # Service methods
@@ -992,9 +992,11 @@ class resClient(object):
         resp : str
             Service response
         '''
-        url = self.svc_url + "/create?what=job&"
+        url = self.svc_url + "/create"
 
-        query_args = {"jobid" : jobid,
+        data = {
+                      "what": 'job',
+                      "jobid" : jobid,
                       "type" : job_type,
                       "query" : query,
                       "task" : task,
@@ -1007,7 +1009,9 @@ class resClient(object):
             # Add the auth token to the request header.
             headers = {'X-DL-AuthToken': token}
 
-            r = requests.get(url, params=query_args, headers=headers)
+            # use json as it escapes strings properly. Useful for the "query"
+            # content that might contain escped characters, single and double quotes, etc
+            r = requests.post(url, json=data, headers=headers)
             response = r.text
 
             if r.status_code != 200:
@@ -1085,7 +1089,7 @@ class resClient(object):
 
 
     def findJobs(self, token, jobid, format='text', status='all',
-                 option='list'):
+                 option='list', **kw):
         '''Find job records.  If jobid is None or '*', all records for the user
            identified by the token are returned, otherwise the specific job
            record is returned.
@@ -1106,6 +1110,7 @@ class resClient(object):
             Processing option:  'list' will return a listing of the matching
             records in the format specified by 'format'; 'delete' will delete
             all matching records from the server except for EXECUTING jobs.
+        kw: dict of optional arguments such as page_size, page, start_index
 
         Returns
         -------
@@ -1119,6 +1124,16 @@ class resClient(object):
                       "option" : option,
                       "profile" : self.svc_profile,
                       "debug" : self.debug}
+
+        if 'page_size' in kw:
+            query_args['pageSize'] = kw['page_size']
+
+        if 'page' in kw:
+            query_args['page'] = kw['page']
+
+        if 'start_index' in kw:
+            query_args['startIndex'] = kw['start_index']
+
         try:
             # Add the auth token to the request header.
             headers = {'X-DL-AuthToken': token}
@@ -1134,8 +1149,7 @@ class resClient(object):
 
         if format == 'json':
             try:
-                jstr_ = response.replace("'",'"')[1:-1]
-                jstr = json.loads(jstr_)
+                jstr = json.loads(response)
             except Exception as e:
                 raise dlResError(str(e))
             return jstr

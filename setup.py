@@ -1,7 +1,9 @@
-from distutils.core import setup
 import sys
 import os
+import glob
 from dl.__version__ import __version__ as dl_version
+from setuptools import setup, find_packages
+
 #from vos.__version__ import vos_version
 
 #if sys.version_info[0] > 2:
@@ -16,12 +18,8 @@ for script in os.listdir(script_dir):
         continue
     scripts.append(os.path.join(script_dir,script))
 
-try:
-    from setuptools import setup, find_packages
-    has_setuptools = True
-except:
-    from distutils.core import setup
-    has_setuptools = False
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
 
 import unittest
 def my_test_suite():
@@ -53,10 +51,6 @@ setup(name="astro-datalab",
           'Programming Language :: Python',
           'Topic :: Scientific/Engineering :: Astronomy',
         ], 
-      install_requires=['requests>=2.7', 'httplib2', 'numpy>=1.13',
-                        'astropy', 'pyvo', 'matplotlib','pandas',
-                        'pycurl_requests','specutils'],
-      requires=['requests (>=2.7)', 'httplib2', 'numpy (>=1.13)', 
-                'astropy', 'pyvo', 'matplotlib','pandas',
-                'pycurl_requests','specutils']
+      install_requires=requirements,
+      data_files=[('', ['requirements.txt'])],
       )

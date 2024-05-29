@@ -37,31 +37,49 @@ pip install --ignore-installed --no-cache-dir astro-datalab
 ```
 
 The flags `--ignore-installed` and `--no-cache-dir` should ensure that the latest version is pulled freshly from the internet.
-
 ### Install from sources
 
-You can also install the ``datalab`` client from source on
+You can also install the `datalab` client from source on 
 [GitHub](https://github.com/astro-datalab/datalab.git):
 
-```
-git clone https://github.com/astro-datalab/datalab.git
-cd datalab
-python setup.py install
-```
+1. Clone the repository and enter the directory:
+   ```bash
+   git clone https://github.com/astro-datalab/datalab.git
+   cd datalab
+   ```
 
-If you want it installed in your private Python repository (because
-you maintain multiple Python instances on your machine) then do:
+2. Ensure you have the latest version of pip and setuptools:
+   ```bash
+   python -m pip install --upgrade pip setuptools
+   ```
 
-```
-python setup.py install --user
-```
+3. Build the package:
+   ```bash
+   python -m pip install build
+   python -m build
+   ```
 
-Finally, if you intend to mount the virtual storage as a local
-filesystem, you will need to touch a file in your home directory:
+4. Install the package:
+   ```bash
+   pip install dist/astro_datalab-<version>-py3-none-any.whl
+   ```
+   Replace `<version>` with the actual version of the package.
 
-```
-touch ~/.netrc
-```
+If you want it installed in your private Python repository (because you
+maintain multiple Python instances on your machine), you can use the
+`--user` flag:
+   ```bash
+   pip install --user dist/astro_datalab-<version>-py3-none-any.whl
+   ```
+
+Finally, if you intend to mount the virtual storage as a local filesystem,
+you will need to touch a file in your home directory:
+   ```bash
+   touch ~/.netrc
+   ```
+
+Note: Replace `<version>` in the `pip install` command with the actual version
+number of the `astro_datalab` package, such as `2.23.0`.
 
 ## Configuration update: If you upgraded from a version prior to v2.20.0
 
@@ -87,7 +105,6 @@ datalab login
 ```
 
 and that should be it.
-</div>
 
 ## Documentation
 

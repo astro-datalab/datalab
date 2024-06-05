@@ -21,6 +21,7 @@ MANIFEST
 _build
 _generated
 api
+docs/sphinx/_sphinx
 
 # Packages/installer info
 *.egg

@@ -1,0 +1,40 @@
+name: Generate API Documentation
+
+env:
+  PACKAGE_VERSION: 2.23.1
+  RELEASE_NAME: 2.23.1
+
+on:
+  push:
+    # TODO: fire this on tag or release, also manual with provided version args
+    # branches-ignore:
+    #   - main
+  
+jobs:
+  generate-docs-html:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install job dependencies
+      run: pip install Sphinx
+    - name: Install astro-datalab dependencies
+      run: pip install .
+    - name: Create sphinx project
+      run: |
+        cd docs/sphinx && \
+        PACKAGE_VERSION=${{ env.PACKAGE_VERSION }} \
+        RELEASE_NAME=${{ env.RELEASE_NAME }} \
+        sphinx-apidoc -f -M -F -e \
+        --implicit-namespaces \
+        -d 4 \
+        -o ./_sphinx/ \
+        ../dl/
+    - name: Sync config file
+      run: cd docs/sphinx && cp conf.py _sphinx/conf.py
+    - name: Generate html
+      run: cd docs/sphinx/_sphinx && make html && ls _build/html
+    - uses: actions/upload-artifact@v3
+      with:
+        name: api-docs-html-${{ env.SHA_SHORT }}
+        path: ./_build/html/

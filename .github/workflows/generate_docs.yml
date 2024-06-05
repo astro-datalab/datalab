@@ -35,12 +35,13 @@ jobs:
     - name: Generate html
       run: cd docs/sphinx/_sphinx && make html && ls _build/html
     - uses: actions/upload-artifact@v4
+      id: upload-html
       with:
         name: api-docs-html-${{ env.PACKAGE_VERSION }}
         path: docs/sphinx/_sphinx/_build/html/
         retention-days: 1
         overwrite: true
     - name: Set artifact id
-      run: echo ARTIFACT_ID="${{ steps.artifact-upload-step.outputs.artifact-id }}" >> $GITHUB_ENV
+      run: echo ARTIFACT_ID="${{ steps.upload-html.outputs.artifact-id }}" >> $GITHUB_ENV
     - name: Send artifact id
       run: echo ${{ env.ARTIFACT_ID }}

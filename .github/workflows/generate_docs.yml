@@ -37,4 +37,4 @@ jobs:
     - uses: actions/upload-artifact@v3
       with:
         name: api-docs-html-${{ env.SHA_SHORT }}
-        path: ./_build/html/
+        path: docs/sphinx/_sphinx/_build/html/

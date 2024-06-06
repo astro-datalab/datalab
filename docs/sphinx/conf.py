@@ -19,7 +19,7 @@ from datetime import datetime
 # -- Project information -----------------------------------------------------
 
 project = 'astro-datalab'
-copyright = f'{datetime.now().year}, Astro Data Lab team'
+copyright = f'{datetime.now().year}, Association of Universities for Research in Astronomy, Inc. (AURA)'
 author = 'Astro Data Lab team'
 
 # The short X.Y version
@@ -60,6 +60,15 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'env']
 # a list of builtin themes.
 #
 html_theme = 'classic'
+
+# If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
+#
+html_show_sphinx = False
+
+# The name of an image file (relative to this directory) to place at the top
+# of the sidebar.
+#
+html_logo = 'https://datalab.noirlab.edu/assets/shared/images/datalab-logo.jpg'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

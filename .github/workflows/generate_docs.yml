@@ -46,10 +46,12 @@ jobs:
     - name: Set payload data
       run: echo HOOK_DATA='{"repository":{"name":"datalab"},"event":"deploy-docs","artifact_id":"${{ env.ARTIFACT_ID }}"}' >> $GITHUB_ENV
     - name: Generate signature
-      run: echo SIG=$(echo -n '${{ env.HOOK_DATA }}' | openssl dgst -sha256 -hmac "${{ secrets.APIDOCS_DEPLOY_KEY }}" -hex | sed s/.*\(stdin\)//g | sed s/=//g ) >> $GITHUB_ENV
-    - name: Dispatch hook
-      run: |
-        curl --fail \
-        -d '${{ env.HOOK_DATA }}' \
-        -H "X-Hub-Signature-256: ${{ env.SIG }}" \
-        "${{ secrets.APIDOCS_HOOK_URL }}"
+      run: echo SIG=$(echo -n '${{ env.HOOK_DATA }}' | openssl dgst -sha256 -hmac "${{ secrets.APIDOCS_DEPLOY_KEY }}" -hex | sed s/.*\(stdin\)//g | sed s/=//g ) >> $GITHUB_SECRETS
+    - name: Test secrets
+      run: echo ${{ secrets.SIG }}
+    # - name: Dispatch hook
+    #   run: |
+    #     curl --fail \
+    #     -d '${{ env.HOOK_DATA }}' \
+    #     -H "X-Hub-Signature-256: ${{ secrets.SIG }}" \
+    #     "${{ secrets.APIDOCS_HOOK_URL }}"

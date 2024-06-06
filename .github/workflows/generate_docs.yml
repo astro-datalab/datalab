@@ -1,6 +1,9 @@
-name: Generate API Documentation
+# Builds and deploys the python documentation using sphinx. Live documentation
+# is available from the main Astro Data Lab website.
+name: Deploy Documentation
 
 env:
+  # these are defaults in case these values do not get set at runtime
   PACKAGE_VERSION: latest
   RELEASE_NAME: latest
 
@@ -19,11 +22,15 @@ on:
     types: [released]
 
 jobs:
-  generate-docs-html:
+  deploy-docs-html:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
     - uses: actions/checkout@v4
+    # This step is here so that when running the workflow manually we can switch
+    # to some specific ref that may not have a matching tag. We can rebuild the docs
+    # with some commit and a version label eg. commitSha: 934812 packageVersion: 2.23.1
+    # and the version doesn't have to match an existing tag.
     - name: Changing commit to (defaults to event ref) ${{ github.event.inputs.commitSha }}
       run: |
         if [[ ! -z "${{ github.event.inputs.commitSha }}" ]]; then
@@ -31,6 +38,9 @@ jobs:
         else
           echo "Already on default ref"
         fi
+
+    # Here we either set the package version to the user provided input or the
+    # tag. This way we can handle both a release trigger and manual trigger
     - name: Set package version
       run: |
         if [[ ! -z "${{ github.event.inputs.packageVersion }}" ]]; then
@@ -38,8 +48,13 @@ jobs:
         elif [[ "${{ github.ref_type }}" == "tag" ]]; then
           echo PACKAGE_VERSION="${{ github.ref_name }}" >> $GITHUB_ENV
         fi
+
+    # We need to set some release name for our sphinx build, for now we keep it
+    # the same as whatever the package version is
     - name: Set release name
       run: echo RELEASE_NAME="${{ env.PACKAGE_VERSION }}" >> $GITHUB_ENV
+
+    # Install the deps and build the sphinx project
     - name: Install job dependencies
       run: pip install Sphinx
     - name: Install astro-datalab dependencies
@@ -54,12 +69,20 @@ jobs:
         -d 3 \
         -o ./_sphinx/ \
         ../../dl/
+
+    # We need to tweak some things in the rst files and then run the html build.
+    # Overwrite the conf.py file with the one from our repo and also replace any
+    # instances of the text "dl's" with "astro-datalab's" (sphinx outputs the
+    # name as "dl" and there is no config option for it)
     - name: Sync config file
       run: cd docs/sphinx && cp conf.py _sphinx/conf.py
     - name: Replace default text "dl's" with "astro-datalab's" in index.rst (toc)
       run: sed -i "s/dl's/astro-datalab's/g" docs/sphinx/_sphinx/index.rst
     - name: Generate html
       run: cd docs/sphinx/_sphinx && make html && ls _build/html
+
+    # If we made it to this point we can upload the artifact and register the
+    # artifact ID
     - uses: actions/upload-artifact@v4
       id: upload-html
       with:
@@ -69,6 +92,8 @@ jobs:
         overwrite: true
     - name: Set artifact id
       run: echo ARTIFACT_ID="${{ steps.upload-html.outputs.artifact-id }}" >> $GITHUB_ENV
+
+    # Prepare our hook data and send "deploy-docs"
     - name: Set payload data
       run: echo HOOK_DATA='{"repository":{"name":"datalab"},"event":"deploy-docs","artifact_id":"${{ env.ARTIFACT_ID }}"}' >> $GITHUB_ENV
     - name: Generate signature

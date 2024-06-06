@@ -2,6 +2,7 @@ name: Generate API Documentation
 
 env:
   PACKAGE_VERSION: 2.23.1
+  RELEASE_NAME: "v2.23.1"
 
 on:
   workflow_dispatch:
@@ -39,6 +40,7 @@ jobs:
         elif [[ "${{ github.ref_type }}" -eq "tag" ]]; then
           echo PACKAGE_VERSION="${{ github.ref_name }}" >> $GITHUB_ENV
         fi
+        echo RELEASE_NAME="$PACKAGE_VERSION" >> $GITHUB_ENV
     - name: Install job dependencies
       run: pip install Sphinx
     - name: Install astro-datalab dependencies

@@ -1,8 +1,8 @@
 name: Generate API Documentation
 
 env:
-  PACKAGE_VERSION: 2.23.1
-  RELEASE_NAME: "v2.23.1"
+  PACKAGE_VERSION: latest
+  RELEASE_NAME: latest
 
 on:
   workflow_dispatch:
@@ -15,10 +15,6 @@ on:
         description: 'Commit SHA'
         required: true
         type: string
-  push:
-    branches-ignore:
-      - main
-      - 'hotfix-*'
   release:
     types: [released]
 

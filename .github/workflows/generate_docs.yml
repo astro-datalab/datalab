@@ -37,10 +37,11 @@ jobs:
       run: |
         if [[ ! -z "${{ github.event.inputs.packageVersion }}" ]]; then
           echo PACKAGE_VERSION="${{ github.event.inputs.packageVersion }}" >> $GITHUB_ENV
+          echo RELEASE_NAME="${{ github.event.inputs.packageVersion }}" >> $GITHUB_ENV
         elif [[ "${{ github.ref_type }}" -eq "tag" ]]; then
           echo PACKAGE_VERSION="${{ github.ref_name }}" >> $GITHUB_ENV
+          echo RELEASE_NAME="${{ github.ref_name }}" >> $GITHUB_ENV
         fi
-        echo RELEASE_NAME="$PACKAGE_VERSION" >> $GITHUB_ENV
     - name: Install job dependencies
       run: pip install Sphinx
     - name: Install astro-datalab dependencies

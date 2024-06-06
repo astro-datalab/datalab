@@ -50,6 +50,6 @@ jobs:
     - name: Dispatch hook
       run: |
         curl --fail \
-        -d "${{ env.HOOK_DATA }}" \
+        -d '${{ env.HOOK_DATA }}' \
         -H "X-Hub-Signature-256: ${{ env.SIG }}" \
         "${{ secrets.APIDOCS_HOOK_URL }}"

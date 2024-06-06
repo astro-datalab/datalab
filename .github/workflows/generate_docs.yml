@@ -28,20 +28,22 @@ jobs:
     timeout-minutes: 5
     steps:
     - uses: actions/checkout@v4
-    - name: Changing commit if provided
+    - name: Changing commit to (defaults to event ref) ${{ github.event.inputs.commitSha }}
       run: |
         if [[ ! -z "${{ github.event.inputs.commitSha }}" ]]; then
           git checkout ${{ github.event.inputs.commitSha }}
+        else
+          echo "Already on default ref"
         fi
     - name: Set package version
       run: |
         if [[ ! -z "${{ github.event.inputs.packageVersion }}" ]]; then
           echo PACKAGE_VERSION="${{ github.event.inputs.packageVersion }}" >> $GITHUB_ENV
-          echo RELEASE_NAME="${{ github.event.inputs.packageVersion }}" >> $GITHUB_ENV
         elif [[ "${{ github.ref_type }}" == "tag" ]]; then
           echo PACKAGE_VERSION="${{ github.ref_name }}" >> $GITHUB_ENV
-          echo RELEASE_NAME="${{ github.ref_name }}" >> $GITHUB_ENV
         fi
+    - name: Set release name
+      run: echo RELEASE_NAME="${{ env.PACKAGE_VERSION }}" >> $GITHUB_ENV
     - name: Install job dependencies
       run: pip install Sphinx
     - name: Install astro-datalab dependencies
@@ -53,32 +55,34 @@ jobs:
         RELEASE_NAME=${{ env.RELEASE_NAME }} \
         sphinx-apidoc -f -M -F -e \
         --implicit-namespaces \
-        -d 4 \
+        -d 3 \
         -o ./_sphinx/ \
         ../../dl/
     - name: Sync config file
       run: cd docs/sphinx && cp conf.py _sphinx/conf.py
+    - name: Replace default text "dl's" with "astro-datalab's" in index.rst (toc)
+      run: sed -i "s/dl's/astro-datalab's/g" docs/sphinx/_sphinx/index.rst
     - name: Generate html
       run: cd docs/sphinx/_sphinx && make html && ls _build/html
-    # - uses: actions/upload-artifact@v4
-    #   id: upload-html
-    #   with:
-    #     name: api-docs-html-${{ env.PACKAGE_VERSION }}
-    #     path: docs/sphinx/_sphinx/_build/html/
-    #     retention-days: 1
-    #     overwrite: true
-    # - name: Set artifact id
-    #   run: echo ARTIFACT_ID="${{ steps.upload-html.outputs.artifact-id }}" >> $GITHUB_ENV
-    # - name: Set payload data
-    #   run: echo HOOK_DATA='{"repository":{"name":"datalab"},"event":"deploy-docs","artifact_id":"${{ env.ARTIFACT_ID }}"}' >> $GITHUB_ENV
-    # - name: Generate signature
-    #   run: |
-    #     SIG=$(echo -n '${{ env.HOOK_DATA }}' | openssl dgst -sha256 -hmac "${{ secrets.APIDOCS_DEPLOY_KEY }}" -hex | sed s/.*\(stdin\)//g | sed s/=//g )
-    #     echo "::add-mask::$SIG"
-    #     echo SIG=$SIG >> $GITHUB_ENV
-    # - name: Dispatch hook
-    #   run: |
-    #     curl --fail \
-    #     -d '${{ env.HOOK_DATA }}' \
-    #     -H "X-Hub-Signature-256: ${{ env.SIG }}" \
-    #     "${{ secrets.APIDOCS_HOOK_URL }}"
+    - uses: actions/upload-artifact@v4
+      id: upload-html
+      with:
+        name: api-docs-html-${{ env.PACKAGE_VERSION }}
+        path: docs/sphinx/_sphinx/_build/html/
+        retention-days: 1
+        overwrite: true
+    - name: Set artifact id
+      run: echo ARTIFACT_ID="${{ steps.upload-html.outputs.artifact-id }}" >> $GITHUB_ENV
+    - name: Set payload data
+      run: echo HOOK_DATA='{"repository":{"name":"datalab"},"event":"deploy-docs","artifact_id":"${{ env.ARTIFACT_ID }}"}' >> $GITHUB_ENV
+    - name: Generate signature
+      run: |
+        SIG=$(echo -n '${{ env.HOOK_DATA }}' | openssl dgst -sha256 -hmac "${{ secrets.APIDOCS_DEPLOY_KEY }}" -hex | sed s/.*\(stdin\)//g | sed s/=//g )
+        echo "::add-mask::$SIG"
+        echo SIG=$SIG >> $GITHUB_ENV
+    - name: Dispatch hook
+      run: |
+        curl --fail \
+        -d '${{ env.HOOK_DATA }}' \
+        -H "X-Hub-Signature-256: ${{ env.SIG }}" \
+        "${{ secrets.APIDOCS_HOOK_URL }}"

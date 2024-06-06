@@ -38,7 +38,7 @@ jobs:
         if [[ ! -z "${{ github.event.inputs.packageVersion }}" ]]; then
           echo PACKAGE_VERSION="${{ github.event.inputs.packageVersion }}" >> $GITHUB_ENV
           echo RELEASE_NAME="${{ github.event.inputs.packageVersion }}" >> $GITHUB_ENV
-        elif [[ "${{ github.ref_type }}" -eq "tag" ]]; then
+        elif [[ "${{ github.ref_type }}" == "tag" ]]; then
           echo PACKAGE_VERSION="${{ github.ref_name }}" >> $GITHUB_ENV
           echo RELEASE_NAME="${{ github.ref_name }}" >> $GITHUB_ENV
         fi

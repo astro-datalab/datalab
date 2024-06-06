@@ -36,7 +36,7 @@ jobs:
       run: |
         if [[ ! -z "${{ github.event.inputs.packageVersion }}" ]]; then
           echo PACKAGE_VERSION="${{ github.event.inputs.packageVersion }}" >> $GITHUB_ENV
-        else if [[ "${{ github.event.inputs.res_type }}" -eq "tag"]]; then
+        else if [[ "${{ github.ref_type }}" -eq "tag"]]; then
           echo PACKAGE_VERSION="${{ github.ref_name }}" >> $GITHUB_ENV
         fi
     - name: Install job dependencies

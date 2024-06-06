@@ -44,7 +44,7 @@ jobs:
     - name: Set artifact id
       run: echo ARTIFACT_ID="${{ steps.upload-html.outputs.artifact-id }}" >> $GITHUB_ENV
     - name: Set payload data
-      run: echo HOOK_DATA="{\"repository\":{\"name\":\"datalab\"},\"event\":\"deploy-docs\",\"artifact_id\":\"${{ env.ARTIFACT_ID }}\"}" >> $GITHUB_ENV
+      run: echo HOOK_DATA='{"repository":{"name":"datalab"},"event":"deploy-docs","artifact_id":"${{ env.ARTIFACT_ID }}"}' >> $GITHUB_ENV
     - name: Generate signature
       run: echo SIG=$(echo -n ${{ env.HOOK_DATA }} | openssl dgst -sha256 -hmac "${{ secrets.APIDOCS_DEPLOY_KEY }}" -hex | sed s/.*\(stdin\)//g | sed s/=//g ) >> $GITHUB_ENV
     - name: Dispatch hook

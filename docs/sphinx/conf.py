@@ -48,12 +48,6 @@ extensions = [
 # Usually you set "language" from the command line for these cases.
 language = 'en'
 
-# List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'env']
-
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -75,6 +69,15 @@ html_logo = 'https://datalab.noirlab.edu/assets/shared/images/datalab-logo.jpg'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+# See here for a full list of sidebar options https://www.sphinx-doc.org/en/master/usage/configuration.html#confval-html_sidebars
+html_sidebars = {
+   '**': [
+       'relations.html',
+       'globaltoc.html',
+       'sourcelink.html',
+       'searchbox.html'
+    ],
+}
 
 # -- Extension configuration -------------------------------------------------
 

@@ -6,6 +6,7 @@ env:
   # these are defaults in case these values do not get set at runtime
   PACKAGE_VERSION: latest
   RELEASE_NAME: latest
+  EXCLUDE_PATTERNS: ../../dl/specClient.py
 
 on:
   workflow_dispatch:
@@ -68,7 +69,8 @@ jobs:
         --implicit-namespaces \
         -d 3 \
         -o ./_sphinx/ \
-        ../../dl/
+        ../../dl/ \
+        "${{ env.EXCLUDE_PATTERNS }}"
 
     # We need to tweak some things in the rst files and then run the html build.
     # Overwrite the conf.py file with the one from our repo and also replace any

@@ -81,6 +81,46 @@ you will need to touch a file in your home directory:
 Note: Replace `<version>` in the `pip install` command with the actual version
 number of the `astro_datalab` package, such as `2.23.0`.
 
+### Note for macOS ARM (M1/M2) Users
+
+Users with macOS ARM architecture (M1/M2) may encounter issues when running or importing the datalab package.
+This is often due to a mismatch between the version of libcurl available at runtime and the version that pycurl
+was compiled against.
+
+Common error message:
+```
+ImportError: pycurl: libcurl link-time version (7.77.0) is older than compile-time version (8.4.0)
+```
+
+To check if this issue exists, you can run:
+
+```bash
+python -c "import dl; print(dl.__version__)"
+```
+
+If you encounter the above error, follow these steps to resolve it:
+
+1. **Update your macOS and Xcode Tools**
+
+2. **Update your conda, if you have one**
+
+3. **Update Homebrew and `curl`**:
+    ```bash
+    brew update
+    brew upgrade curl
+    ```
+
+4. **Uninstall and Reinstall `pycurl`**:
+    ```bash
+    pip uninstall pycurl
+    pip install --no-cache-dir pycurl
+    ```
+
+5. **If the above steps do not work, use `conda` to install `pycurl`**:
+    ```bash
+    conda install -c conda-forge pycurl
+    ```
+
 ## Configuration update: If you upgraded from a version prior to v2.20.0
 
 With version v2.20.0, the `datalab` package changed internal service

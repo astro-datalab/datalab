@@ -5,15 +5,14 @@ on:
     branches: 
       - master
   release:
-    types: [ released ]
+    types: [ published ]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.9, 3.10, 3.11]
+        python-version: ['3.9', '3.10', '3.11']
 
     steps:
     - uses: actions/checkout@v4
@@ -29,9 +28,20 @@ jobs:
       run: |
         rm -rf dist/ build/ datalab_client.egg-info/ astro_datalab.egg-info/
         python -m build
+
+    - name: Print release event details
+      if: github.event_name == 'release'
+      run: |
+        echo "Event: ${{ github.event_name }}"
+        echo "Action: ${{ github.event.action }}"
+
     - name: Upload package to PyPI
-      # only execute this step if it is a release
-      if: github.event_name == 'release' && github.event.action == 'created'
+      # TODO:
+      #  break this workflow in two jobs, make the first job to output the build directory to a
+      #  place the next job can upload from.
+      #  
+      # Only execute this step if it is a release and just do it for one python version
+      if: ${{ matrix.python-version == '3.11' }} && github.event_name == 'release' && github.event.action == 'published'
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}

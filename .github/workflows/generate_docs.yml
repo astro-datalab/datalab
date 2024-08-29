@@ -21,6 +21,7 @@ on:
         type: string
   release:
     types: [released]
+  push:
 
 jobs:
   deploy-docs-html:

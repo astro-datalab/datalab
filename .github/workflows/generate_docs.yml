@@ -4,8 +4,8 @@ name: Deploy Documentation
 
 env:
   # these are defaults in case these values do not get set at runtime
-  PACKAGE_VERSION: latest
-  RELEASE_NAME: latest
+  PACKAGE_VERSION: 2.23.1
+  RELEASE_NAME: "v2.23.1"
   EXCLUDE_PATTERNS: ../../dl/specClient.py
 
 on:
@@ -21,7 +21,6 @@ on:
         type: string
   release:
     types: [released]
-  push:
 
 jobs:
   deploy-docs-html:
@@ -62,8 +61,8 @@ jobs:
     - name: Install astro-datalab dependencies
       run: pip install .
     - name: Create sphinx project
+      working-directory: docs/sphinx
       run: |
-        cd docs/sphinx && \
         PACKAGE_VERSION=${{ env.PACKAGE_VERSION }} \
         RELEASE_NAME=${{ env.RELEASE_NAME }} \
         sphinx-apidoc -f -M -F -e \
@@ -78,11 +77,13 @@ jobs:
     # instances of the text "dl's" with "astro-datalab's" (sphinx outputs the
     # name as "dl" and there is no config option for it)
     - name: Sync config file
-      run: cd docs/sphinx && cp conf.py _sphinx/conf.py
+      working-directory: docs/sphinx
+      run: cp conf.py _sphinx/conf.py
     - name: Replace default text "dl's" with "astro-datalab's" in index.rst (toc)
       run: sed -i "s/dl's/astro-datalab's/g" docs/sphinx/_sphinx/index.rst
     - name: Generate html
-      run: cd docs/sphinx/_sphinx && make html && ls _build/html
+      working-directory: docs/sphinx/_sphinx
+      run: make html && ls _build/html
 
     # If we made it to this point we can upload the artifact and register the
     # artifact ID
@@ -96,7 +97,7 @@ jobs:
     - name: Set artifact id
       run: echo ARTIFACT_ID="${{ steps.upload-html.outputs.artifact-id }}" >> $GITHUB_ENV
 
-    # # Prepare our hook data and send "deploy-docs" event
+    # Prepare our hook data and send "deploy-docs" event
     # - name: Set payload data
     #   run: echo HOOK_DATA='{"repository":{"name":"datalab"},"event":"deploy-docs","artifact_id":"${{ env.ARTIFACT_ID }}"}' >> $GITHUB_ENV
     # - name: Generate signature

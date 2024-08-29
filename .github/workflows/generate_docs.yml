@@ -4,8 +4,8 @@ name: Deploy Documentation
 
 env:
   # these are defaults in case these values do not get set at runtime
-  PACKAGE_VERSION: 2.23.1
-  RELEASE_NAME: "v2.23.1"
+  PACKAGE_VERSION: latest
+  RELEASE_NAME: latest
   EXCLUDE_PATTERNS: ../../dl/specClient.py
 
 on:
@@ -58,7 +58,7 @@ jobs:
 
     # Install the deps and build the sphinx project
     - name: Install job dependencies
-      run: pip install Sphinx
+      run: pip install Sphinx==7.3.7
     - name: Install astro-datalab dependencies
       run: pip install .
     - name: Create sphinx project

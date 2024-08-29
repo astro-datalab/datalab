@@ -21,7 +21,6 @@ on:
         type: string
   release:
     types: [released]
-  push:
 
 jobs:
   deploy-docs-html:
@@ -99,16 +98,16 @@ jobs:
       run: echo ARTIFACT_ID="${{ steps.upload-html.outputs.artifact-id }}" >> $GITHUB_ENV
 
     # Prepare our hook data and send "deploy-docs" event
-    # - name: Set payload data
-    #   run: echo HOOK_DATA='{"repository":{"name":"datalab"},"event":"deploy-docs","artifact_id":"${{ env.ARTIFACT_ID }}"}' >> $GITHUB_ENV
-    # - name: Generate signature
-    #   run: |
-    #     SIG=$(echo -n '${{ env.HOOK_DATA }}' | openssl dgst -sha256 -hmac "${{ secrets.APIDOCS_DEPLOY_KEY }}" -hex | sed s/.*\(stdin\)//g | sed s/=//g )
-    #     echo "::add-mask::$SIG"
-    #     echo SIG=$SIG >> $GITHUB_ENV
-    # - name: Dispatch hook
-    #   run: |
-    #     curl --fail \
-    #     -d '${{ env.HOOK_DATA }}' \
-    #     -H "X-Hub-Signature-256: ${{ env.SIG }}" \
-    #     "${{ secrets.APIDOCS_HOOK_URL }}"
+    - name: Set payload data
+      run: echo HOOK_DATA='{"repository":{"name":"datalab"},"event":"deploy-docs","artifact_id":"${{ env.ARTIFACT_ID }}"}' >> $GITHUB_ENV
+    - name: Generate signature
+      run: |
+        SIG=$(echo -n '${{ env.HOOK_DATA }}' | openssl dgst -sha256 -hmac "${{ secrets.APIDOCS_DEPLOY_KEY }}" -hex | sed s/.*\(stdin\)//g | sed s/=//g )
+        echo "::add-mask::$SIG"
+        echo SIG=$SIG >> $GITHUB_ENV
+    - name: Dispatch hook
+      run: |
+        curl --fail \
+        -d '${{ env.HOOK_DATA }}' \
+        -H "X-Hub-Signature-256: ${{ env.SIG }}" \
+        "${{ secrets.APIDOCS_HOOK_URL }}"

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# AUTHCLIENT -- Client methods for the Data Lab Authentication Service
+# AUTHCLIENT -- Client methods for the Data Lab Authentication Manager service
 #
 
 from __future__ import print_function
@@ -76,7 +76,7 @@ ANON_TOKEN = "anonymous.0.0.anon_access"
 DEMO_TOKEN = "dldemo.99999.99999.demo_access"
 TEST_TOKEN = "dltest.99998.99998.test_access"
 
-# Set the default user accounts for the authentication service.  We don't
+# Set the default user accounts for the Authentication Manager service.  We don't
 # include privileged users so that account can remain secure.
 
 DEF_USERS = {'anonymous': ANON_TOKEN,
@@ -84,7 +84,7 @@ DEF_USERS = {'anonymous': ANON_TOKEN,
              'dltest': TEST_TOKEN}
 
 
-# The URL of the AuthManager service to contact.  This may be changed by
+# The URL of the Authentication Manager service to contact.  This may be changed by
 # passing a new URL into the set_svc_url() method before beginning.
 
 DEF_SERVICE_ROOT = "https://datalab.noirlab.edu"
@@ -114,7 +114,7 @@ if os.path.exists('/tmp/QM_SVC_URL'):
 
 
 # The requested authentication "profile".  A profile refers to the specific
-# machines and services used by the AuthManager on the server. [Note that
+# machines and services used by the Authentication Manager on the server. [Note that
 # profiles are not currently used.]
 
 DEF_SERVICE_PROFILE = "default"
@@ -293,7 +293,7 @@ def list_profiles(token, profile=None, format='text'):
 class authClient(object):
     '''
          AUTHCLIENT -- Client-side methods to access the Data Lab
-                       Authentication Service.
+                       Authentication Manager service.
     '''
 
     def __init__(self):
@@ -364,7 +364,7 @@ class authClient(object):
             self.config.write(configfile)
 
     def whoAmI(self):
-        '''Return the currently logged-in user identity.
+        '''Return the currently logged in user identity.
 
         Parameters
         ----------
@@ -373,10 +373,10 @@ class authClient(object):
         Returns
         -------
         name : str
-            Currently logged-in user name, or 'anonymous' if not logged-in
+            Currently logged in user name, or 'anonymous' if not logged in.
 
-        Examples
-        --------
+        Example
+        -------
         >>> from dl import authClient
         >>> name = authClient.whoAmI()
         '''
@@ -393,19 +393,19 @@ class authClient(object):
     # Standard Data Lab service methods.
     #
     def set_svc_url(self, svc_url):
-        '''Set the URL of the Authentication Service to be used.
+        '''Set the URL of the Authentication Manager service to be used.
 
         Parameters
         ----------
         svc_url : str
-            Authentication service base URL to call.
+            Authentication Manager service base URL to call.
 
         Returns
         -------
         Nothing
 
-        Examples
-        --------
+        Example
+        -------
         >>> from dl import authClient
         >>> authClient.set_svc_url("http://localhost:7001/")
         '''
@@ -413,7 +413,7 @@ class authClient(object):
             self.svc_url = acToString(svc_url.strip('/'))
 
     def get_svc_url(self):
-        '''Return the currently-used Authentication Service URL.
+        '''Return the currently-used Authentication Manager service URL.
 
         Parameters
         ----------
@@ -422,9 +422,9 @@ class authClient(object):
         Returns
         -------
         service_url : str
-            The currently-used Authentication Service URL.
+            The currently-used Authentication Manager service URL.
 
-        Examples
+        Example
         -------
         >>> from dl import authClient
         >>> service_url = authClient.get_svc_url()
@@ -437,16 +437,16 @@ class authClient(object):
         Parameters
         ----------
         profile : str
-            Requested service profile string.
+            Requested service profile.
 
         Returns
         -------
         Nothing
 
-        Examples
-        --------
+        Example
+        -------
         >>> from dl import authClient
-        >>> token = authClient.client.set_profile("dev")
+        >>> authClient.set_profile("dev")
         '''
         if profile is not None and profile != '':
             self.svc_profile = acToString(profile)
@@ -463,10 +463,10 @@ class authClient(object):
         profile : str
             The currently requested service profile.
 
-        Examples
+        Example
         -------
         >>> from dl import authClient
-        >>> profile = authClient.client.get_profile()
+        >>> profile = authClient.get_profile()
         '''
         return acToString(self.svc_profile)
 
@@ -482,17 +482,17 @@ class authClient(object):
         -------
         profiles : JSON string
 
-        Examples
+        Example
         -------
         >>> from dl import authClient
-        >>> profiles = authClient.client.list_profiles(token, profile, format)
+        >>> profiles = authClient.list_profiles(token, profile, format)
         '''
         pass
 
     def isAlive(self, svc_url=DEF_SERVICE_URL):
-        '''Check whether the AuthManager service at the given URL is
-            alive and responding.  This is a simple call to the root
-            service URL or ping() method.
+        '''Check whether the Authentication Manager service at the given URL is
+            alive and responding. This is a simple call to the root
+            service URL or ``ping()`` method.
 
         Parameters
         ----------
@@ -502,13 +502,12 @@ class authClient(object):
         Returns
         -------
         result : bool
-            True if service responds properly, False otherwise
+            ``True`` if service responds properly, ``False`` otherwise.
 
-        Examples
-        --------
+        Example
+        -------
         >>> from dl import authClient
-        >>> if authClient.isAlive():
-        ...     print("Auth Manager is alive")
+        >>> authClient.isAlive()
         '''
         url = svc_url
         try:
@@ -530,12 +529,12 @@ class authClient(object):
     ###################################################
 
     def login(self, username, password, debug=False, verbose=False):
-        '''Authenticate the user with the Authentication Service.
+        '''Authenticate the user with the Authentication Manager service.
             We first check for a valid login token in the user's
-            $HOME/.datalab/ directory and simply return that rather
-            than make a service call to get a new token.  If a token
+            ``$HOME/.datalab/`` directory and simply return that rather
+            than make a service call to get a new token. If a token
             exists but is invalid, we remove it and get a new
-            token.  In either case, we save the token for later use.
+            token. In either case, we save the token for later use.
 
         Parameters
         ----------
@@ -543,22 +542,23 @@ class authClient(object):
             User login name.
 
         password : str
-            User password.  If not given, a valid ID token will be
-            searched for in the $HOME/.datalab directory.
+            User password. If not given, a valid ID token will be
+            searched for in the ``$HOME/.datalab`` directory.
 
         debug : bool
             Method debug flag.
+
         verbose : bool
             Initialize session to print verbose output messages.
 
         Returns
         -------
         token : str
-            One-time security token for valid user(identified via
-            'username' and 'password').
+            One-time security token for valid user (identified via
+            ``username`` and ``password``).
 
-        Examples
-        --------
+        Example
+        -------
         >>> from dl import authClient
         >>> token = authClient.login('dldemo', 'dldemo')   # get security token
         '''
@@ -658,21 +658,21 @@ class authClient(object):
         return acToString(self.auth_token)
 
     def logout(self, token=None):
-        '''Log the user out of the Data Lab.
+        '''Log the user out of Data Lab.
 
         Parameters
         ----------
-        token : str
-            User login token
+        token : str [Optional]
+            User login token.
 
         Returns
         -------
-        'OK' string on success, or exception message
+        'OK' string on success, or exception message.
 
-        Examples
-        --------
+        Example
+        -------
         >>> from dl import authClient
-        >>> status = authClient.logout(token)
+        >>> status = authClient.logout()
         '''
         url = self.svc_url + "/logout?"
         args = urlencode({"token": token,
@@ -721,27 +721,29 @@ class authClient(object):
         return response
 
     def passwordReset(self, token, username, password):
-        '''Reset a user password reset.  We require that the user provide
+        '''Reset a user password. We require that the user provide
            either a valid 'root' token or the token for the account being
            reset.
 
         Parameters
         ----------
         token : str
-            User login token
+            User login token.
+
         username : str
-            User login name
+            User login name.
+
         password : str
-            User password
+            User password.
 
         Returns
         -------
-        'OK' string on success, or exception message
+        'OK' string on success, or exception message.
 
-        Examples
-        --------
+        Example
+        -------
         >>> from dl import authClient
-        >>> status = authClient.logout(token)
+        >>> authClient.passwordReset(token, 'monty', 'python')
         '''
         url = self.svc_url + "/passwordReset?"
         args = urlencode({"token": token,
@@ -803,19 +805,20 @@ class authClient(object):
         Parameters
         ----------
         token : str
-            User login token
+            User login token.
+
         resource : str
-            Resource identifier to check
+            Resource identifier to check.
 
         Returns
         -------
         status : bool
-            True if user owns or has access, False otherwise
+            ``True`` if user owns or has access, ``False`` otherwise.
 
-        Examples
-        --------
+        Example
+        -------
         >>> from dl import authClient
-        >>> status = authClient.hasAccess(token,'vos://test.dat')
+        >>> status = authClient.hasAccess(token, 'vos://test.dat')
         '''
         # Either the user is not logged in or the token is invalid, so
         # make a service call to get a new token.
@@ -836,17 +839,17 @@ class authClient(object):
         Parameters
         ----------
         token : str
-            User login token
+            User login token.
 
         Returns
         -------
         status : bool
-            True if token is valid, False otherwise
+            ``True`` if token is valid, ``False`` otherwise.
 
-        Examples
-        --------
-        >>> if authClient.isValidToken(token):
-        ...     print("Valid token")
+        Example
+        -------
+        >>> from dl import authClient
+        >>> authClient.isValidToken(token)
         '''
         url = self.svc_url + "/isValidToken?"
         args = urlencode({"token": token,
@@ -869,19 +872,19 @@ class authClient(object):
         Parameters
         ----------
         user : str
-            User login name
+            User login name.
         password : str
-            Password for named user
+            Password for named user.
 
         Returns
         -------
         status : bool
-            True if password is valid for the user, False otherwise
+            ``True`` if password is valid for the user, ``False`` otherwise.
 
-        Examples
-        --------
-        >>> if authClient.isValidPassword('monty','python'):
-        ...     print("Valid password")
+        Example
+        -------
+        >>> from dl import authClient
+        >>> authClient.isValidPassword('monty', 'python')
         '''
         url = self.svc_url + "/isValidPassword?"
         args = urlencode({"user": user,
@@ -905,17 +908,17 @@ class authClient(object):
         Parameters
         ----------
         user : str
-            User login name
+            User login name.
 
         Returns
         -------
         status : bool
-            True if 'user' is a valid user name, False otherwise
+            ``True`` if ``user`` is a valid user name, ``False`` otherwise.
 
-        Examples
-        --------
-        >>> if authClient.isValidUser('monty'):
-        ...     print("Valid user")
+        Example
+        -------
+        >>> from dl import authClient
+        >>> authClient.isValidUser('monty')
         '''
         url = self.svc_url + "/isValidUser?"
         args = urlencode({"user": user,
@@ -933,22 +936,22 @@ class authClient(object):
         return val
 
     def isUserLoggedIn(self, user):
-        '''See whether the user identified by the token is currently logged in.
+        '''See whether the user identified by the username is currently logged in.
 
         Parameters
         ----------
         user : str
-            User login name
+            User login name.
 
         Returns
         -------
         status : bool
-            True if user is currently logged-in, False otherwise
+            ``True`` if user is currently logged in, ``False`` otherwise.
 
-        Examples
-        --------
-        >>> if not authClient.isUserLoggedIn(token):
-        ...     token = authClient.login('monty')
+        Example
+        -------
+        >>> from dl import authClient
+        >>> authClient.isUserLoggedIn('monty')
         '''
         url = self.svc_url + "/isUserLoggedIn?"
         args = urlencode({"user": user,
@@ -971,17 +974,17 @@ class authClient(object):
         Parameters
         ----------
         token : str
-            User login token
+            User login token.
 
         Returns
         -------
         status : bool
-            True if token is marked as logged-in, False otherwise
+            ``True`` if token is marked as logged in, ``False`` otherwise.
 
-        Examples
-        --------
-        >>> if not authClient.isTokenLoggedIn(token):
-        ...     token = authClient.login('monty')
+        Example
+        -------
+        >>> from dl import authClient
+        >>> authClient.isTokenLoggedIn(token)
         '''
         url = self.svc_url + "/isTokenLoggedIn?"
         args = urlencode({"token": token,
@@ -1070,10 +1073,10 @@ def getClient():
     Returns
     -------
     client : authClient
-        An authClient object
+        An authClient object.
 
-    Examples
-    --------
+    Example
+    -------
     >>> from dl import authClient
     >>> new_client = authClient.getClient()
     '''

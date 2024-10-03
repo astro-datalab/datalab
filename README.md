@@ -32,19 +32,21 @@ etc.)
 
 The easiest way to install the ``datalab`` client is via pip:
 
-```
-pip install --ignore-installed --no-cache-dir astro-datalab
+```bash
+pip install --upgrade astro-datalab
 ```
 
-The flags `--ignore-installed` and `--no-cache-dir` should ensure that the latest version is pulled freshly from the internet.
+**Note:** You should periodically update your client via the command above to ensure you are using the latest version. Older
+versions of the client may not be supported.
+
 ### Install from sources
 
 You can also install the `datalab` client from source on 
-[GitHub](https://github.com/astro-datalab/datalab.git):
+[GitHub](https://github.com/astro-datalab/datalab.git) via the steps below:
 
 1. Clone the repository and enter the directory:
    ```bash
-   git clone https://github.com/astro-datalab/datalab.git
+   git clone https://github.com/astro-datalab/datalab.git && \
    cd datalab
    ```
 
@@ -63,23 +65,22 @@ You can also install the `datalab` client from source on
    ```bash
    pip install dist/astro_datalab-<version>-py3-none-any.whl
    ```
-   Replace `<version>` with the actual version of the package.
-
-If you want it installed in your private Python repository (because you
-maintain multiple Python instances on your machine), you can use the
+   If you want it installed in your private Python repository (because you
+  maintain multiple Python instances on your machine), you can use the
 `--user` flag:
    ```bash
    pip install --user dist/astro_datalab-<version>-py3-none-any.whl
    ```
-
-Finally, if you intend to mount the virtual storage as a local filesystem,
+   **Note:** Replace `<version>` in the `pip install` command with the actual version
+number of the `astro_datalab` package, such as `2.23.0`.  
+### Additional Installation Steps
+If you intend to mount the virtual storage as a local filesystem,
 you will need to touch a file in your home directory:
    ```bash
    touch ~/.netrc
    ```
 
-Note: Replace `<version>` in the `pip install` command with the actual version
-number of the `astro_datalab` package, such as `2.23.0`.
+## Troubleshooting
 
 ### Note for macOS ARM (M1/M2) Users
 
@@ -121,30 +122,29 @@ If you encounter the above error, follow these steps to resolve it:
     conda install -c conda-forge pycurl
     ```
 
-## Configuration update: If you upgraded from a version prior to v2.20.0
+### Configuration update required (when upgrading from a version prior to v2.20.0)
 
-With version v2.20.0, the `datalab` package changed internal service
-URLs to point to our new noirlab.edu domain (the old noao.edu domain
-expired on Nov 29, 2021). If you had `datalab` installed previously,
-your local configuration file will still point to the old domain and
-you will see 'connection' errors when executing most commands.
+With version `2.20.0`, the `datalab` package changed internal service
+URLs to point to our new noirlab.edu domain. If you have an older version of
+`datalab` installed, your local configuration file will need to be reinitialized
+in order to use our new domain name (`datalab.noirlab.edu`).
 
-To fix this, simply rename the old configuration file. When you first
-run a `datalab` command again, a new and updated configuration file will
-be created:
+To refresh the config, simply remove the old configuration file. The next time you
+run a `datalab` command , a new configuration file will be generated:
 
 ```
-mv $HOME/.datalab/dl.conf $HOME/.datalab/dl.conf.bak  # renames old config file
-datalab version  # any datalab command will create a new config file
+rm $HOME/.datalab/dl.conf
+```
+Any datalab command will create a new config file eg.
+```
+datalab version
 ```
 
-Finally, log in again:
+In some cases you might need to go through the login process eg.
 
 ```
 datalab login
 ```
-
-and that should be it.
 
 ## Documentation
 

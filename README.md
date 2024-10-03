@@ -1,6 +1,6 @@
 # Astro Data Lab Client
 
-[![Version Release](https://github.com/astro-datalab//datalab/actions/workflows/generate_docs.yml/badge.svg)](https://github.com/astro-datalab//datalab/actions/workflows/generate_docs.yml/badge.svg)
+[![Documentation](https://github.com/astro-datalab//datalab/actions/workflows/generate_docs.yml/badge.svg)](https://datalab.noirlab.edu/docs/api/index.html)
 
 ``datalab`` is command-line Python client for NSF NOIRLab's [Astro Data Lab](https://datalab.noirlab.edu).
 

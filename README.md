@@ -11,6 +11,19 @@ It provides easy access to various Astro Data Lab functionalities including:
 * your remote file storage (VOSpace)
 * your remote database tables (MyDB)
 
+## Basic Usage
+```python
+>>> from dl import queryClient as qc
+>>> result = qc.query(sql='SELECT TOP 5 ra,dec from smash_dr1.object')
+>>> print(result)
+ra,dec
+296.0702105660565,-75.58008799398345
+296.0689079309987,-75.57850708319104
+296.0695746063349,-75.5771115243687
+296.0734998386567,-75.57729189836104
+296.074467291614,-75.57941799334213
+```
+
 ## System requirements
 
 * An Astro Data Lab user account (You can request an account on the [Astro Data Lab website](https://datalab.noirlab.edu/)).

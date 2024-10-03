@@ -1,31 +1,26 @@
-# THE DATALAB COMMAND LINE CLIENT
+# Astro Data Lab Client
+[![Build](https://github.com/astro-datalab/datalab/actions/workflows/datalab_pip.yml/badge.svg)](https://github.com/astro-datalab/datalab/actions/workflows/datalab_pip.yml/badge.svg)
+[![Version Release](https://github.com/astro-datalab//datalab/actions/workflows/generate_docs.yml/badge.svg)](https://github.com/astro-datalab//datalab/actions/workflows/generate_docs.yml/badge.svg)
 
-``datalab`` is command-line Python client for NOIRLab's [Astro Data Lab](https://datalab.noirlab.edu).
+``datalab`` is command-line Python client for NSF NOIRLab's [Astro Data Lab](https://datalab.noirlab.edu).
 
-It provides easy access to Data Lab functionalities:
+It provides easy access to various Astro Data Lab functionalities including:
 
 * synchronous and asynchronous database queries (TAP)
 * your remote file storage (VOSpace)
 * your remote database tables (MyDB)
 
-Authentication to Data Lab is based on a username and password.
-
-
 ## System requirements
 
-* A Data Lab account
-* Python 3.x (Python 3.8 recommended; **We are no longer supporting Python 2**)
-* fuse or OSX-FUSE (if you want to mount the remote storage as a local filesystem)
-
-For Ubuntu users:
-
-* If the pip installation instructions below fail for you complaining about a missing library `libcurl4-openssl-dev`, please install it using your software/package manager.
+* An Astro Data Lab user account (You can request an account on the [Astro Data Lab website](https://datalab.noirlab.edu/)).
+* Python 3 (Python 3.11 recommended. Python >=3.9 required.)
+* fuse or OSX-FUSE (only if you want to mount the remote storage as a local filesystem)
 
 ## Installation
 
-The ``astrodatalab`` package installs the ``datalab`` command line
-client, and some Data Lab Python libraries that allow you to use Data
-Lab functionality locally on your computer (for instance in Ipython
+The ``astro-datalab`` package installs the ``datalab`` command line
+client, and various additional Data Lab Python libraries that allow you to use
+Astro Data Lab functionality locally on your computer (for instance in Ipython
 etc.)
 
 ### Install via pip
@@ -73,14 +68,20 @@ You can also install the `datalab` client from source on
    ```
    **Note:** Replace `<version>` in the `pip install` command with the actual version
 number of the `astro_datalab` package, such as `2.23.0`.  
+
 ### Additional Installation Steps
+
 If you intend to mount the virtual storage as a local filesystem,
 you will need to touch a file in your home directory:
-   ```bash
-   touch ~/.netrc
-   ```
+```bash
+touch ~/.netrc
+```
 
 ## Troubleshooting
+
+### `pip install` fails on Ubuntu
+
+* If the pip installation instructions below fail for you complaining about a missing library `libcurl4-openssl-dev`, please install it using your software/package manager.
 
 ### Note for macOS ARM (M1/M2) Users
 
@@ -261,39 +262,3 @@ ra,dec
 
 A comprehensive [user manual](https://datalab.noirlab.edu/docs/manual/)
 explains the many features of Data Lab.
-
-<!---
-### To mount virtual storage as a local directory at login
-
-You can mount the virtual storage as a local directory at login by
-using the optional <i>mount</i> argument. 
-
-```
-datalab login --user=<user> --password=<password> --mount=/tmp/vospace
-```
-
-This will attempt to mount the default virtual storage (at NOIRLab). If
-you need to mount another one, you should use the ``datalab mount`` option.
-
-### To mount virtual storage as a local directory once logged in
-
-```
-datalab mount
-vospace (default: vos:):
-mount (default: /tmp/vospace):
-```
-
-### To unmount virtual storage
-
-You can either use a regular Unix command:
-
-```
-umount /tmp/vospace
-```
-
-or unmount the space when you log out of Data Lab:
-
-```
-datalab logout --unmount=/tmp/vospace
-```
--->

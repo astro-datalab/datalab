@@ -1,4 +1,5 @@
 # Astro Data Lab Client
+
 [![Build](https://github.com/astro-datalab/datalab/actions/workflows/datalab_pip.yml/badge.svg)](https://github.com/astro-datalab/datalab/actions/workflows/datalab_pip.yml/badge.svg)
 [![Version Release](https://github.com/astro-datalab//datalab/actions/workflows/generate_docs.yml/badge.svg)](https://github.com/astro-datalab//datalab/actions/workflows/generate_docs.yml/badge.svg)
 
@@ -36,36 +37,45 @@ versions of the client may not be supported.
 
 ### Install from sources
 
-You can also install the `datalab` client from source on 
+You can also install the `datalab` client from source on
 [GitHub](https://github.com/astro-datalab/datalab.git) via the steps below:
 
 1. Clone the repository and enter the directory:
+
    ```bash
    git clone https://github.com/astro-datalab/datalab.git && \
    cd datalab
    ```
 
 2. Ensure you have the latest version of pip and setuptools:
+
    ```bash
    python -m pip install --upgrade pip setuptools
    ```
 
 3. Build the package:
+
    ```bash
    python -m pip install build
+   ```
+   ```bash
    python -m build
    ```
 
 4. Install the package:
+
    ```bash
    pip install dist/astro_datalab-<version>-py3-none-any.whl
    ```
+
    If you want it installed in your private Python repository (because you
   maintain multiple Python instances on your machine), you can use the
 `--user` flag:
+
    ```bash
    pip install --user dist/astro_datalab-<version>-py3-none-any.whl
    ```
+
    **Note:** Replace `<version>` in the `pip install` command with the actual version
 number of the `astro_datalab` package, such as `2.23.0`.  
 
@@ -73,11 +83,12 @@ number of the `astro_datalab` package, such as `2.23.0`.
 
 If you intend to mount the virtual storage as a local filesystem,
 you will need to touch a file in your home directory:
+
 ```bash
 touch ~/.netrc
 ```
 
-## Troubleshooting
+## Troubleshooting / Common Issues
 
 ### `pip install` fails on Ubuntu
 
@@ -90,7 +101,8 @@ This is often due to a mismatch between the version of libcurl available at runt
 was compiled against.
 
 Common error message:
-```
+
+```bash
 ImportError: pycurl: libcurl link-time version (7.77.0) is older than compile-time version (8.4.0)
 ```
 
@@ -107,18 +119,21 @@ If you encounter the above error, follow these steps to resolve it:
 2. **Update your conda, if you have one**
 
 3. **Update Homebrew and `curl`**:
+
     ```bash
     brew update
     brew upgrade curl
     ```
 
 4. **Uninstall and Reinstall `pycurl`**:
+
     ```bash
     pip uninstall pycurl
     pip install --no-cache-dir pycurl
     ```
 
 5. **If the above steps do not work, use `conda` to install `pycurl`**:
+
     ```bash
     conda install -c conda-forge pycurl
     ```
@@ -133,17 +148,19 @@ in order to use our new domain name (`datalab.noirlab.edu`).
 To refresh the config, simply remove the old configuration file. The next time you
 run a `datalab` command , a new configuration file will be generated:
 
-```
+```bash
 rm $HOME/.datalab/dl.conf
 ```
+
 Any datalab command will create a new config file eg.
-```
+
+```bash
 datalab version
 ```
 
 In some cases you might need to go through the login process eg.
 
-```
+```bash
 datalab login
 ```
 
@@ -153,7 +170,7 @@ datalab login
 
 To check the currently installed version of `datalab`:
 
-```
+```bash
 datalab --version
 
 Task Version:  2.20.1
@@ -161,7 +178,7 @@ Task Version:  2.20.1
 
 To get a list of available datalab commands (tasks):
 
-```
+```bash
 datalab --help
 
 Usage:
@@ -208,7 +225,7 @@ where <task> is one of:
 You can get summaries of the arguments to a task with the ``help``
 option:
 
-```
+```bash
 datalab login help
 
 The 'login' task takes the following parameters:
@@ -225,7 +242,7 @@ The 'login' task takes the following parameters:
 The ``datalab`` command will prompt you for required arguments if you do not
 provide them on the command line, e.g.:
 
-```
+```bash
 datalab login
 
 user (default: None): foousername

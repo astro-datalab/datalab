@@ -1,85 +1,111 @@
-# THE DATALAB COMMAND LINE CLIENT
+# Datalab
 
-``datalab`` is command-line Python client for NOIRLab's [Astro Data Lab](https://datalab.noirlab.edu).
+[![pip](https://img.shields.io/pypi/v/astro-datalab.svg)](https://pypi.org/project/astro-datalab/#history)
+[![Documentation](https://github.com/astro-datalab//datalab/actions/workflows/generate_docs.yml/badge.svg)](https://datalab.noirlab.edu/docs/api/index.html)
 
-It provides easy access to Data Lab functionalities:
+``datalab`` is command-line Python client for NSF NOIRLab's [Astro Data Lab](https://datalab.noirlab.edu).
+
+It provides easy access to various Astro Data Lab functionalities including:
 
 * synchronous and asynchronous database queries (TAP)
 * your remote file storage (VOSpace)
 * your remote database tables (MyDB)
 
-Authentication to Data Lab is based on a username and password.
-
+## Basic Usage
+```python
+>>> from dl import queryClient as qc
+>>> result = qc.query(sql='SELECT TOP 5 ra,dec from smash_dr1.object')
+>>> print(result)
+ra,dec
+296.0702105660565,-75.58008799398345
+296.0689079309987,-75.57850708319104
+296.0695746063349,-75.5771115243687
+296.0734998386567,-75.57729189836104
+296.074467291614,-75.57941799334213
+```
 
 ## System requirements
 
-* A Data Lab account
-* Python 3.x (Python 3.8 recommended; **We are no longer supporting Python 2**)
-* fuse or OSX-FUSE (if you want to mount the remote storage as a local filesystem)
-
-For Ubuntu users:
-
-* If the pip installation instructions below fail for you complaining about a missing library `libcurl4-openssl-dev`, please install it using your software/package manager.
+* An Astro Data Lab user account (You can request an account on the [Astro Data Lab website](https://datalab.noirlab.edu/)).
+* Python 3 (Python 3.11 recommended. Python >=3.9 required.)
+* fuse or OSX-FUSE (only if you want to mount the remote storage as a local filesystem)
 
 ## Installation
 
-The ``astrodatalab`` package installs the ``datalab`` command line
-client, and some Data Lab Python libraries that allow you to use Data
-Lab functionality locally on your computer (for instance in Ipython
+The ``astro-datalab`` package installs the ``datalab`` command line
+client, and various additional Data Lab Python libraries that allow you to use
+Astro Data Lab functionality locally on your computer (for instance in Ipython
 etc.)
 
 ### Install via pip
 
 The easiest way to install the ``datalab`` client is via pip:
 
-```
-pip install --ignore-installed --no-cache-dir astro-datalab
+```bash
+pip install --upgrade astro-datalab
 ```
 
-The flags `--ignore-installed` and `--no-cache-dir` should ensure that the latest version is pulled freshly from the internet.
+**Note:** You should periodically update your client via the command above to ensure you are using the latest version. Older
+versions of the client may not be supported.
+
 ### Install from sources
 
-You can also install the `datalab` client from source on 
-[GitHub](https://github.com/astro-datalab/datalab.git):
+You can also install the `datalab` client from source on
+[GitHub](https://github.com/astro-datalab/datalab.git) via the steps below:
 
 1. Clone the repository and enter the directory:
+
    ```bash
-   git clone https://github.com/astro-datalab/datalab.git
+   git clone git@github.com:astro-datalab/datalab.git && \
    cd datalab
    ```
 
 2. Ensure you have the latest version of pip and setuptools:
+
    ```bash
    python -m pip install --upgrade pip setuptools
    ```
 
 3. Build the package:
+
    ```bash
    python -m pip install build
+   ```
+   ```bash
    python -m build
    ```
 
 4. Install the package:
+
    ```bash
    pip install dist/astro_datalab-<version>-py3-none-any.whl
    ```
-   Replace `<version>` with the actual version of the package.
 
-If you want it installed in your private Python repository (because you
-maintain multiple Python instances on your machine), you can use the
+   If you want it installed in your private Python repository (because you
+  maintain multiple Python instances on your machine), you can use the
 `--user` flag:
+
    ```bash
    pip install --user dist/astro_datalab-<version>-py3-none-any.whl
    ```
 
-Finally, if you intend to mount the virtual storage as a local filesystem,
-you will need to touch a file in your home directory:
-   ```bash
-   touch ~/.netrc
-   ```
+   **Note:** Replace `<version>` in the `pip install` command with the actual version
+number of the `astro_datalab` package, such as `2.23.0`.  
 
-Note: Replace `<version>` in the `pip install` command with the actual version
-number of the `astro_datalab` package, such as `2.23.0`.
+### Additional Installation Steps
+
+If you intend to mount the virtual storage as a local filesystem,
+you will need to touch a file in your home directory:
+
+```bash
+touch ~/.netrc
+```
+
+## Troubleshooting / Common Issues
+
+### `pip install` fails on Ubuntu
+
+* If the pip installation instructions below fail for you complaining about a missing library `libcurl4-openssl-dev`, please install it using your software/package manager.
 
 ### Note for macOS ARM (M1/M2) Users
 
@@ -88,7 +114,8 @@ This is often due to a mismatch between the version of libcurl available at runt
 was compiled against.
 
 Common error message:
-```
+
+```bash
 ImportError: pycurl: libcurl link-time version (7.77.0) is older than compile-time version (8.4.0)
 ```
 
@@ -105,46 +132,50 @@ If you encounter the above error, follow these steps to resolve it:
 2. **Update your conda, if you have one**
 
 3. **Update Homebrew and `curl`**:
+
     ```bash
     brew update
     brew upgrade curl
     ```
 
 4. **Uninstall and Reinstall `pycurl`**:
+
     ```bash
     pip uninstall pycurl
     pip install --no-cache-dir pycurl
     ```
 
 5. **If the above steps do not work, use `conda` to install `pycurl`**:
+
     ```bash
     conda install -c conda-forge pycurl
     ```
 
-## Configuration update: If you upgraded from a version prior to v2.20.0
+### Configuration update required (when upgrading from a version prior to v2.20.0)
 
-With version v2.20.0, the `datalab` package changed internal service
-URLs to point to our new noirlab.edu domain (the old noao.edu domain
-expired on Nov 29, 2021). If you had `datalab` installed previously,
-your local configuration file will still point to the old domain and
-you will see 'connection' errors when executing most commands.
+With version `2.20.0`, the `datalab` package changed internal service
+URLs to point to our new noirlab.edu domain. If you have an older version of
+`datalab` installed, your local configuration file will need to be reinitialized
+in order to use our new domain name (`datalab.noirlab.edu`).
 
-To fix this, simply rename the old configuration file. When you first
-run a `datalab` command again, a new and updated configuration file will
-be created:
+To refresh the config, simply remove the old configuration file. The next time you
+run a `datalab` command , a new configuration file will be generated:
 
-```
-mv $HOME/.datalab/dl.conf $HOME/.datalab/dl.conf.bak  # renames old config file
-datalab version  # any datalab command will create a new config file
+```bash
+rm $HOME/.datalab/dl.conf
 ```
 
-Finally, log in again:
+Any datalab command will create a new config file eg.
 
+```bash
+datalab version
 ```
+
+In some cases you might need to go through the login process eg.
+
+```bash
 datalab login
 ```
-
-and that should be it.
 
 ## Documentation
 
@@ -152,7 +183,7 @@ and that should be it.
 
 To check the currently installed version of `datalab`:
 
-```
+```bash
 datalab --version
 
 Task Version:  2.20.1
@@ -160,7 +191,7 @@ Task Version:  2.20.1
 
 To get a list of available datalab commands (tasks):
 
-```
+```bash
 datalab --help
 
 Usage:
@@ -207,7 +238,7 @@ where <task> is one of:
 You can get summaries of the arguments to a task with the ``help``
 option:
 
-```
+```bash
 datalab login help
 
 The 'login' task takes the following parameters:
@@ -224,7 +255,7 @@ The 'login' task takes the following parameters:
 The ``datalab`` command will prompt you for required arguments if you do not
 provide them on the command line, e.g.:
 
-```
+```bash
 datalab login
 
 user (default: None): foousername
@@ -261,39 +292,3 @@ ra,dec
 
 A comprehensive [user manual](https://datalab.noirlab.edu/docs/manual/)
 explains the many features of Data Lab.
-
-<!---
-### To mount virtual storage as a local directory at login
-
-You can mount the virtual storage as a local directory at login by
-using the optional <i>mount</i> argument. 
-
-```
-datalab login --user=<user> --password=<password> --mount=/tmp/vospace
-```
-
-This will attempt to mount the default virtual storage (at NOIRLab). If
-you need to mount another one, you should use the ``datalab mount`` option.
-
-### To mount virtual storage as a local directory once logged in
-
-```
-datalab mount
-vospace (default: vos:):
-mount (default: /tmp/vospace):
-```
-
-### To unmount virtual storage
-
-You can either use a regular Unix command:
-
-```
-umount /tmp/vospace
-```
-
-or unmount the space when you log out of Data Lab:
-
-```
-datalab logout --unmount=/tmp/vospace
-```
--->

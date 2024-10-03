@@ -42,7 +42,7 @@ You can also install the `datalab` client from source on
 1. Clone the repository and enter the directory:
 
    ```bash
-   git clone https://github.com/astro-datalab/datalab.git && \
+   git clone git@github.com:astro-datalab/datalab.git && \
    cd datalab
    ```
 

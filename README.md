@@ -1,4 +1,4 @@
-# Astro Data Lab Client
+# Datalab
 
 [![Documentation](https://github.com/astro-datalab//datalab/actions/workflows/generate_docs.yml/badge.svg)](https://datalab.noirlab.edu/docs/api/index.html)
 

@@ -1,0 +1,37 @@
+name: Release
+
+on:
+  release:
+    types: [released]
+
+jobs:
+  release-pip:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Install dependencies
+      run: pip install --upgrade setuptools wheel twine build
+
+    - name: Build pip package
+      run: |
+        rm -rf dist/ build/ datalab_client.egg-info/ astro_datalab.egg-info/
+        python -m build
+
+    - name: Upload package to PyPI
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        # for testing purposes set the PYPI_REPO_URL to https://test.pypi.org/legacy/
+        PYPI_REPO_URL: ''
+      run: |
+        if [ -z "${{ env.PYPI_REPO_URL }}" ]; then
+          twine upload --verbose dist/*
+        else
+          twine upload --verbose --repository-url "${{ env.PYPI_REPO_URL }}" dist/*
+        fi

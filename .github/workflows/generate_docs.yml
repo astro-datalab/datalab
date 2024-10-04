@@ -1,6 +1,6 @@
 # Builds and deploys the python documentation using sphinx. Live documentation
 # is available from the main Astro Data Lab website.
-name: Deploy Documentation
+name: Docs
 
 env:
   # these are defaults in case these values do not get set at runtime

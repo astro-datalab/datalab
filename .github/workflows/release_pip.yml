@@ -1,8 +1,12 @@
 name: Release
 
+# on:
+#   release:
+#     types: [released]
 on:
-  release:
-    types: [released]
+  push:
+    branches:
+      - workflow-updates
 
 jobs:
   build:
@@ -34,5 +38,5 @@ jobs:
         if [ -z "${{ env.PYPI_REPO_URL }}" ]; then
           twine upload --verbose dist/*
         else
-          twine upload --verbose --repository-url "${{ env.PYPI_REPO_URL }}" dist/*
+          echo "skipped for test"
         fi

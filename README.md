@@ -1,7 +1,9 @@
 # Datalab
 
-[![pip](https://img.shields.io/pypi/v/astro-datalab.svg)](https://pypi.org/project/astro-datalab/#history)
+[![Tests and Checks](https://github.com/astro-datalab//datalab/actions/workflows/test.yml/badge.svg)](https://github.com/astro-datalab/datalab/actions/workflows/test.yml)
 [![Documentation](https://github.com/astro-datalab//datalab/actions/workflows/generate_docs.yml/badge.svg)](https://datalab.noirlab.edu/docs/api/index.html)
+[![Release](https://github.com/astro-datalab//datalab/actions/workflows/release_pip.yml/badge.svg)](https://github.com/astro-datalab/datalab/actions/workflows/test.yml)
+[![pip](https://img.shields.io/pypi/v/astro-datalab.svg)](https://pypi.org/project/astro-datalab/#history)
 
 ``datalab`` is command-line Python client for NSF NOIRLab's [Astro Data Lab](https://datalab.noirlab.edu).
 

@@ -13,14 +13,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Install dependencies
-      run: |
-        pip install --upgrade pip
-        pip install --upgrade setuptools wheel twine build
+      run: pip install --upgrade setuptools wheel twine build
+
     - name: Build pip package
       run: |
         rm -rf dist/ build/ datalab_client.egg-info/ astro_datalab.egg-info/

@@ -1,9 +1,8 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - version-2.24.0
+  release:
+    types: [released]
 
 jobs:
   release-pip:

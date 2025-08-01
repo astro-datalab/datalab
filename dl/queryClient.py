@@ -2850,7 +2850,7 @@ class queryClient (object):
                                   data=data, **kw)
 
     def _mydb_import(self, token=None, table=None, data=None, **kw):
-        '''Implementation of the mydb_create() method.
+        '''Implementation of the mydb_import() method.
         '''
         # Get optional parameters.
         csv_header = (kw['csv_header'] if 'csv_header' in kw else True)
@@ -2863,6 +2863,11 @@ class queryClient (object):
         # Set up the request headers and initialize.
         headers = self.getHeaders (token)
         dburl = '%s/import' % (self.svc_url)
+
+        # ensure the user has a valid token before reserving resources
+        user, _, _, _ = split_auth_token(token)
+        if not user or user == 'anonymous':
+            raise queryClientError('The provided security token is invalid')
 
         if not validTableName(table):
             raise queryClientError('Invalid table name: "%s"' % table)

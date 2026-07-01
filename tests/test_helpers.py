@@ -62,8 +62,8 @@ class TestHelpersUtilsResolve(unittest.TestCase):
         self.assertIsInstance(self.res,SkyCoord)
 
     def test_ra(self):
-        """Should return 10.6847083"""
-        self.assertEqual(self.res.ra.value,10.6847083)
+        """Should return 10.68470833"""
+        self.assertEqual(self.res.ra.value,10.68470833)
 
     def test_dec(self):
         """Should return 41.26875"""

@@ -599,7 +599,7 @@ class Login(Task):
                 self.dl.save("login", "user", "")
                 self.dl.save("login", "authtoken", "")
                 self.dl.save(self.user.value, "authtoken", '')
-        except Exception as e:
+        except Exception:
             pass
 
         # Get the security token for the user
@@ -637,13 +637,13 @@ class Logout(Task):
             user, uid, gid, hash = token.strip().split('.', 3)
             res = authClient.logout (token)
             if res != "OK":
-                print ("Error: %s" % res)
-                #sys.exit (-1)
+                print("Error: %s" % res)
+                sys.exit(-1)
             if self.unmount.value != "":
                 print ("Unmounting remote space")
                 cmd = "umount %s" % self.unmount.value
                 pipe = Popen(cmd, shell=True, stdout=PIPE)
-                output = pipe.stdout.read()
+                pipe.stdout.read()
                 self.dl.save("vospace", "mount", "")
             self.dl.save("login", "status", "loggedout")
             self.dl.save("login", "user", "")
@@ -869,11 +869,12 @@ class Query2 (Task):
             if not getattr(self,"async").value and str(e) is not None:
                 err = str(e)
                 if err.find("Time-out") > 0:
-                    print ("Error: Sync query timeout, try an async query")
+                    sys.stderr.write("Error: Sync query timeout, try an async query\n")
+                    sys.exit(-1)
                 else:
-                    print (str(e))
+                    raise e
             else:
-                print (str(e))
+                raise e
 
 
 class QueryStatus(Task):
@@ -1107,12 +1108,8 @@ class MyDB_List(Task):
 
     def run(self):
         token = getUserToken(self)
-        try:
-            res = queryClient.mydb_list (token, table=self.table.value)
-        except Exception as e:
-            print ("Error listing MyDB tables: %s" % str(e))
-        else:
-            print (res)
+        res = queryClient.mydb_list (token, table=self.table.value)
+        print(res)
 
 
 class MyDB_Drop(Task):
@@ -1127,12 +1124,8 @@ class MyDB_Drop(Task):
 
     def run(self):
         token = getUserToken(self)
-        try:
-            res = queryClient.mydb_drop (token, self.table.value)
-        except Exception as e:
-            print ("Error dropping table '%s': %s" % (self.table.value,str(e)))
-        else:
-            print (res)
+        res = queryClient.mydb_drop (token, self.table.value)
+        print(res)
 
 
 class MyDB_Create(Task):
@@ -1149,13 +1142,9 @@ class MyDB_Create(Task):
 
     def run(self):
         token = getUserToken(self)
-        try:
-            res = queryClient.mydb_create (token, self.table.value,
-                                           self.schema.value)
-        except Exception as e:
-            print ("Error creating table '%s': %s" % (self.table.value,str(e)))
-        else:
-            print (res)
+        res = queryClient.mydb_create (token, self.table.value,
+                                       self.schema.value)
+        print(res)
 
 
 class MyDB_Import(Task):
@@ -1175,15 +1164,10 @@ class MyDB_Import(Task):
 
     def run(self):
         token = getUserToken(self)
-        try:
-            res = queryClient.mydb_import (token, self.table.value,
-                                           self.data.value,
-                                           append=self.append.value)
-        except Exception as e:
-            print ("Error importing table '%s': %s" % \
-                     (self.table.value, str(e)))
-        else:
-            print (res)
+        res = queryClient.mydb_import (token, self.table.value,
+                                       self.data.value,
+                                       append=self.append.value)
+        print(res)
 
 
 class MyDB_Insert(Task):
@@ -1204,20 +1188,16 @@ class MyDB_Insert(Task):
 
     def run(self):
         token = getUserToken(self)
-        try:
-            res = queryClient.mydb_list (token, table=self.table.value)
-            if res.find('not known') > 0:
-                res = "Error: MyDB table '%s' does not exist" % self.table.value
+        res = queryClient.mydb_list (token, table=self.table.value)
+        if res.find('not known') > 0:
+            res = "Error: MyDB table '%s' does not exist" % self.table.value
 
-            else:
-                # Table exists, so just insert the data.
-                res = queryClient.mydb_insert (token, self.table.value,
-                                               self.data.value,
-                                               csv_header=self.csv_header.value)
-        except Exception as e:
-            print (str(e))
         else:
-            print (res)
+            # Table exists, so just insert the data.
+            res = queryClient.mydb_insert (token, self.table.value,
+                                           self.data.value,
+                                           csv_header=self.csv_header.value)
+        print(res)
 
 
 class MyDB_Index(Task):
@@ -1242,16 +1222,12 @@ class MyDB_Index(Task):
 
     def run(self):
         token = getUserToken(self)
-        try:
-            res = queryClient.mydb_index (token, self.table.value,
-                                           self.column.value, 
-                                           q3c=self.q3c.value,
-                                           cluster=self.cluster.value,
-                                           async_=self.async_.value)
-        except Exception as e:
-            print ("Error indexing table '%s': %s" % (self.table.value,str(e)))
-        else:
-            print (res)
+        res = queryClient.mydb_index (token, self.table.value,
+                                       self.column.value, 
+                                       q3c=self.q3c.value,
+                                       cluster=self.cluster.value,
+                                       async_=self.async_.value)
+        print(res)
 
 
 class MyDB_Truncate(Task):
@@ -1267,13 +1243,8 @@ class MyDB_Truncate(Task):
 
     def run(self):
         token = getUserToken(self)
-        try:
-            res = queryClient.mydb_truncate (token, self.table.value)
-        except Exception as e:
-            print ("Error truncating table '%s': %s" % \
-                   (self.table.value,str(e)))
-        else:
-            print (res)
+        res = queryClient.mydb_truncate (token, self.table.value)
+        print(res)
 
 
 class MyDB_Rename(Task):
@@ -1290,12 +1261,8 @@ class MyDB_Rename(Task):
 
     def run(self):
         token = getUserToken(self)
-        try:
-            res = queryClient.mydb_rename(token, self.old.value, self.new.value)
-        except Exception as e:
-            print ("Error renaming table '%s': %s" % (self.old.value,str(e)))
-        else:
-            print (res)
+        res = queryClient.mydb_rename(token, self.old.value, self.new.value)
+        print(res)
 
 
 class MyDB_Copy(Task):
@@ -1312,14 +1279,9 @@ class MyDB_Copy(Task):
 
     def run(self):
         token = getUserToken(self)
-        try:
-            res = queryClient.mydb_copy (token, self.source.value,
-                                         self.target.value)
-        except Exception as e:
-            print ("Error copying table '%s': %s" % (self.old.value,str(e)))
-        else:
-            print (res)
-
+        res = queryClient.mydb_copy (token, self.source.value,
+                                     self.target.value)
+        print(res)
 
 
 
@@ -1442,8 +1404,7 @@ class Mountvofs(Task):
                         noappledouble=True,
                         foreground=self.foreground.value)
         else:
-          try:
-            print ("mounting linux fuse....")
+            print("mounting linux fuse....")
             fuse = FUSE(VOFS(root, self.cache_dir.value, opt,
                              conn=conn, cache_limit=self.cache_limit.value,
                              cache_nodes=self.cache_nodes.value,
@@ -1455,11 +1416,9 @@ class Mountvofs(Task):
                         readonly=self.readonly.value,
                         allow_other=self.allow_other.value,
                         foreground=self.foreground.value)
-            print ("done mounting linux fuse....")
-          except Exception as e:
-            print ("FUSE MOUNT EXCEPTION: " + str(e))
+            print("done mounting linux fuse....")
 
-        print ("fuse = " + str(fuse))
+        print("fuse = " + str(fuse))
         if not fuse:
             self.dl.save('vospace', 'mount', '')
 

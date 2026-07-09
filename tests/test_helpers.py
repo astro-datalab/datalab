@@ -153,8 +153,16 @@ xsi:noNamespaceSchemaLocation="xmlns:http://www.ivoa.net/xml/VOTable-1.2.xsd" ve
     def test_is_votable(self):
         """Result of convert() to votable should be a votable"""
         res = utils.convert(self.votable,'votable')
-        self.assertIsInstance(res,astropy.io.votable.tree.Table)
 
+        # astropy changed stuff with the votable in version 6.0.0
+        # https://github.com/astropy/astropy/blob/main/CHANGES.rst#astropyiovotable-3
+        if astropy.__version__ >= '6.0.0':
+            table_type = astropy.io.votable.tree.TableElement
+        else:
+            table_type = astropy.io.votable.tree.Table
+
+        self.assertIsInstance(res,table_type)
+        
     def test_votable_value(self):
         """Result of convert() to votable should have res['mag_auto_i'][0] == 23.168003"""
         res = utils.convert(self.votable,'votable')

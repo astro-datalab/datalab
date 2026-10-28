@@ -4,11 +4,6 @@ import glob
 from dl.__version__ import __version__ as dl_version
 from setuptools import setup, find_packages
 
-#from vos.__version__ import vos_version
-
-#if sys.version_info[0] > 2:
-#    print 'The vos package is only compatible with Python version 2.n'
-#    sys.exit(-1)
 
 ## Build the list of scripts to be installed.
 script_dir = 'scripts'
@@ -31,13 +26,10 @@ setup(name="astro-datalab",
       version=dl_version,
       url="https://github.com/astro-datalab/datalab/",
       description="Tools for interacting with NOIRLab's Astro Data Lab.",
-      author="M.J. Graham, M.J. Fitzpatrick, D.L. Nidever, R. Nikutta",
-      author_email="mjg@caltech.edu, mike.fitzpatrick@noirlab.edu, robert.nikutta@noirlab.edu",
+      author="NSF NOIRLab Data Lab Team",
+      author_email="datalab@noirlab.edu",
       long_description="Tools for interacting with NOIRLab's Astro Data Lab services",
       packages=find_packages(exclude=['test.*']),
-      package_data ={
-        'datalab': ['caps/*']
-      },
       scripts=['scripts/datalab', 'scripts/mountvofs'],
       test_suite='setup.my_test_suite',
       classifiers=[

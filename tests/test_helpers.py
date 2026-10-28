@@ -1,13 +1,9 @@
-__author__ = 'Robert Nikutta <robert.nikutta@noirlab.edu>, NOAO Data Lab <datalab@noirlab.edu>'
-__version__ = '20180131' #yyyymmdd
-
 import unittest
 from dl.helpers import utils
 from astropy.coordinates.sky_coordinate import SkyCoord
 import astropy
 import numpy
 import pandas
-
 
 # These are old tests from the original implmentation, so skip the mocking 
 # for now.
@@ -153,7 +149,7 @@ xsi:noNamespaceSchemaLocation="xmlns:http://www.ivoa.net/xml/VOTable-1.2.xsd" ve
     def test_is_votable(self):
         """Result of convert() to votable should be a votable"""
         res = utils.convert(self.votable,'votable')
-        self.assertIsInstance(res,astropy.io.votable.tree.Table)
+        self.assertIsInstance(res,astropy.io.votable.tree.TableElement)
 
     def test_votable_value(self):
         """Result of convert() to votable should have res['mag_auto_i'][0] == 23.168003"""

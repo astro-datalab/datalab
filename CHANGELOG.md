@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Dropped support for Astropy v5.x
 - Removed various legacy code and directories
 - `specClient` was deprecated in favor of [SPARCL](https://gitlab.com/nsf-noirlab/csdc/datalab/sparcl/sparclclient)
+- `dl.helpers.legacy` was deprecated
 
 ### Fixed
 
